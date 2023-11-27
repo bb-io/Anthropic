@@ -24,6 +24,6 @@ public class AnthropicRestClient : BlackBirdRestClient
         var json = response.Content!;
 
         var error = JsonConvert.DeserializeObject<ErrorResponse>(json);
-        return new(error.Error.ToString());
+        return new(error.ToString());
     }
 }
