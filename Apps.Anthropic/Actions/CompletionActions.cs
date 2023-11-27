@@ -21,7 +21,7 @@ public class CompletionActions : BaseInvocable
     {
         var client = new AnthropicRestClient(InvocationContext.AuthenticationCredentialsProviders);
         var request = new RestRequest("/complete", Method.Post);
-        input.Prompt = $"\"\\n\\nHuman: {input.Prompt} \\n\\nAssistant:\"";
+        input.Prompt = $"\n\nHuman: {input.Prompt} \n\nAssistant:";
         request.AddJsonBody(input);
         return client.Execute<CompletionResponse>(request);
     }    
