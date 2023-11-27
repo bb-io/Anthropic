@@ -18,7 +18,7 @@ public class ConnectionValidator : IConnectionValidator
         request.AddJsonBody(new CompletionRequest()
         {
             Model = new ModelDataSourceHandler().GetData(new Blackbird.Applications.Sdk.Common.Dynamic.DataSourceContext() { SearchString = string.Empty}).First().Key,
-            Prompt = "\"\\n\\nHuman: hello \\n\\nAssistant:\"",
+            Prompt = "\n\nHuman: hello \n\nAssistant:",
             MaxTokensToSample = 20
         });
         try
