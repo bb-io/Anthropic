@@ -28,7 +28,7 @@ public class CompletionActions : BaseInvocable
             model = input.Model,
             prompt = input.Prompt,
             max_tokens_to_sample = input.MaxTokensToSample,
-            stop_sequences = input.StopSequences,
+            stop_sequences = input.StopSequences != null ? input.StopSequences : new List<string>(),
             temperature = input.Temperature != null ? float.Parse(input.Temperature) : 1.0f,
             top_p = input.TopP != null ? float.Parse(input.TopP) : 1.0f,
             top_k = input.TopK != null ? input.TopK : 1,
