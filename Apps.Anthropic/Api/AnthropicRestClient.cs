@@ -1,4 +1,5 @@
-﻿using Blackbird.Applications.Sdk.Common.Authentication;
+﻿using Apps.Anthropic.Models.Response;
+using Blackbird.Applications.Sdk.Common.Authentication;
 using Blackbird.Applications.Sdk.Utils.Extensions.String;
 using Blackbird.Applications.Sdk.Utils.RestSharp;
 using Newtonsoft.Json;
@@ -8,34 +9,21 @@ using System.Text;
 
 namespace Apps.Anthropic.Api;
 
-public class AnthropicRestClient : RestClient
+public class AnthropicRestClient : BlackBirdRestClient
 {
     public AnthropicRestClient(IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProviders) :
-            base(new RestClientOptions() { ThrowOnAnyError = true, BaseUrl = new Uri("https://api.anthropic.com/v1") }, configureSerialization: s => s.UseNewtonsoftJson())
+            base(new RestClientOptions() { ThrowOnAnyError = true, BaseUrl = new Uri("https://api.anthropic.com/v1") })
     {
         this.AddDefaultHeader("x-api-key", authenticationCredentialsProviders.First(x => x.KeyName == "apiKey").Value);
         this.AddDefaultHeader("anthropic-version", "2023-06-01");
 
     }
 
-    public T Get<T>(RestRequest request)
+    protected override Exception ConfigureErrorException(RestResponse response)
     {
-        var resultStr = this.Get(request).Content;
-        return JsonConvert.DeserializeObject<T>(resultStr, GetSerializerSettings())!;
-    }
+        var json = response.Content!;
 
-    public T Execute<T>(RestRequest request)
-    {
-        var resultStr = this.Execute(request).Content;
-        return JsonConvert.DeserializeObject<T>(resultStr, GetSerializerSettings())!;
-    }
-
-    private JsonSerializerSettings GetSerializerSettings()
-    {
-        var options = new JsonSerializerSettings
-        {
-            MissingMemberHandling = MissingMemberHandling.Ignore
-        };
-        return options;
+        var error = JsonConvert.DeserializeObject<ErrorResponse>(json);
+        return new(error.Error.ToString());
     }
 }

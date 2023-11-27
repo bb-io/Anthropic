@@ -6,6 +6,7 @@ using Blackbird.Applications.Sdk.Common.Actions;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.Sdk.Utils.Extensions.Http;
 using RestSharp;
+using System.Reflection;
 
 namespace Apps.Anthropic.Actions;
 
@@ -22,7 +23,16 @@ public class CompletionActions : BaseInvocable
         var client = new AnthropicRestClient(InvocationContext.AuthenticationCredentialsProviders);
         var request = new RestRequest("/complete", Method.Post);
         input.Prompt = $"\n\nHuman: {input.Prompt} \n\nAssistant:";
-        request.AddJsonBody(input);
-        return client.Execute<CompletionResponse>(request);
+        request.AddJsonBody(new
+        {
+            model = input.Model,
+            prompt = input.Prompt,
+            max_tokens_to_sample = input.MaxTokensToSample,
+            stop_sequences = input.StopSequences,
+            temperature = input.Temperature != null ? float.Parse(input.Temperature) : 1.0f,
+            top_p = input.TopP != null ? float.Parse(input.TopP) : 1.0f,
+            top_k = input.TopK != null ? input.TopK : 1,
+        });
+        return await client.ExecuteWithErrorHandling<CompletionResponse>(request);
     }    
 }
