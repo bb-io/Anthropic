@@ -11,6 +11,8 @@ namespace Apps.Anthropic.Models.Response
     {
         [JsonProperty("error")]
         public Error Error { get; set; }
+
+        public override string ToString() => $"{Error.Type}: {Error.Message}";
     }
 
     public class Error
