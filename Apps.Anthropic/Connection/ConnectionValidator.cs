@@ -17,7 +17,7 @@ public class ConnectionValidator : IConnectionValidator
         var request = new RestRequest("/complete", Method.Post);
         request.AddJsonBody(new CompletionRequest()
         {
-            Model = new ModelDataSourceHandler().GetData(new Blackbird.Applications.Sdk.Common.Dynamic.DataSourceContext() { SearchString = string.Empty}).First().Key,
+            Model = "claude-2",
             Prompt = "\n\nHuman: hello \n\nAssistant:",
             MaxTokensToSample = 20
         });
