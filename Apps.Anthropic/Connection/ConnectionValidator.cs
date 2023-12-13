@@ -17,7 +17,7 @@ public class ConnectionValidator : IConnectionValidator
         var request = new RestRequest("/complete", Method.Post);
         request.AddJsonBody(new CompletionRequest()
         {
-            Model = "claude-2",
+            Model = "claude-2.0",
             Prompt = "\n\nHuman: hello \n\nAssistant:",
             MaxTokensToSample = 20
         });
