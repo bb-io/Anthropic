@@ -15,9 +15,9 @@ public class ConnectionValidator : IConnectionValidator
     {
         var client = new AnthropicRestClient(authProviders);
         var request = new RestRequest("/complete", Method.Post);
-        request.AddJsonBody(new CompletionRequest()
+        request.AddJsonBody(new
         {
-            Model = "claude-2.0",
+            Model = "claude-2",
             Prompt = "\n\nHuman: hello \n\nAssistant:",
             MaxTokensToSample = 20
         });
