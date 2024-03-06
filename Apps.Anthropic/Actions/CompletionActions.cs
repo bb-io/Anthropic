@@ -18,14 +18,14 @@ public class CompletionActions : BaseInvocable
     }
     
     [Action("Create message", Description = "Create a message")]
-    public async Task<CompletionResponse> CreateCompletion([ActionParameter] CompletionRequest input)
+    public async Task<ResponseMessage> CreateCompletion([ActionParameter] CompletionRequest input)
     {
         var client = new AnthropicRestClient(InvocationContext.AuthenticationCredentialsProviders);
         var request = new RestRequest("/messages", Method.Post);
         var messages = new List<Message>() { new Message { Role = "user", Content = input.Prompt } };
         request.AddJsonBody(new
         {
-            system = input.SystemPrompt,
+            system = input.SystemPrompt ?? "",
             model = input.Model,
             messages = messages,
             max_tokens = input.MaxTokensToSample ?? 4096,
@@ -34,6 +34,11 @@ public class CompletionActions : BaseInvocable
             top_p = input.TopP != null ? float.Parse(input.TopP) : 1.0f,
             top_k = input.TopK != null ? input.TopK : 1,
         });
-        return await client.ExecuteWithErrorHandling<CompletionResponse>(request);
+        var response = await client.ExecuteWithErrorHandling<CompletionResponse>(request);
+
+        return new ResponseMessage
+        {
+            Text = response.Content.FirstOrDefault()?.Text ?? ""
+        };
     }    
 }
