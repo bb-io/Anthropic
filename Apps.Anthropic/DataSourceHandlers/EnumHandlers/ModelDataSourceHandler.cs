@@ -15,6 +15,8 @@ namespace Apps.Anthropic.DataSourceHandlers.EnumHandlers
     {
         protected override Dictionary<string, string> EnumValues => new Dictionary<string, string>()
         {
+            { "claude-3-opus-20240229", "Claude 3 Opus" },
+            { "claude-3-sonnet-20240229", "Claude 3 Sonnet" },
             { "claude-2.1", "Claude 2.1" },
             { "claude-2", "Claude 2" },
             { "claude-instant-1", "Claude Instant" },

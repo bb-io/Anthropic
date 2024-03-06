@@ -26,9 +26,9 @@ namespace Apps.Anthropic.Models.Request
         [Display("System prompt", Description = "A system prompt is a way of providing context and instructions to Claude,\n such as specifying a particular goal or role for Claude before asking it a question or giving it a task.")]
         public string? SystemPrompt { get; set; }
 
-        [Display("Max tokens to sample", Description = "The maximum number of tokens to generate before stopping.")]
+        [Display("Max tokens", Description = "The maximum number of tokens to generate before stopping.")]
         [JsonProperty("max_tokens_to_sample")]
-        public int MaxTokensToSample { get; set; }
+        public int? MaxTokensToSample { get; set; }
 
         [Display("Stop sequences", Description = "Sequences that will cause the model to stop generating completion text.")]
         [JsonProperty("stop_sequences")]
