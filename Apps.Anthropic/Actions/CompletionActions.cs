@@ -17,22 +17,28 @@ public class CompletionActions : BaseInvocable
     {
     }
     
-    [Action("Create completion", Description = "Create completion")]
-    public async Task<CompletionResponse> CreateCompletion([ActionParameter] CompletionRequest input)
+    [Action("Create message", Description = "Create a message")]
+    public async Task<ResponseMessage> CreateCompletion([ActionParameter] CompletionRequest input)
     {
         var client = new AnthropicRestClient(InvocationContext.AuthenticationCredentialsProviders);
-        var request = new RestRequest("/complete", Method.Post);
-        input.Prompt = $"{input.SystemPrompt ?? ""}\n\nHuman: {input.Prompt} \n\nAssistant:";
+        var request = new RestRequest("/messages", Method.Post);
+        var messages = new List<Message>() { new Message { Role = "user", Content = input.Prompt } };
         request.AddJsonBody(new
         {
+            system = input.SystemPrompt ?? "",
             model = input.Model,
-            prompt = input.Prompt,
-            max_tokens_to_sample = input.MaxTokensToSample,
+            messages = messages,
+            max_tokens = input.MaxTokensToSample ?? 4096,
             stop_sequences = input.StopSequences != null ? input.StopSequences : new List<string>(),
             temperature = input.Temperature != null ? float.Parse(input.Temperature) : 1.0f,
             top_p = input.TopP != null ? float.Parse(input.TopP) : 1.0f,
             top_k = input.TopK != null ? input.TopK : 1,
         });
-        return await client.ExecuteWithErrorHandling<CompletionResponse>(request);
+        var response = await client.ExecuteWithErrorHandling<CompletionResponse>(request);
+
+        return new ResponseMessage
+        {
+            Text = response.Content.FirstOrDefault()?.Text ?? ""
+        };
     }    
 }

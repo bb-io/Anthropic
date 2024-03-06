@@ -10,15 +10,12 @@ namespace Apps.Anthropic.Models.Response
 {
     public class CompletionResponse
     {
-        [Display("Completion")]
-        [JsonProperty("completion")]
-        public string Completion { get; set; }
+        [JsonProperty("content")]
+        public List<Content> Content { get; set; }
 
-        [Display("Stop reason")]
         [JsonProperty("stop_reason")]
         public string StopReason { get; set; }
 
-        [Display("Model")]
         [JsonProperty("model")]
         public string Model { get; set; }
     }
