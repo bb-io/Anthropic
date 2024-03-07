@@ -27,7 +27,7 @@ Before you can connect you need to make sure that:
 There is only one action - **Create completion** <br/>
 Action has the following input values in order to configure the generated response:
 
-- Model (Claude 2.1, Claude 2, Claude Instant)
+- Model (Claude 2.1, Claude 2, Claude Instant, Claude 3 Sonnet, Claude 3 Opus)
 - Prompt
 - Max tokens to sample
 - Temperature
