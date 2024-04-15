@@ -1,11 +1,9 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using Apps.Anthropic.Extensions;
+﻿using Apps.Anthropic.Extensions;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Dynamic;
 using Blackbird.Applications.Sdk.Common.Invocation;
 
-namespace Apps.Anthropic.DataSourceHandlers;
+namespace Apps.Anthropic.DataSourceHandlers.EnumHandlers;
 
 public class TemperatureDataSourceHandler : BaseInvocable, IDataSourceHandler
 {

@@ -4,9 +4,7 @@ using Apps.Anthropic.Models.Response;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
 using Blackbird.Applications.Sdk.Common.Invocation;
-using Blackbird.Applications.Sdk.Utils.Extensions.Http;
 using RestSharp;
-using System.Reflection;
 
 namespace Apps.Anthropic.Actions;
 

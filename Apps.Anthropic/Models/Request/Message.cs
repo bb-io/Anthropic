@@ -1,14 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿namespace Apps.Anthropic.Models.Request;
 
-namespace Apps.Anthropic.Models.Request
+public class Message
 {
-    public class Message
-    {
-        public string Role { get; set; }
-        public string Content { get; set; }
-    }
+    public string Role { get; set; }
+    public string Content { get; set; }
 }
