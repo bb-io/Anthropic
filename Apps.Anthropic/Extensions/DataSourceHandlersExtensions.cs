@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Apps.Anthropic.Extensions;
+﻿namespace Apps.Anthropic.Extensions;
 
 public static class DataSourceHandlersExtensions
 {

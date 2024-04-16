@@ -1,11 +1,8 @@
 ﻿using Apps.Anthropic.Models.Response;
 using Blackbird.Applications.Sdk.Common.Authentication;
-using Blackbird.Applications.Sdk.Utils.Extensions.String;
 using Blackbird.Applications.Sdk.Utils.RestSharp;
 using Newtonsoft.Json;
 using RestSharp;
-using RestSharp.Serializers.NewtonsoftJson;
-using System.Text;
 
 namespace Apps.Anthropic.Api;
 

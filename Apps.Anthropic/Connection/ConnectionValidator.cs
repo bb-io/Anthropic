@@ -1,7 +1,4 @@
 ﻿using Apps.Anthropic.Api;
-using Apps.Anthropic.DataSourceHandlers.EnumHandlers;
-using Apps.Anthropic.Models.Request;
-using Apps.Anthropic.Models.Response;
 using Blackbird.Applications.Sdk.Common.Authentication;
 using Blackbird.Applications.Sdk.Common.Connections;
 using RestSharp;
