@@ -111,7 +111,7 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
 
         var xliffDoc = XDocument.Load(memoryStream);
         return XliffDocument.FromXDocument(xliffDoc,
-            new XliffConfig { RemoveWhitespaces = true, CopyAttributes = true, IncludeInlineTags = true });
+            new XliffConfig { RemoveWhitespaces = true, CopyAttributes = false, IncludeInlineTags = true });
     }
     
     private async Task<List<TranslationUnit>> TranslateXliffDocument(ProcessXliffRequest request, GlossaryRequest glossaryRequest, XliffDocument xliff)
@@ -146,7 +146,7 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
                 Prompt = request.Prompt ?? 
                     $"Your input is going to be a sentence in {sourceLanguage} as source language and their translation into {targetLanguage}. " +
                     "You need to review the target text and respond with edits of the target text as necessary. If no edits are required, respond with target text." +
-                    "Your reply needs to include only the target text (updated or unmodified) in the same format as received ((it's crucial, because your response will be used as a translation without any further processing)." +
+                    "Your reply needs to include only the target text (updated or unmodified) in the same format as received (it's crucial, because your response will be used as a translation without any further processing)." +
                     $"Translation unit: \n" +
                     $"Source: {translationUnit.Source}; Target: {translationUnit.Target}",
                 SystemPrompt = request.SystemPrompt ?? "You are a linguistic expert that should process the following texts according to the given instructions."
@@ -161,7 +161,7 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
     private async Task<double> GetQualityScoresOfXliffDocument(ProcessXliffRequest request, GlossaryRequest glossaryRequest, XliffDocument xliff)
     {
         var criteria = request.Prompt ?? "fluency, grammar, terminology, style, and punctuation";
-        double averageScore = 0;
+        double totalScore = 0;
         
         foreach (var translationUnit in xliff.TranslationUnits)
         {
@@ -171,15 +171,25 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
             {
                 Prompt = $"Your input is going to be a sentence in {sourceLanguage} as source language and their translation into {targetLanguage}. " +
                          "You need to review the target text and respond with scores for the target text. " +
-                         $"The score number is a score from 1 to 10 assessing the quality of the translation, considering the following criteria: {criteria}.",
+                         $"The score number is a score from 1 to 10 assessing the quality of the translation, considering the following criteria: {criteria}." +
+                         $"Provide only number as response, it's crucial, because your response will be displayed to the user without any further processing" +
+                         $"Translation unit: \n" +
+                         $"Source: {translationUnit.Source}; Target: {translationUnit.Target}",
                 SystemPrompt = request.SystemPrompt ?? "You are a linguistic expert that should process the following texts according to the given instructions."
             }, glossaryRequest);
             
             translationUnit.Attributes?.Add("extradata", response.Text);
-            averageScore += double.Parse(response.Text);
+            if (double.TryParse(response.Text, out double score))
+            {
+                totalScore += score;
+            }
+            else
+            {
+                throw new Exception($"Received invalid score from API. Score: {response.Text}");
+            }
         }
         
-        return averageScore / xliff.TranslationUnits.Count;
+        return totalScore / xliff.TranslationUnits.Count;
     }
 
     private async Task<FileReference> UploadUpdatedDocument(XliffDocument xliffDocument, FileReference originalFile)
