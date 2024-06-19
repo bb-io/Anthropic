@@ -11,8 +11,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Blackbird.Applications.Sdk.Common" Version="2.6.0" />
-    <PackageReference Include="Blackbird.Applications.Sdk.Utils" Version="1.0.13" />
+    <PackageReference Include="Blackbird.Applications.Sdk.Common" Version="2.8.0" />
+    <PackageReference Include="Blackbird.Applications.SDK.Extensions.FileManagement" Version="1.0.2-alpha1" />
+    <PackageReference Include="Blackbird.Applications.Sdk.Glossaries.Utils" Version="1.0.2-alpha1" />
     <PackageReference Include="RestSharp.Serializers.NewtonsoftJson" Version="110.2.0" />
   </ItemGroup>
 <ItemGroup>
