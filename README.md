@@ -24,19 +24,25 @@ Before you can connect you need to make sure that:
 
 ## Actions
 
-There is only one action - **Create completion** <br/>
-Action has the following input values in order to configure the generated response:
+### Chat actions
 
-- Model (Claude 2.1, Claude 2, Claude Instant, Claude 3 Sonnet, Claude 3 Opus)
-- Prompt
-- Max tokens to sample
-- Temperature
-- top_p
-- top_k
-- System prompt
-- Stop sequences
+- **Create completion** action has the following input values in order to configure the generated response:
+1. Model (Claude 2.1, Claude 2, Claude Instant, Claude 3 Sonnet, Claude 3 Opus)
+2. Prompt
+3. Max tokens to sample
+4. Temperature
+5. top_p
+6. top_k
+7. System prompt 
+8. Stop sequences
 
 For more in-depth information about action consult the [Anthropic API reference](https://docs.anthropic.com/claude/docs).
+
+### XLIFF actions
+
+- **Process XLIFF** processes the XLIFF file and returns updated XLIFF with the translated content. By default it will translate source and place the translation in the target field. But you can modify behavior by providing your custom `prompt`
+- **Post-edit XLIFF file** action is used to post-edit the XLIFF file.
+- **Get Quality Scores for XLIFF file** action is used to get quality scores for the XLIFF file by adding `extradata` attribute to the translation unit of the file. Default criteria are `fluency`, `grammar`, `terminology`, `style`, and `punctuation`, but you can add your own by filling `prompt` optional input.
 
 ## Feedback
 

@@ -19,7 +19,7 @@ namespace Apps.Anthropic.Actions;
 public class CompletionActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient)
     : BaseInvocable(invocationContext)
 {
-    [Action("Chat", Description = "Create a message")]
+    [Action("Create completion", Description = "Send a message")]
     public async Task<ResponseMessage> CreateCompletion([ActionParameter] CompletionRequest input,
         [ActionParameter] GlossaryRequest glossaryRequest)
     {
