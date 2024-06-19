@@ -56,7 +56,7 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
             return new ProcessXliffResponse { Xliff = input.Xliff };
         }
         
-        var translatedUnits = await GetTranslations(input, glossaryRequest, xliffDocument);
+        var translatedUnits = await TranslateXliffDocument(input, glossaryRequest, xliffDocument);
 
         var xDoc = xliffDocument.UpdateTranslationUnits(translatedUnits);
         var updatedDocument = XliffDocument.FromXDocument(xDoc,
@@ -64,6 +64,42 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
 
         var fileReference = await UploadUpdatedDocument(updatedDocument, input.Xliff);
         return new ProcessXliffResponse { Xliff = fileReference };
+    }
+    
+    [Action("Post-edit XLIFF file", Description = "Updates the targets of XLIFF 1.2 files")]
+    public async Task<ProcessXliffResponse> PostEditXliff([ActionParameter] ProcessXliffRequest input,
+        [ActionParameter] GlossaryRequest glossaryRequest)
+    {
+        var xliffDocument = await LoadAndParseXliffDocument(input.Xliff);
+        if (xliffDocument.TranslationUnits.Count == 0)
+        {
+            return new ProcessXliffResponse { Xliff = input.Xliff };
+        }
+        
+        var translatedUnits = await PostEditXliffDocument(input, glossaryRequest, xliffDocument);
+
+        var xDoc = xliffDocument.UpdateTranslationUnits(translatedUnits);
+        var updatedDocument = XliffDocument.FromXDocument(xDoc,
+            new XliffConfig { RemoveWhitespaces = true, CopyAttributes = true, IncludeInlineTags = true });
+
+        var fileReference = await UploadUpdatedDocument(updatedDocument, input.Xliff);
+        return new ProcessXliffResponse { Xliff = fileReference };
+    }
+    
+    [Action("Get Quality Scores for XLIFF file", Description = "Gets segment and file level quality scores for XLIFF files")]
+    public async Task<ScoreXliffResponse> GetQualityScores([ActionParameter] ProcessXliffRequest input,
+        [ActionParameter] GlossaryRequest glossaryRequest)
+    {
+        var xliffDocument = await LoadAndParseXliffDocument(input.Xliff);
+        if (xliffDocument.TranslationUnits.Count == 0)
+        {
+            return new ScoreXliffResponse { XliffFile = input.Xliff, AverageScore = 0 };
+        }
+        
+        double averageScore = await GetQualityScoresOfXliffDocument(input, glossaryRequest, xliffDocument);
+
+        var fileReference = await UploadUpdatedDocument(xliffDocument, input.Xliff);
+        return new ScoreXliffResponse { XliffFile = fileReference, AverageScore = averageScore };
     }
 
     private async Task<XliffDocument> LoadAndParseXliffDocument(FileReference inputFile)
@@ -78,7 +114,7 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
             new XliffConfig { RemoveWhitespaces = true, CopyAttributes = true, IncludeInlineTags = true });
     }
     
-    private async Task<List<TranslationUnit>> GetTranslations(ProcessXliffRequest request, GlossaryRequest glossaryRequest, XliffDocument xliff)
+    private async Task<List<TranslationUnit>> TranslateXliffDocument(ProcessXliffRequest request, GlossaryRequest glossaryRequest, XliffDocument xliff)
     {
         foreach (var translationUnit in xliff.TranslationUnits)
         {
@@ -97,6 +133,53 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
         }
         
         return xliff.TranslationUnits;
+    }
+    
+    private async Task<List<TranslationUnit>> PostEditXliffDocument(ProcessXliffRequest request, GlossaryRequest glossaryRequest, XliffDocument xliff)
+    {
+        foreach (var translationUnit in xliff.TranslationUnits)
+        {
+            var sourceLanguage = translationUnit.SourceLanguage ?? xliff.SourceLanguage;
+            var targetLanguage = translationUnit.TargetLanguage ?? xliff.TargetLanguage;
+            var response = await CreateCompletion(new(request)
+            {
+                Prompt = request.Prompt ?? 
+                    $"Your input is going to be a sentence in {sourceLanguage} as source language and their translation into {targetLanguage}. " +
+                    "You need to review the target text and respond with edits of the target text as necessary. If no edits are required, respond with target text." +
+                    "Your reply needs to include only the target text (updated or unmodified) in the same format as received ((it's crucial, because your response will be used as a translation without any further processing)." +
+                    $"Translation unit: \n" +
+                    $"Source: {translationUnit.Source}; Target: {translationUnit.Target}",
+                SystemPrompt = request.SystemPrompt ?? "You are a linguistic expert that should process the following texts according to the given instructions."
+            }, glossaryRequest);
+            
+            translationUnit.Target = response.Text;
+        }
+        
+        return xliff.TranslationUnits;
+    }
+    
+    private async Task<double> GetQualityScoresOfXliffDocument(ProcessXliffRequest request, GlossaryRequest glossaryRequest, XliffDocument xliff)
+    {
+        var criteria = request.Prompt ?? "fluency, grammar, terminology, style, and punctuation";
+        double averageScore = 0;
+        
+        foreach (var translationUnit in xliff.TranslationUnits)
+        {
+            var sourceLanguage = translationUnit.SourceLanguage ?? xliff.SourceLanguage;
+            var targetLanguage = translationUnit.TargetLanguage ?? xliff.TargetLanguage;
+            var response = await CreateCompletion(new(request)
+            {
+                Prompt = $"Your input is going to be a sentence in {sourceLanguage} as source language and their translation into {targetLanguage}. " +
+                         "You need to review the target text and respond with scores for the target text. " +
+                         $"The score number is a score from 1 to 10 assessing the quality of the translation, considering the following criteria: {criteria}.",
+                SystemPrompt = request.SystemPrompt ?? "You are a linguistic expert that should process the following texts according to the given instructions."
+            }, glossaryRequest);
+            
+            translationUnit.Attributes?.Add("extradata", response.Text);
+            averageScore += double.Parse(response.Text);
+        }
+        
+        return averageScore / xliff.TranslationUnits.Count;
     }
 
     private async Task<FileReference> UploadUpdatedDocument(XliffDocument xliffDocument, FileReference originalFile)
