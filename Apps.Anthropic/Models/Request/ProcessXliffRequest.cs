@@ -2,12 +2,16 @@
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Dictionaries;
 using Blackbird.Applications.Sdk.Common.Dynamic;
+using Blackbird.Applications.Sdk.Common.Files;
 using Newtonsoft.Json;
 
 namespace Apps.Anthropic.Models.Request;
 
-public class CompletionRequest
+public class ProcessXliffRequest
 {
+    [Display("XLIFF file")]
+    public FileReference Xliff { get; set; }
+
     [Display("Model", Description = "This parameter controls which version of Claude answers your request")]
     [StaticDataSource(typeof(ModelDataSourceHandler))]
     [JsonProperty("model")]
@@ -15,7 +19,7 @@ public class CompletionRequest
 
     [Display("Prompt", Description = "The prompt that you want Claude to complete.")]
     [JsonProperty("prompt")]
-    public string Prompt { get; set; }
+    public string? Prompt { get; set; }
 
     [Display("System prompt", Description = "A system prompt is a way of providing context and instructions to Claude,\n such as specifying a particular goal or role for Claude before asking it a question or giving it a task.")]
     public string? SystemPrompt { get; set; }
@@ -41,17 +45,4 @@ public class CompletionRequest
     [Display("top_k", Description = "Only sample from the top K options for each subsequent token.\nUsed to remove \"long tail\" low probability responses.")]
     [JsonProperty("top_k")]
     public int? TopK { get; set; }
-
-    public CompletionRequest()
-    { }
-
-    public CompletionRequest(ProcessXliffRequest xliffRequest)
-    {
-        Model = xliffRequest.Model;
-        MaxTokensToSample = xliffRequest.MaxTokensToSample;
-        StopSequences = xliffRequest.StopSequences;
-        Temperature = xliffRequest.Temperature;
-        TopP = xliffRequest.TopP;
-        TopK = xliffRequest.TopK;
-    }
 }
