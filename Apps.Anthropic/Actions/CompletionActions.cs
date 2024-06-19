@@ -11,7 +11,6 @@ using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
 using Blackbird.Applications.Sdk.Glossaries.Utils.Converters;
 using Blackbird.Xliff.Utils;
 using Blackbird.Xliff.Utils.Models;
-using Newtonsoft.Json;
 using RestSharp;
 
 namespace Apps.Anthropic.Actions;
@@ -111,11 +110,6 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
     private async Task<List<Message>> GenerateChatMessages(CompletionRequest input, GlossaryRequest glossaryRequest)
     {
         var messages = new List<Message>();
-
-        if (!string.IsNullOrEmpty(input.SystemPrompt))
-        {
-            messages.Add(new Message { Role = "system", Content = input.SystemPrompt });
-        }
 
         string prompt = input.Prompt;
         if (glossaryRequest.Glossary != null)
