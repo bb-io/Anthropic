@@ -47,16 +47,18 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
         var messages = new List<Message>();
 
         if (!string.IsNullOrEmpty(input.SystemPrompt))
+        {
             messages.Add(new Message { Role = "system", Content = input.SystemPrompt });
+        }
 
-        messages.Add(new Message { Role = "user", Content = input.Prompt });
-
+        string prompt = input.Prompt;
         if (glossaryRequest?.Glossary != null)
         {
             var glossaryPromptPart = await GetGlossaryPromptPart(glossaryRequest.Glossary);
-            messages.Add(new Message { Role = "user", Content = $"Glossary: {glossaryPromptPart}" });
+            prompt += glossaryPromptPart;
         }
-
+        
+        messages.Add(new Message { Role = "user", Content = prompt });
         return messages;
     }
 
