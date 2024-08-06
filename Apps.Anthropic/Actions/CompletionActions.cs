@@ -21,11 +21,11 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
 {
     [Action("Create completion", Description = "Send a message")]
     public async Task<ResponseMessage> CreateCompletion([ActionParameter] CompletionRequest input,
-        [ActionParameter] GlossaryRequest glossaryRequest)
+        [ActionParameter] GlossaryRequest glossaryRequest, [ActionParameter] GlossaryLanguagesRequest languagesToFilter)
     {
         var client = new AnthropicRestClient(InvocationContext.AuthenticationCredentialsProviders);
         var request = new RestRequest("/messages", Method.Post);
-        var messages = await GenerateChatMessages(input, glossaryRequest);
+        var messages = await GenerateChatMessages(input, glossaryRequest, languagesToFilter);
 
         request.AddJsonBody(new
         {
@@ -48,7 +48,7 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
 
     [Action("Process XLIFF", Description = "Process XLIFF file, by default translating it to a target language")]
     public async Task<ProcessXliffResponse> ProcessXliff([ActionParameter] ProcessXliffRequest input,
-        [ActionParameter] GlossaryRequest glossaryRequest)
+        [ActionParameter] GlossaryRequest glossaryRequest, [ActionParameter] GlossaryLanguagesRequest glossaryLangs)
     {
         var xliffDocument = await LoadAndParseXliffDocument(input.Xliff);
         if (xliffDocument.TranslationUnits.Count == 0)
@@ -56,7 +56,7 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
             return new ProcessXliffResponse { Xliff = input.Xliff };
         }
         
-        var translatedUnits = await TranslateXliffDocument(input, glossaryRequest, xliffDocument);
+        var translatedUnits = await TranslateXliffDocument(input, glossaryRequest, xliffDocument, glossaryLangs);
 
         var xDoc = xliffDocument.UpdateTranslationUnits(translatedUnits);
         var updatedDocument = XliffDocument.FromXDocument(xDoc,
@@ -68,7 +68,7 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
     
     [Action("Post-edit XLIFF file", Description = "Updates the targets of XLIFF 1.2 files")]
     public async Task<ProcessXliffResponse> PostEditXliff([ActionParameter] ProcessXliffRequest input,
-        [ActionParameter] GlossaryRequest glossaryRequest)
+        [ActionParameter] GlossaryRequest glossaryRequest, [ActionParameter] GlossaryLanguagesRequest glossaryLangs)
     {
         var xliffDocument = await LoadAndParseXliffDocument(input.Xliff);
         if (xliffDocument.TranslationUnits.Count == 0)
@@ -76,7 +76,7 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
             return new ProcessXliffResponse { Xliff = input.Xliff };
         }
         
-        var translatedUnits = await PostEditXliffDocument(input, glossaryRequest, xliffDocument);
+        var translatedUnits = await PostEditXliffDocument(input, glossaryRequest, xliffDocument, glossaryLangs);
 
         var xDoc = xliffDocument.UpdateTranslationUnits(translatedUnits);
         var updatedDocument = XliffDocument.FromXDocument(xDoc,
@@ -88,7 +88,7 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
     
     [Action("Get Quality Scores for XLIFF file", Description = "Gets segment and file level quality scores for XLIFF files")]
     public async Task<ScoreXliffResponse> GetQualityScores([ActionParameter] ProcessXliffRequest input,
-        [ActionParameter] GlossaryRequest glossaryRequest)
+        [ActionParameter] GlossaryRequest glossaryRequest,[ActionParameter] GlossaryLanguagesRequest glossaryLangs)
     {
         var xliffDocument = await LoadAndParseXliffDocument(input.Xliff);
         if (xliffDocument.TranslationUnits.Count == 0)
@@ -96,7 +96,7 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
             return new ScoreXliffResponse { XliffFile = input.Xliff, AverageScore = 0 };
         }
         
-        double averageScore = await GetQualityScoresOfXliffDocument(input, glossaryRequest, xliffDocument);
+        double averageScore = await GetQualityScoresOfXliffDocument(input, glossaryRequest, xliffDocument, glossaryLangs);
 
         var fileReference = await UploadUpdatedDocument(xliffDocument, input.Xliff);
         return new ScoreXliffResponse { XliffFile = fileReference, AverageScore = averageScore };
@@ -114,7 +114,7 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
             new XliffConfig { RemoveWhitespaces = true, CopyAttributes = false, IncludeInlineTags = true });
     }
     
-    private async Task<List<TranslationUnit>> TranslateXliffDocument(ProcessXliffRequest request, GlossaryRequest glossaryRequest, XliffDocument xliff)
+    private async Task<List<TranslationUnit>> TranslateXliffDocument(ProcessXliffRequest request, GlossaryRequest glossaryRequest, XliffDocument xliff, GlossaryLanguagesRequest glossaryLangs)
     {
         foreach (var translationUnit in xliff.TranslationUnits)
         {
@@ -127,7 +127,7 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
                                 "Ensure the structure of the original text is preserved. Respond with the localized text." +
                                 "In response provide ONLY the translation of the text (it's crucial, because your response will be used as a translation " +
                                 "without any further processing)."
-            }, glossaryRequest);
+            }, glossaryRequest, glossaryLangs);
             
             translationUnit.Target = response.Text;
         }
@@ -135,7 +135,7 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
         return xliff.TranslationUnits;
     }
     
-    private async Task<List<TranslationUnit>> PostEditXliffDocument(ProcessXliffRequest request, GlossaryRequest glossaryRequest, XliffDocument xliff)
+    private async Task<List<TranslationUnit>> PostEditXliffDocument(ProcessXliffRequest request, GlossaryRequest glossaryRequest, XliffDocument xliff, GlossaryLanguagesRequest glossaryLangs)
     {
         foreach (var translationUnit in xliff.TranslationUnits)
         {
@@ -150,7 +150,7 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
                     $"Translation unit: \n" +
                     $"Source: {translationUnit.Source}; Target: {translationUnit.Target}",
                 SystemPrompt = request.SystemPrompt ?? "You are a linguistic expert that should process the following texts according to the given instructions."
-            }, glossaryRequest);
+            }, glossaryRequest, glossaryLangs);
             
             translationUnit.Target = response.Text;
         }
@@ -158,7 +158,7 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
         return xliff.TranslationUnits;
     }
     
-    private async Task<double> GetQualityScoresOfXliffDocument(ProcessXliffRequest request, GlossaryRequest glossaryRequest, XliffDocument xliff)
+    private async Task<double> GetQualityScoresOfXliffDocument(ProcessXliffRequest request, GlossaryRequest glossaryRequest, XliffDocument xliff, GlossaryLanguagesRequest glossaryLangs)
     {
         var criteria = request.Prompt ?? "fluency, grammar, terminology, style, and punctuation";
         double totalScore = 0;
@@ -176,7 +176,7 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
                          $"Translation unit: \n" +
                          $"Source: {translationUnit.Source}; Target: {translationUnit.Target}",
                 SystemPrompt = request.SystemPrompt ?? "You are a linguistic expert that should process the following texts according to the given instructions."
-            }, glossaryRequest);
+            }, glossaryRequest, glossaryLangs);
             
             translationUnit.Attributes?.Add("extradata", response.Text);
             if (double.TryParse(response.Text, out double score))
@@ -200,14 +200,14 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
         return await fileManagementClient.UploadAsync(outputMemoryStream, contentType, originalFile.Name);
     }
 
-    private async Task<List<Message>> GenerateChatMessages(CompletionRequest input, GlossaryRequest glossaryRequest)
+    private async Task<List<Message>> GenerateChatMessages(CompletionRequest input, GlossaryRequest glossaryRequest, GlossaryLanguagesRequest languagesToFilter)
     {
         var messages = new List<Message>();
 
         string prompt = input.Prompt;
         if (glossaryRequest.Glossary != null)
         {
-            var glossaryPromptPart = await GetGlossaryPromptPart(glossaryRequest.Glossary);
+            var glossaryPromptPart = await GetGlossaryPromptPart(glossaryRequest, languagesToFilter);
             prompt += glossaryPromptPart;
         }
 
@@ -215,9 +215,9 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
         return messages;
     }
 
-    private async Task<string> GetGlossaryPromptPart(FileReference glossary)
+    private async Task<string> GetGlossaryPromptPart(GlossaryRequest input, GlossaryLanguagesRequest langs)
     {
-        var glossaryStream = await fileManagementClient.DownloadAsync(glossary);
+        var glossaryStream = await fileManagementClient.DownloadAsync(input.Glossary);
         var blackbirdGlossary = await glossaryStream.ConvertFromTbx();
 
         var glossaryPromptPart = new StringBuilder();
@@ -225,16 +225,26 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
         glossaryPromptPart.AppendLine(
             "Glossary entries (each entry includes terms in different languages. Each language may have a few synonymous variations which are separated by ;;):");
 
+        var Languages = new List<string>();
+        if (langs.LanguagesToFilter != null && langs.LanguagesToFilter.Count() > 0)
+        { Languages = langs.LanguagesToFilter; }
         foreach (var entry in blackbirdGlossary.ConceptEntries)
         {
-            glossaryPromptPart.AppendLine();
-            glossaryPromptPart.AppendLine("\tEntry:");
+            if (Languages.Count == 0)
+            { Languages = entry.LanguageSections.Select(x => x.LanguageCode).ToList(); }
 
-            foreach (var section in entry.LanguageSections)
+            if (entry.LanguageSections.Any(x => Languages.Contains(x.LanguageCode))) 
             {
-                glossaryPromptPart.AppendLine(
-                    $"\t\t{section.LanguageCode}: {string.Join(";; ", section.Terms.Select(term => term.Term))}");
+                glossaryPromptPart.AppendLine();
+                glossaryPromptPart.AppendLine("\tEntry:");
+
+                foreach (var section in entry.LanguageSections.Where(x => Languages.Contains(x.LanguageCode)))
+                {
+                    glossaryPromptPart.AppendLine(
+                        $"\t\t{section.LanguageCode}: {string.Join(";; ", section.Terms.Select(term => term.Term))}");
+                }
             }
+           
         }
 
         return glossaryPromptPart.ToString();
