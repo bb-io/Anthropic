@@ -12,6 +12,11 @@ using Blackbird.Applications.Sdk.Glossaries.Utils.Converters;
 using Blackbird.Xliff.Utils;
 using Blackbird.Xliff.Utils.Models;
 using RestSharp;
+using Newtonsoft.Json;
+using MoreLinq;
+using System.Text.RegularExpressions;
+using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
+
 
 namespace Apps.Anthropic.Actions;
 
@@ -48,41 +53,43 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
 
     [Action("Process XLIFF", Description = "Process XLIFF file, by default translating it to a target language")]
     public async Task<ProcessXliffResponse> ProcessXliff([ActionParameter] ProcessXliffRequest input,
-        [ActionParameter] GlossaryRequest glossaryRequest)
+        [ActionParameter] GlossaryRequest glossaryRequest, [ActionParameter,
+         Display("Bucket size",
+             Description =
+                 "Specify the number of source texts to be translated at once. Default value: 1500. (See our documentation for an explanation)")]
+        int? bucketSize = 1500)
     {
         var xliffDocument = await LoadAndParseXliffDocument(input.Xliff);
         if (xliffDocument.TranslationUnits.Count == 0)
         {
             return new ProcessXliffResponse { Xliff = input.Xliff };
         }
-        
-        var translatedUnits = await TranslateXliffDocument(input, glossaryRequest, xliffDocument);
-
-        var xDoc = xliffDocument.UpdateTranslationUnits(translatedUnits);
-        var updatedDocument = XliffDocument.FromXDocument(xDoc,
-            new XliffConfig { RemoveWhitespaces = true, CopyAttributes = true, IncludeInlineTags = true });
-
-        var fileReference = await UploadUpdatedDocument(updatedDocument, input.Xliff);
+        var translatedUnits = await TranslateXliffDocument(input, glossaryRequest, xliffDocument, bucketSize ?? 1500);
+        var stream = await fileManagementClient.DownloadAsync(input.Xliff);
+        var updatedFile = Blackbird.Xliff.Utils.Utils.XliffExtensions.UpdateOriginalFile(stream, translatedUnits);
+        string contentType = input.Xliff.ContentType ?? "application/xml";
+        var fileReference = await fileManagementClient.UploadAsync(updatedFile, contentType, input.Xliff.Name);
         return new ProcessXliffResponse { Xliff = fileReference };
     }
     
     [Action("Post-edit XLIFF file", Description = "Updates the targets of XLIFF 1.2 files")]
     public async Task<ProcessXliffResponse> PostEditXliff([ActionParameter] ProcessXliffRequest input,
-        [ActionParameter] GlossaryRequest glossaryRequest)
+        [ActionParameter] GlossaryRequest glossaryRequest,[ActionParameter,
+         Display("Bucket size",
+             Description =
+                 "Specify the number of translation units processed at once. Default value: 1500. (See our documentation for an explanation)")]
+        int? bucketSize = 1500)
     {
         var xliffDocument = await LoadAndParseXliffDocument(input.Xliff);
         if (xliffDocument.TranslationUnits.Count == 0)
         {
             return new ProcessXliffResponse { Xliff = input.Xliff };
         }
-        
-        var translatedUnits = await PostEditXliffDocument(input, glossaryRequest, xliffDocument);
-
-        var xDoc = xliffDocument.UpdateTranslationUnits(translatedUnits);
-        var updatedDocument = XliffDocument.FromXDocument(xDoc,
-            new XliffConfig { RemoveWhitespaces = true, CopyAttributes = true, IncludeInlineTags = true });
-
-        var fileReference = await UploadUpdatedDocument(updatedDocument, input.Xliff);
+        var translatedUnits = await PostEditXliffDocument(input, glossaryRequest, xliffDocument, bucketSize ?? 1500);
+        var stream = await fileManagementClient.DownloadAsync(input.Xliff);
+        var updatedFile = Blackbird.Xliff.Utils.Utils.XliffExtensions.UpdateOriginalFile(stream, translatedUnits);
+        string contentType = input.Xliff.ContentType ?? "application/xml";
+        var fileReference = await fileManagementClient.UploadAsync(updatedFile, contentType, input.Xliff.Name);
         return new ProcessXliffResponse { Xliff = fileReference };
     }
     
@@ -105,57 +112,87 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
     private async Task<XliffDocument> LoadAndParseXliffDocument(FileReference inputFile)
     {
         var stream = await fileManagementClient.DownloadAsync(inputFile);
-        var memoryStream = new MemoryStream();
-        await stream.CopyToAsync(memoryStream);
-        memoryStream.Position = 0;
-
-        var xliffDoc = XDocument.Load(memoryStream);
-        return XliffDocument.FromXDocument(xliffDoc,
-            new XliffConfig { RemoveWhitespaces = true, CopyAttributes = false, IncludeInlineTags = true });
+        return Blackbird.Xliff.Utils.Utils.XliffExtensions.ParseXLIFF(stream);
     }
     
-    private async Task<List<TranslationUnit>> TranslateXliffDocument(ProcessXliffRequest request, GlossaryRequest glossaryRequest, XliffDocument xliff)
+    private async Task<Dictionary<string,string>> TranslateXliffDocument(ProcessXliffRequest request, GlossaryRequest glossaryRequest, XliffDocument xliff, int bucketSize)
     {
-        foreach (var translationUnit in xliff.TranslationUnits)
+        var results = new List<string>();
+        var batches = xliff.TranslationUnits.Batch(bucketSize);
+        foreach (var batch in batches)
         {
-            string targetLanguage = translationUnit.TargetLanguage ?? xliff.TargetLanguage;
+            string json = JsonConvert.SerializeObject(batch.Select(x => "{ID:" + x.Id + "}" + x.Source ));
+            var UserPrompt = GetUserPrompt(request.Prompt,xliff,json);
             var response = await CreateCompletion(new(request)
             {
-                Prompt = request.Prompt ?? $"Translate the following text to {targetLanguage}: {translationUnit.Source}",
+                Prompt = UserPrompt,
                 SystemPrompt = request.SystemPrompt ?? "You are tasked with localizing the provided text. Consider cultural nuances, idiomatic expressions, " +
                                 "and locale-specific references to make the text feel natural in the target language. " +
-                                "Ensure the structure of the original text is preserved. Respond with the localized text." +
-                                "In response provide ONLY the translation of the text (it's crucial, because your response will be used as a translation " +
-                                "without any further processing)."
+                                "Reply only with the serialized JSON array of translated strings without additional formatting. Ensure the structure of the original text is preserved."
             }, glossaryRequest);
-            
-            translationUnit.Target = response.Text;
+
+            var result = JsonConvert.DeserializeObject<string[]>(response.Text.Substring(response.Text.IndexOf("[")));
+                   
+            if (result.Length != xliff.TranslationUnits.Count)
+            {
+                throw new InvalidOperationException(
+                    "Anthropic returned inappropriate response. " +
+                    "The number of translated texts does not match the number of source texts. " +
+                    "Probably there is a duplication or a missing text in translation unit. " +
+                    "Try change model or bucket size (to lower values) or add retries to this action.");
+            }
+
+            results.AddRange(result);
+                       
         }
         
-        return xliff.TranslationUnits;
+        return results.ToDictionary(x => Regex.Match(x, "\\{ID:(.*?)\\}(.+)$").Groups[1].Value, y => Regex.Match(y, "\\{ID:(.*?)\\}(.+)$").Groups[2].Value);
+    }
+
+    private string GetUserPrompt(string prompt, XliffDocument xliffDocument, string json)
+    {
+        string instruction = string.IsNullOrEmpty(prompt)
+            ? $"Translate the following texts from {xliffDocument.SourceLanguage} to {xliffDocument.TargetLanguage}."
+            : $"Process the following texts as per the custom instructions: {prompt}. The source language is {xliffDocument.SourceLanguage} and the target language is {xliffDocument.TargetLanguage}. This information might be useful for the custom instructions.";
+
+        return
+            $"Please provide a translation for each individual text, even if similar texts have been provided more than once. " +
+            $"{instruction} Return the outputs as a serialized JSON array of strings without additional formatting " +
+            $"(it is crucial because your response will be deserialized programmatically. Please ensure that your response is formatted correctly to avoid any deserialization issues). " +
+            $"Original texts (in serialized array format): {json}";
     }
     
-    private async Task<List<TranslationUnit>> PostEditXliffDocument(ProcessXliffRequest request, GlossaryRequest glossaryRequest, XliffDocument xliff)
+
+    private async Task<Dictionary<string, string>> PostEditXliffDocument(ProcessXliffRequest request, GlossaryRequest glossaryRequest, XliffDocument xliff, int bucketSize)
     {
-        foreach (var translationUnit in xliff.TranslationUnits)
+        var results = new Dictionary<string, string>();
+        var batches = xliff.TranslationUnits.Batch(bucketSize);
+        foreach (var batch in batches)
         {
-            var sourceLanguage = translationUnit.SourceLanguage ?? xliff.SourceLanguage;
-            var targetLanguage = translationUnit.TargetLanguage ?? xliff.TargetLanguage;
             var response = await CreateCompletion(new(request)
             {
-                Prompt = request.Prompt ?? 
-                    $"Your input is going to be a sentence in {sourceLanguage} as source language and their translation into {targetLanguage}. " +
-                    "You need to review the target text and respond with edits of the target text as necessary. If no edits are required, respond with target text." +
-                    "Your reply needs to include only the target text (updated or unmodified) in the same format as received (it's crucial, because your response will be used as a translation without any further processing)." +
-                    $"Translation unit: \n" +
-                    $"Source: {translationUnit.Source}; Target: {translationUnit.Target}",
+                Prompt = 
+                $"Your input consists of sentences in {xliff.SourceLanguage} language with their translations into {xliff.TargetLanguage}. " +
+                "Review and edit the translated target text as necessary to ensure it is a correct and accurate translation of the source text. " +
+                "The XML tags in the source need to be included in the target text, don't delete or modify them. " +
+                "Include only the target texts (including the necessary linguitic updates) in the format [ID:X]{target}. " +
+                $"Example: [ID:1]{{target1}},[ID:2]{{target2}}. " +
+                $"{request.Prompt ?? ""} Sentences: \n" +
+                string.Join("\n", batch.Select(tu => $"ID: {tu.Id}; Source: {tu.Source}; Target: {tu.Target}")),
                 SystemPrompt = request.SystemPrompt ?? "You are a linguistic expert that should process the following texts according to the given instructions."
             }, glossaryRequest);
-            
-            translationUnit.Target = response.Text;
+
+            var matches = Regex.Matches(response.Text.Replace("</ept}", "</ept>}"), @"\[ID:(.+?)\]\{([\s\S]+?)\}(?=,\[|$|,?\n)").Cast<Match>().ToList();
+            foreach (var match in matches)
+            {
+                if (match.Groups[2].Value.Contains("[ID:"))
+                    continue;
+                else
+                    results.Add(match.Groups[1].Value, match.Groups[2].Value);
+            }
         }
         
-        return xliff.TranslationUnits;
+        return results;
     }
     
     private async Task<double> GetQualityScoresOfXliffDocument(ProcessXliffRequest request, GlossaryRequest glossaryRequest, XliffDocument xliff)
@@ -207,7 +244,7 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
         string prompt = input.Prompt;
         if (glossaryRequest.Glossary != null)
         {
-            var glossaryPromptPart = await GetGlossaryPromptPart(glossaryRequest.Glossary);
+            var glossaryPromptPart = await GetGlossaryPromptPart(glossaryRequest);
             prompt += glossaryPromptPart;
         }
 
@@ -215,9 +252,9 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
         return messages;
     }
 
-    private async Task<string> GetGlossaryPromptPart(FileReference glossary)
+    private async Task<string> GetGlossaryPromptPart(GlossaryRequest input)
     {
-        var glossaryStream = await fileManagementClient.DownloadAsync(glossary);
+        var glossaryStream = await fileManagementClient.DownloadAsync(input.Glossary);
         var blackbirdGlossary = await glossaryStream.ConvertFromTbx();
 
         var glossaryPromptPart = new StringBuilder();
@@ -225,8 +262,10 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
         glossaryPromptPart.AppendLine(
             "Glossary entries (each entry includes terms in different languages. Each language may have a few synonymous variations which are separated by ;;):");
 
+        
         foreach (var entry in blackbirdGlossary.ConceptEntries)
         {
+            
             glossaryPromptPart.AppendLine();
             glossaryPromptPart.AppendLine("\tEntry:");
 
