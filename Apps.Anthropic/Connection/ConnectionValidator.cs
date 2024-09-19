@@ -20,7 +20,7 @@ public class ConnectionValidator : IConnectionValidator
         });
         try
         {
-            client.Execute(request);
+            await client.ExecuteWithErrorHandling(request);
             return new()
             {
                 IsValid = true
