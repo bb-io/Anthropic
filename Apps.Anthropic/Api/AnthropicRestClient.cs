@@ -9,7 +9,7 @@ namespace Apps.Anthropic.Api;
 public class AnthropicRestClient : BlackBirdRestClient
 {
     public AnthropicRestClient(IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProviders) :
-            base(new RestClientOptions() { ThrowOnAnyError = true, BaseUrl = new Uri("https://api.anthropic.com/v1") })
+            base(new RestClientOptions { ThrowOnAnyError = false, BaseUrl = new Uri("https://api.anthropic.com/v1") })
     {
         this.AddDefaultHeader("x-api-key", authenticationCredentialsProviders.First(x => x.KeyName == "apiKey").Value);
         this.AddDefaultHeader("anthropic-version", "2023-06-01");
@@ -18,9 +18,15 @@ public class AnthropicRestClient : BlackBirdRestClient
 
     protected override Exception ConfigureErrorException(RestResponse response)
     {
-        var json = response.Content!;
-
-        var error = JsonConvert.DeserializeObject<ErrorResponse>(json);
-        return new(error.ToString());
+        try
+        {
+            var json = response.Content!;
+            var error = JsonConvert.DeserializeObject<ErrorResponse>(json)!;
+            return new(error.ToString());
+        }
+        catch (Exception)
+        {
+            return new($"Failed to parse error response. Content: {response.Content}");
+        }
     }
 }

@@ -17,7 +17,6 @@ using MoreLinq;
 using System.Text.RegularExpressions;
 using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
 
-
 namespace Apps.Anthropic.Actions;
 
 [ActionList]
