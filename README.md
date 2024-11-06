@@ -27,7 +27,7 @@ Before you can connect you need to make sure that:
 ### Chat actions
 
 - **Create completion** action has the following input values in order to configure the generated response:
-1. Model (Claude 2.1, Claude 2, Claude Instant, Claude 3 Sonnet, Claude 3 Opus, Claude 3.5 Sonnet)
+1. Model (Claude 2.1, Claude 2, Claude Instant, Claude 3 Sonnet, Claude 3 Opus, Claude 3.5 Sonnet, Claude 3.5 Haiku)
 2. Prompt
 3. Max tokens to sample
 4. Temperature
