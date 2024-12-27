@@ -15,6 +15,7 @@ using RestSharp;
 using Newtonsoft.Json;
 using MoreLinq;
 using System.Text.RegularExpressions;
+using Apps.Anthropic.Invocable;
 using Apps.Anthropic.Models.Entities;
 using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
 
@@ -22,8 +23,10 @@ namespace Apps.Anthropic.Actions;
 
 [ActionList]
 public class CompletionActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient)
-    : BaseInvocable(invocationContext)
+    : AnthropicInvocable(invocationContext, fileManagementClient)
 {
+    private readonly IFileManagementClient _fileManagementClient = fileManagementClient;
+
     [Action("Create completion", Description = "Send a message")]
     public async Task<ResponseMessage> CreateCompletion([ActionParameter] CompletionRequest input,
         [ActionParameter] GlossaryRequest glossaryRequest)
@@ -66,10 +69,10 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
             return new ProcessXliffResponse { Xliff = input.Xliff };
         }
         var entity = await TranslateXliffDocument(input, glossaryRequest, xliffDocument, bucketSize ?? 1500);
-        var stream = await fileManagementClient.DownloadAsync(input.Xliff);
+        var stream = await _fileManagementClient.DownloadAsync(input.Xliff);
         var updatedFile = Blackbird.Xliff.Utils.Utils.XliffExtensions.UpdateOriginalFile(stream, entity.TranslationUnits);
         string contentType = input.Xliff.ContentType ?? "application/xml";
-        var fileReference = await fileManagementClient.UploadAsync(updatedFile, contentType, input.Xliff.Name);
+        var fileReference = await _fileManagementClient.UploadAsync(updatedFile, contentType, input.Xliff.Name);
         return new ProcessXliffResponse { Xliff = fileReference, Usage = entity.Usage };
     }
     
@@ -87,10 +90,10 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
             return new ProcessXliffResponse { Xliff = input.Xliff };
         }
         var entity = await PostEditXliffDocument(input, glossaryRequest, xliffDocument, bucketSize ?? 1500);
-        var stream = await fileManagementClient.DownloadAsync(input.Xliff);
+        var stream = await _fileManagementClient.DownloadAsync(input.Xliff);
         var updatedFile = Blackbird.Xliff.Utils.Utils.XliffExtensions.UpdateOriginalFile(stream, entity.TranslationUnits);
         string contentType = input.Xliff.ContentType ?? "application/xml";
-        var fileReference = await fileManagementClient.UploadAsync(updatedFile, contentType, input.Xliff.Name);
+        var fileReference = await _fileManagementClient.UploadAsync(updatedFile, contentType, input.Xliff.Name);
         return new ProcessXliffResponse { Xliff = fileReference, Usage = entity.Usage };
     }
     
@@ -108,12 +111,6 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
 
         var fileReference = await UploadUpdatedDocument(xliffDocument, input.Xliff);
         return new ScoreXliffResponse { XliffFile = fileReference, AverageScore = qualityScoresEntity.Score, Usage = qualityScoresEntity.Usage };
-    }
-
-    private async Task<XliffDocument> LoadAndParseXliffDocument(FileReference inputFile)
-    {
-        var stream = await fileManagementClient.DownloadAsync(inputFile);
-        return Blackbird.Xliff.Utils.Utils.XliffExtensions.ParseXLIFF(stream);
     }
     
     private async Task<TranslateXliffDocumentEntity> TranslateXliffDocument(ProcessXliffRequest request, GlossaryRequest glossaryRequest, XliffDocument xliff, int bucketSize)
@@ -151,19 +148,6 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
 
         return new(results.ToDictionary(x => Regex.Match(x, "\\{ID:(.*?)\\}(.+)$").Groups[1].Value,
             y => Regex.Match(y, "\\{ID:(.*?)\\}(.+)$").Groups[2].Value), totalUsage);
-    }
-
-    private string GetUserPrompt(string prompt, XliffDocument xliffDocument, string json)
-    {
-        string instruction = string.IsNullOrEmpty(prompt)
-            ? $"Translate the following texts from {xliffDocument.SourceLanguage} to {xliffDocument.TargetLanguage}."
-            : $"Process the following texts as per the custom instructions: {prompt}. The source language is {xliffDocument.SourceLanguage} and the target language is {xliffDocument.TargetLanguage}. This information might be useful for the custom instructions.";
-
-        return
-            $"Please provide a translation for each individual text, even if similar texts have been provided more than once. " +
-            $"{instruction} Return the outputs as a serialized JSON array of strings without additional formatting " +
-            $"(it is crucial because your response will be deserialized programmatically. Please ensure that your response is formatted correctly to avoid any deserialization issues). " +
-            $"Original texts (in serialized array format): {json}";
     }
     
 
@@ -245,7 +229,7 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
         var outputMemoryStream = xliffDocument.ToStream();
 
         string contentType = originalFile.ContentType ?? "application/xml";
-        return await fileManagementClient.UploadAsync(outputMemoryStream, contentType, originalFile.Name);
+        return await _fileManagementClient.UploadAsync(outputMemoryStream, contentType, originalFile.Name);
     }
 
     private async Task<List<Message>> GenerateChatMessages(CompletionRequest input, GlossaryRequest glossaryRequest)
@@ -261,32 +245,5 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
 
         messages.Add(new Message { Role = "user", Content = prompt });
         return messages;
-    }
-
-    private async Task<string> GetGlossaryPromptPart(GlossaryRequest input)
-    {
-        var glossaryStream = await fileManagementClient.DownloadAsync(input.Glossary);
-        var blackbirdGlossary = await glossaryStream.ConvertFromTbx();
-
-        var glossaryPromptPart = new StringBuilder();
-        glossaryPromptPart.AppendLine();
-        glossaryPromptPart.AppendLine(
-            "Glossary entries (each entry includes terms in different languages. Each language may have a few synonymous variations which are separated by ;;):");
-
-        
-        foreach (var entry in blackbirdGlossary.ConceptEntries)
-        {
-            
-            glossaryPromptPart.AppendLine();
-            glossaryPromptPart.AppendLine("\tEntry:");
-
-            foreach (var section in entry.LanguageSections)
-            {
-                glossaryPromptPart.AppendLine(
-                    $"\t\t{section.LanguageCode}: {string.Join(";; ", section.Terms.Select(term => term.Term))}");
-            }
-        }
-
-        return glossaryPromptPart.ToString();
     }
 }
