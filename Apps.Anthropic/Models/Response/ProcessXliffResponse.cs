@@ -6,5 +6,7 @@ namespace Apps.Anthropic.Models.Response;
 public class ProcessXliffResponse
 {
     [Display("XLIFF file")]
-    public FileReference Xliff { get; set; }
+    public FileReference Xliff { get; set; } = new();
+
+    public UsageResponse Usage { get; set; } = new();
 }

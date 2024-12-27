@@ -364,3 +364,7 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 /ConsoleApp1
+/ConsoleApp2
+/ConsoleApp3
+/OpenAITests/appsettings.json
+/Tests.Anthropic/appsettings.json
