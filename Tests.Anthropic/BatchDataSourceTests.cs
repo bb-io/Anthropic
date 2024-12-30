@@ -9,7 +9,7 @@ namespace Tests.Anthropic;
 public class BatchDataSourceTests : TestBase
 {
     [TestMethod]
-    public async Task GetData_WithourSearchParameter_ShouldNotNullCollection()
+    public async Task GetData_WithoutSearchParameter_ShouldNotNullCollection()
     {
         var dataSource = new BatchDataSource(InvocationContext);
         var data = await dataSource.GetDataAsync(new(), default);

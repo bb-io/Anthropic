@@ -25,7 +25,7 @@ public class BatchPollingList(InvocationContext invocationContext) : AnthropicIn
                 Memory = new()
                 {
                     LastPollingTime = DateTime.UtcNow,
-                    Triggered = false
+                    Triggered = request.Memory?.Triggered ?? false
                 }
             };
         }
