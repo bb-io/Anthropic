@@ -15,14 +15,18 @@ using RestSharp;
 using Newtonsoft.Json;
 using MoreLinq;
 using System.Text.RegularExpressions;
+using Apps.Anthropic.Invocable;
+using Apps.Anthropic.Models.Entities;
 using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
 
 namespace Apps.Anthropic.Actions;
 
 [ActionList]
 public class CompletionActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient)
-    : BaseInvocable(invocationContext)
+    : AnthropicInvocable(invocationContext, fileManagementClient)
 {
+    private readonly IFileManagementClient _fileManagementClient = fileManagementClient;
+
     [Action("Create completion", Description = "Send a message")]
     public async Task<ResponseMessage> CreateCompletion([ActionParameter] CompletionRequest input,
         [ActionParameter] GlossaryRequest glossaryRequest)
@@ -46,7 +50,8 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
         var response = await client.ExecuteWithErrorHandling<CompletionResponse>(request);
         return new ResponseMessage
         {
-            Text = response.Content.FirstOrDefault()?.Text ?? ""
+            Text = response.Content.FirstOrDefault()?.Text ?? "",
+            Usage = response.Usage
         };
     }
 
@@ -63,12 +68,12 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
         {
             return new ProcessXliffResponse { Xliff = input.Xliff };
         }
-        var translatedUnits = await TranslateXliffDocument(input, glossaryRequest, xliffDocument, bucketSize ?? 1500);
-        var stream = await fileManagementClient.DownloadAsync(input.Xliff);
-        var updatedFile = Blackbird.Xliff.Utils.Utils.XliffExtensions.UpdateOriginalFile(stream, translatedUnits);
+        var entity = await TranslateXliffDocument(input, glossaryRequest, xliffDocument, bucketSize ?? 1500);
+        var stream = await _fileManagementClient.DownloadAsync(input.Xliff);
+        var updatedFile = Blackbird.Xliff.Utils.Utils.XliffExtensions.UpdateOriginalFile(stream, entity.TranslationUnits);
         string contentType = input.Xliff.ContentType ?? "application/xml";
-        var fileReference = await fileManagementClient.UploadAsync(updatedFile, contentType, input.Xliff.Name);
-        return new ProcessXliffResponse { Xliff = fileReference };
+        var fileReference = await _fileManagementClient.UploadAsync(updatedFile, contentType, input.Xliff.Name);
+        return new ProcessXliffResponse { Xliff = fileReference, Usage = entity.Usage };
     }
     
     [Action("Post-edit XLIFF file", Description = "Updates the targets of XLIFF 1.2 files")]
@@ -84,12 +89,12 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
         {
             return new ProcessXliffResponse { Xliff = input.Xliff };
         }
-        var translatedUnits = await PostEditXliffDocument(input, glossaryRequest, xliffDocument, bucketSize ?? 1500);
-        var stream = await fileManagementClient.DownloadAsync(input.Xliff);
-        var updatedFile = Blackbird.Xliff.Utils.Utils.XliffExtensions.UpdateOriginalFile(stream, translatedUnits);
+        var entity = await PostEditXliffDocument(input, glossaryRequest, xliffDocument, bucketSize ?? 1500);
+        var stream = await _fileManagementClient.DownloadAsync(input.Xliff);
+        var updatedFile = Blackbird.Xliff.Utils.Utils.XliffExtensions.UpdateOriginalFile(stream, entity.TranslationUnits);
         string contentType = input.Xliff.ContentType ?? "application/xml";
-        var fileReference = await fileManagementClient.UploadAsync(updatedFile, contentType, input.Xliff.Name);
-        return new ProcessXliffResponse { Xliff = fileReference };
+        var fileReference = await _fileManagementClient.UploadAsync(updatedFile, contentType, input.Xliff.Name);
+        return new ProcessXliffResponse { Xliff = fileReference, Usage = entity.Usage };
     }
     
     [Action("Get Quality Scores for XLIFF file", Description = "Gets segment and file level quality scores for XLIFF files")]
@@ -102,22 +107,18 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
             return new ScoreXliffResponse { XliffFile = input.Xliff, AverageScore = 0 };
         }
         
-        double averageScore = await GetQualityScoresOfXliffDocument(input, glossaryRequest, xliffDocument);
+        var qualityScoresEntity = await GetQualityScoresOfXliffDocument(input, glossaryRequest, xliffDocument);
 
         var fileReference = await UploadUpdatedDocument(xliffDocument, input.Xliff);
-        return new ScoreXliffResponse { XliffFile = fileReference, AverageScore = averageScore };
-    }
-
-    private async Task<XliffDocument> LoadAndParseXliffDocument(FileReference inputFile)
-    {
-        var stream = await fileManagementClient.DownloadAsync(inputFile);
-        return Blackbird.Xliff.Utils.Utils.XliffExtensions.ParseXLIFF(stream);
+        return new ScoreXliffResponse { XliffFile = fileReference, AverageScore = qualityScoresEntity.Score, Usage = qualityScoresEntity.Usage };
     }
     
-    private async Task<Dictionary<string,string>> TranslateXliffDocument(ProcessXliffRequest request, GlossaryRequest glossaryRequest, XliffDocument xliff, int bucketSize)
+    private async Task<TranslateXliffDocumentEntity> TranslateXliffDocument(ProcessXliffRequest request, GlossaryRequest glossaryRequest, XliffDocument xliff, int bucketSize)
     {
         var results = new List<string>();
         var batches = xliff.TranslationUnits.Batch(bucketSize);
+        
+        var totalUsage = new UsageResponse();
         foreach (var batch in batches)
         {
             string json = JsonConvert.SerializeObject(batch.Select(x => "{ID:" + x.Id + "}" + x.Source ));
@@ -142,30 +143,20 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
             }
 
             results.AddRange(result);
-                       
+            totalUsage += response.Usage;
         }
-        
-        return results.ToDictionary(x => Regex.Match(x, "\\{ID:(.*?)\\}(.+)$").Groups[1].Value, y => Regex.Match(y, "\\{ID:(.*?)\\}(.+)$").Groups[2].Value);
-    }
 
-    private string GetUserPrompt(string prompt, XliffDocument xliffDocument, string json)
-    {
-        string instruction = string.IsNullOrEmpty(prompt)
-            ? $"Translate the following texts from {xliffDocument.SourceLanguage} to {xliffDocument.TargetLanguage}."
-            : $"Process the following texts as per the custom instructions: {prompt}. The source language is {xliffDocument.SourceLanguage} and the target language is {xliffDocument.TargetLanguage}. This information might be useful for the custom instructions.";
-
-        return
-            $"Please provide a translation for each individual text, even if similar texts have been provided more than once. " +
-            $"{instruction} Return the outputs as a serialized JSON array of strings without additional formatting " +
-            $"(it is crucial because your response will be deserialized programmatically. Please ensure that your response is formatted correctly to avoid any deserialization issues). " +
-            $"Original texts (in serialized array format): {json}";
+        return new(results.ToDictionary(x => Regex.Match(x, "\\{ID:(.*?)\\}(.+)$").Groups[1].Value,
+            y => Regex.Match(y, "\\{ID:(.*?)\\}(.+)$").Groups[2].Value), totalUsage);
     }
     
 
-    private async Task<Dictionary<string, string>> PostEditXliffDocument(ProcessXliffRequest request, GlossaryRequest glossaryRequest, XliffDocument xliff, int bucketSize)
+    private async Task<TranslateXliffDocumentEntity> PostEditXliffDocument(ProcessXliffRequest request, GlossaryRequest glossaryRequest, XliffDocument xliff, int bucketSize)
     {
         var results = new Dictionary<string, string>();
         var batches = xliff.TranslationUnits.Batch(bucketSize);
+
+        var totalUsage = new UsageResponse();
         foreach (var batch in batches)
         {
             var response = await CreateCompletion(new(request)
@@ -189,16 +180,19 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
                 else
                     results.Add(match.Groups[1].Value, match.Groups[2].Value);
             }
+
+            totalUsage += response.Usage;
         }
-        
-        return results;
+
+        return new(results, totalUsage);
     }
     
-    private async Task<double> GetQualityScoresOfXliffDocument(ProcessXliffRequest request, GlossaryRequest glossaryRequest, XliffDocument xliff)
+    private async Task<XliffQualityScoresEntity> GetQualityScoresOfXliffDocument(ProcessXliffRequest request, GlossaryRequest glossaryRequest, XliffDocument xliff)
     {
         var criteria = request.Prompt ?? "fluency, grammar, terminology, style, and punctuation";
         double totalScore = 0;
-        
+
+        var totalUsage = new UsageResponse();
         foreach (var translationUnit in xliff.TranslationUnits)
         {
             var sourceLanguage = translationUnit.SourceLanguage ?? xliff.SourceLanguage;
@@ -223,9 +217,11 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
             {
                 throw new Exception($"Received invalid score from API. Score: {response.Text}");
             }
+
+            totalUsage += response.Usage;
         }
         
-        return totalScore / xliff.TranslationUnits.Count;
+        return new(totalScore / xliff.TranslationUnits.Count, totalUsage);
     }
 
     private async Task<FileReference> UploadUpdatedDocument(XliffDocument xliffDocument, FileReference originalFile)
@@ -233,7 +229,7 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
         var outputMemoryStream = xliffDocument.ToStream();
 
         string contentType = originalFile.ContentType ?? "application/xml";
-        return await fileManagementClient.UploadAsync(outputMemoryStream, contentType, originalFile.Name);
+        return await _fileManagementClient.UploadAsync(outputMemoryStream, contentType, originalFile.Name);
     }
 
     private async Task<List<Message>> GenerateChatMessages(CompletionRequest input, GlossaryRequest glossaryRequest)
@@ -249,32 +245,5 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
 
         messages.Add(new Message { Role = "user", Content = prompt });
         return messages;
-    }
-
-    private async Task<string> GetGlossaryPromptPart(GlossaryRequest input)
-    {
-        var glossaryStream = await fileManagementClient.DownloadAsync(input.Glossary);
-        var blackbirdGlossary = await glossaryStream.ConvertFromTbx();
-
-        var glossaryPromptPart = new StringBuilder();
-        glossaryPromptPart.AppendLine();
-        glossaryPromptPart.AppendLine(
-            "Glossary entries (each entry includes terms in different languages. Each language may have a few synonymous variations which are separated by ;;):");
-
-        
-        foreach (var entry in blackbirdGlossary.ConceptEntries)
-        {
-            
-            glossaryPromptPart.AppendLine();
-            glossaryPromptPart.AppendLine("\tEntry:");
-
-            foreach (var section in entry.LanguageSections)
-            {
-                glossaryPromptPart.AppendLine(
-                    $"\t\t{section.LanguageCode}: {string.Join(";; ", section.Terms.Select(term => term.Term))}");
-            }
-        }
-
-        return glossaryPromptPart.ToString();
     }
 }

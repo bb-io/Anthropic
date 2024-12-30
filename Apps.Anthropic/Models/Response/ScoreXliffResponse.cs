@@ -10,4 +10,6 @@ public class ScoreXliffResponse
 
     [Display("Average Score")]
     public double AverageScore { get; set; }
+
+    public UsageResponse Usage { get; set; } = new();
 }

@@ -24,6 +24,6 @@ public class ConnectionDefinition : IConnectionDefinition
     {
         return values
             .Select(x =>
-                new AuthenticationCredentialsProvider(AuthenticationCredentialsRequestLocation.None, x.Key, x.Value));
+                new AuthenticationCredentialsProvider(x.Key, x.Value));
     }
 }
