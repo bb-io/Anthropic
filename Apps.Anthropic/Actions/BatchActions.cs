@@ -24,7 +24,7 @@ public class BatchActions(InvocationContext invocationContext, IFileManagementCl
 {
     [Action("(Batch) Process XLIFF file",
         Description =
-            "Asynchronously process each translation unit in the XLIFF file according to the provided instructions (by default it just translates the source tags) and updates the target text for each unit. For now it supports only 1.2 version of XLIFF.")]
+            "Asynchronously process each translation unit in the XLIFF file according to the provided instructions (by default it just translates the source tags) and updates the target text for each unit.")]
     public async Task<BatchResponse> ProcessXliffFileAsync([ActionParameter] ProcessXliffFileRequest request)
     {
         var xliffDocument = await LoadAndParseXliffDocument(request.File);
@@ -42,7 +42,7 @@ public class BatchActions(InvocationContext invocationContext, IFileManagementCl
 
     [Action("(Batch) Post-edit XLIFF file",
         Description =
-            "Asynchronously post-edit the target text of each translation unit in the XLIFF file according to the provided instructions and updates the target text for each unit. For now it supports only 1.2 version of XLIFF.")]
+            "Asynchronously post-edit the target text of each translation unit in the XLIFF file according to the provided instructions and updates the target text for each unit.")]
     public async Task<BatchResponse> PostEditXliffFileAsync([ActionParameter] ProcessXliffFileRequest request)
     {
         var xliffDocument = await LoadAndParseXliffDocument(request.File);
@@ -78,7 +78,7 @@ public class BatchActions(InvocationContext invocationContext, IFileManagementCl
     }
     
     [Action("(Batch) Get XLIFF from the batch",
-        Description = "Get the results of the batch process. This action is suitable only for processing and post-editing XLIFF file and should be called after the async process is completed.")]
+        Description = "Get the results of the batch process. This action is suitable only for processing and post-editing XLIFF file and should be called after the async process is ended.")]
     public async Task<GetBatchResultResponse> GetBatchResultsAsync([ActionParameter] GetBatchResultRequest request)
     {
         var batchRequests = await GetBatchRequestsAsync(request.BatchId);
