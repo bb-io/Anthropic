@@ -146,7 +146,8 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
             totalUsage += response.Usage;
         }
 
-        return new(results.ToDictionary(x => Regex.Match(x, "\\{ID:(.*?)\\}(.+)$").Groups[1].Value,
+        return new(results.Where(x => !String.IsNullOrEmpty(Regex.Match(x, "\\{ID:(.*?)\\}(.+)$").Groups[1].Value))
+            .ToDictionary(x => Regex.Match(x, "\\{ID:(.*?)\\}(.+)$").Groups[1].Value,
             y => Regex.Match(y, "\\{ID:(.*?)\\}(.+)$").Groups[2].Value), totalUsage);
     }
     
