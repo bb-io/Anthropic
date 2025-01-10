@@ -15,4 +15,15 @@ public class CompletionResponse
 
     [JsonProperty("usage")]
     public UsageResponse Usage { get; set; } = new();
+
+    [JsonProperty("error")]
+    public AnthropicError? Error { get; set; }
+}
+public class AnthropicError
+{
+    [JsonProperty("type")]
+    public string Type { get; set; }
+
+    [JsonProperty("message")]
+    public string Message { get; set; }
 }

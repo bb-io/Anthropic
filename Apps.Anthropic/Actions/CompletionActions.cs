@@ -18,6 +18,7 @@ using System.Text.RegularExpressions;
 using Apps.Anthropic.Invocable;
 using Apps.Anthropic.Models.Entities;
 using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
+using Blackbird.Applications.Sdk.Common.Exceptions;
 
 namespace Apps.Anthropic.Actions;
 
@@ -31,28 +32,41 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
     public async Task<ResponseMessage> CreateCompletion([ActionParameter] CompletionRequest input,
         [ActionParameter] GlossaryRequest glossaryRequest)
     {
-        var client = new AnthropicRestClient(InvocationContext.AuthenticationCredentialsProviders);
-        var request = new RestRequest("/messages", Method.Post);
-        var messages = await GenerateChatMessages(input, glossaryRequest);
-
-        request.AddJsonBody(new
+        try
         {
-            system = input.SystemPrompt ?? "",
-            model = input.Model,
-            messages = messages,
-            max_tokens = input.MaxTokensToSample ?? 4096,
-            stop_sequences = input.StopSequences != null ? input.StopSequences : new List<string>(),
-            temperature = input.Temperature != null ? float.Parse(input.Temperature) : 1.0f,
-            top_p = input.TopP != null ? float.Parse(input.TopP) : 1.0f,
-            top_k = input.TopK != null ? input.TopK : 1,
-        });
+            var client = new AnthropicRestClient(InvocationContext.AuthenticationCredentialsProviders);
+            var request = new RestRequest("/messages", Method.Post);
+            var messages = await GenerateChatMessages(input, glossaryRequest);
 
-        var response = await client.ExecuteWithErrorHandling<CompletionResponse>(request);
-        return new ResponseMessage
+            request.AddJsonBody(new
+            {
+                system = input.SystemPrompt ?? "",
+                model = input.Model,
+                messages = messages,
+                max_tokens = input.MaxTokensToSample ?? 4096,
+                stop_sequences = input.StopSequences != null ? input.StopSequences : new List<string>(),
+                temperature = input.Temperature != null ? float.Parse(input.Temperature) : 1.0f,
+                top_p = input.TopP != null ? float.Parse(input.TopP) : 1.0f,
+                top_k = input.TopK != null ? input.TopK : 1,
+            });
+
+            var response = await client.ExecuteWithErrorHandling<CompletionResponse>(request);
+
+            if (response.Error is not null)
+            {
+                throw new PluginMisconfigurationException($"Anthropic error: {response.Error.Message} (type: {response.Error.Type}). Please check your request parameters or contact support if the issue persists.");
+            }
+
+            return new ResponseMessage
+            {
+                Text = response.Content.FirstOrDefault()?.Text ?? "",
+                Usage = response.Usage
+            };
+        }
+        catch (Exception ex)
         {
-            Text = response.Content.FirstOrDefault()?.Text ?? "",
-            Usage = response.Usage
-        };
+            throw new PluginApplicationException($"Anthropic API error: {ex.Message}", ex);
+        }
     }
 
     [Action("Process XLIFF", Description = "Process XLIFF file, by default translating it to a target language")]
