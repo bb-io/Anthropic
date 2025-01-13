@@ -215,14 +215,16 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
 
             string scoreText = response.Text?.Split(' ')[0].Trim();
 
-            if (!double.TryParse(scoreText, out double score))
-            {             
-                throw new PluginApplicationException($"Received invalid score from API. Score: {response.Text}");
-            }
-
-            if (score < 0 || score > 10)
+            if (double.TryParse(scoreText, out double score))
             {
-                throw new PluginApplicationException($"Score out of expected range (0-10). Received: {score}");
+                if (score < 0 || score > 10)
+                {
+                    throw new PluginApplicationException($"Score out of expected range (0-10). Received: {score}");
+                }
+            }
+            else
+            {              
+                throw new PluginApplicationException($"Received invalid score from API. Score: {response.Text}");
             }
 
             totalScore += score;
