@@ -212,15 +212,20 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
             }, glossaryRequest);
             
             translationUnit.Attributes?.Add("extradata", response.Text);
-            if (double.TryParse(response.Text, out double score))
-            {
-                totalScore += score;
-            }
-            else
-            {
-                throw new PluginMisconfigurationException($"Received invalid score from API. Score: {response.Text}");
+
+            string scoreText = response.Text?.Split(' ')[0].Trim();
+
+            if (!double.TryParse(scoreText, out double score))
+            {             
+                throw new PluginApplicationException($"Received invalid score from API. Score: {response.Text}");
             }
 
+            if (score < 0 || score > 10)
+            {
+                throw new PluginApplicationException($"Score out of expected range (0-10). Received: {score}");
+            }
+
+            totalScore += score;
             totalUsage += response.Usage;
         }
         
