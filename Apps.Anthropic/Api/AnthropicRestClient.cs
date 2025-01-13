@@ -26,7 +26,7 @@ public class AnthropicRestClient : BlackBirdRestClient
            new JsonSerializerSettings { MissingMemberHandling = MissingMemberHandling.Ignore };
 
     public AnthropicRestClient(IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProviders) :
-            base(new RestClientOptions { ThrowOnAnyError = false, BaseUrl = new Uri("https://api.anthropic.com/v1") })
+            base(new RestClientOptions { ThrowOnAnyError = false, BaseUrl = new Uri("https://api.anthropic.com/v1"), MaxTimeout = (int)TimeSpan.FromMinutes(10).TotalMilliseconds })
     {
         this.AddDefaultHeader("x-api-key", authenticationCredentialsProviders.First(x => x.KeyName == "apiKey").Value);
         this.AddDefaultHeader("anthropic-version", "2023-06-01");
