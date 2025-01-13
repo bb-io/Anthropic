@@ -41,7 +41,7 @@ public class AnthropicRestClient : BlackBirdRestClient
         var error = JsonConvert.DeserializeObject<ErrorResponse>(response.Content, JsonSettings);
 
         if (error?.Error == null || string.IsNullOrWhiteSpace(error.Error.Type))
-            throw new PluginApplicationException(error?.Error?.Message ?? response.ErrorException?.Message ?? "Unknown error");
+            throw new PluginApplicationException(error?.Error?.Message ?? response.ErrorException?.Message);
 
         var errorType = error.Error.Type;
 

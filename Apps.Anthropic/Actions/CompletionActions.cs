@@ -218,7 +218,7 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
             }
             else
             {
-                throw new Exception($"Received invalid score from API. Score: {response.Text}");
+                throw new PluginMisconfigurationException($"Received invalid score from API. Score: {response.Text}");
             }
 
             totalUsage += response.Usage;
