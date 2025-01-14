@@ -32,8 +32,6 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
     public async Task<ResponseMessage> CreateCompletion([ActionParameter] CompletionRequest input,
         [ActionParameter] GlossaryRequest glossaryRequest)
     {
-        try
-        {
             var client = new AnthropicRestClient(InvocationContext.AuthenticationCredentialsProviders);
             var request = new RestRequest("/messages", Method.Post);
             var messages = await GenerateChatMessages(input, glossaryRequest);
@@ -52,21 +50,11 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
 
             var response = await client.ExecuteWithErrorHandling<CompletionResponse>(request);
 
-            if (response.Error is not null)
-            {
-                throw new PluginMisconfigurationException($"Anthropic error: {response.Error.Message} (type: {response.Error.Type}). Please check your request parameters or contact support if the issue persists.");
-            }
-
             return new ResponseMessage
             {
                 Text = response.Content.FirstOrDefault()?.Text ?? "",
                 Usage = response.Usage
-            };
-        }
-        catch (Exception ex)
-        {
-            throw new PluginApplicationException($"Anthropic API error: {ex.Message}", ex);
-        }
+            }; 
     }
 
     [Action("Process XLIFF", Description = "Process XLIFF file, by default translating it to a target language")]
@@ -224,15 +212,22 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
             }, glossaryRequest);
             
             translationUnit.Attributes?.Add("extradata", response.Text);
-            if (double.TryParse(response.Text, out double score))
+
+            string scoreText = response.Text?.Split(' ')[0].Trim();
+
+            if (double.TryParse(scoreText, out double score))
             {
-                totalScore += score;
+                if (score < 0 || score > 10)
+                {
+                    throw new PluginApplicationException($"Score out of expected range (0-10). Received: {score}");
+                }
             }
             else
-            {
-                throw new Exception($"Received invalid score from API. Score: {response.Text}");
+            {              
+                throw new PluginApplicationException($"Received invalid score from API. Score: {response.Text}");
             }
 
+            totalScore += score;
             totalUsage += response.Usage;
         }
         
