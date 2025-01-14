@@ -18,4 +18,5 @@ public class BatchDataSourceTests : TestBase
 
         Console.WriteLine(JsonConvert.SerializeObject(data, Formatting.Indented));
     }
+
 }
