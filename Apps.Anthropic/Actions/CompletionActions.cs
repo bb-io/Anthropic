@@ -17,7 +17,6 @@ using MoreLinq;
 using System.Text.RegularExpressions;
 using Apps.Anthropic.Invocable;
 using Apps.Anthropic.Models.Entities;
-using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
 using Blackbird.Applications.Sdk.Common.Exceptions;
 
 namespace Apps.Anthropic.Actions;
