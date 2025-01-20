@@ -17,6 +17,7 @@ using MoreLinq;
 using System.Text.RegularExpressions;
 using Apps.Anthropic.Invocable;
 using Apps.Anthropic.Models.Entities;
+using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
 using Blackbird.Applications.Sdk.Common.Exceptions;
 
 namespace Apps.Anthropic.Actions;
@@ -31,28 +32,29 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
     public async Task<ResponseMessage> CreateCompletion([ActionParameter] CompletionRequest input,
         [ActionParameter] GlossaryRequest glossaryRequest)
     {
-        var client = new AnthropicRestClient(InvocationContext.AuthenticationCredentialsProviders);
-        var request = new RestRequest("/messages", Method.Post);
-        var messages = await GenerateChatMessages(input, glossaryRequest);
+            var client = new AnthropicRestClient(InvocationContext.AuthenticationCredentialsProviders);
+            var request = new RestRequest("/messages", Method.Post);
+            var messages = await GenerateChatMessages(input, glossaryRequest);
 
-        request.AddJsonBody(new
-        {
-            system = input.SystemPrompt ?? "",
-            model = input.Model,
-            messages = messages,
-            max_tokens = input.MaxTokensToSample ?? 4096,
-            stop_sequences = input.StopSequences != null ? input.StopSequences : new List<string>(),
-            temperature = input.Temperature != null ? float.Parse(input.Temperature) : 1.0f,
-            top_p = input.TopP != null ? float.Parse(input.TopP) : 1.0f,
-            top_k = input.TopK != null ? input.TopK : 1,
-        });
+            request.AddJsonBody(new
+            {
+                system = input.SystemPrompt ?? "",
+                model = input.Model,
+                messages = messages,
+                max_tokens = input.MaxTokensToSample ?? 4096,
+                stop_sequences = input.StopSequences != null ? input.StopSequences : new List<string>(),
+                temperature = input.Temperature != null ? float.Parse(input.Temperature) : 1.0f,
+                top_p = input.TopP != null ? float.Parse(input.TopP) : 1.0f,
+                top_k = input.TopK != null ? input.TopK : 1,
+            });
 
-        var response = await client.ExecuteWithErrorHandling<CompletionResponse>(request);
-        return new ResponseMessage
-        {
-            Text = response.Content.FirstOrDefault()?.Text ?? "",
-            Usage = response.Usage
-        };
+            var response = await client.ExecuteWithErrorHandling<CompletionResponse>(request);
+
+            return new ResponseMessage
+            {
+                Text = response.Content.FirstOrDefault()?.Text ?? "",
+                Usage = response.Usage
+            }; 
     }
 
     [Action("Process XLIFF", Description = "Process XLIFF file, by default translating it to a target language")]
@@ -210,15 +212,22 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
             }, glossaryRequest);
             
             translationUnit.Attributes?.Add("extradata", response.Text);
-            if (double.TryParse(response.Text, out double score))
+
+            string scoreText = response.Text?.Split(' ')[0].Trim();
+
+            if (double.TryParse(scoreText, out double score))
             {
-                totalScore += score;
+                if (score < 0 || score > 10)
+                {
+                    throw new PluginApplicationException($"Score out of expected range (0-10). Received: {score}");
+                }
             }
             else
-            {
+            {              
                 throw new PluginApplicationException($"Received invalid score from API. Score: {response.Text}");
             }
 
+            totalScore += score;
             totalUsage += response.Usage;
         }
         
