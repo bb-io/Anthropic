@@ -9,7 +9,7 @@ namespace Apps.Anthropic.Api;
 public class AnthropicRestClient : BlackBirdRestClient
 {
     public AnthropicRestClient(IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProviders) :
-            base(new RestClientOptions { ThrowOnAnyError = false, BaseUrl = new Uri("https://api.anthropic.com/v1") })
+            base(new RestClientOptions { ThrowOnAnyError = false, BaseUrl = new Uri("https://api.anthropic.com/v1"), MaxTimeout = 1000000000 })
     {
         this.AddDefaultHeader("x-api-key", authenticationCredentialsProviders.First(x => x.KeyName == "apiKey").Value);
         this.AddDefaultHeader("anthropic-version", "2023-06-01");

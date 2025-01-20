@@ -152,7 +152,7 @@ public class BatchActions(InvocationContext invocationContext, IFileManagementCl
             var translationUnit = xliffDocument.TranslationUnits.Find(tu => tu.Id == batchRequest.CustomId);
             if (translationUnit == null)
             {
-                throw new InvalidOperationException(
+                throw new PluginApplicationException(
                     $"Translation unit with id {batchRequest.CustomId} not found in the XLIFF file.");
             }
 

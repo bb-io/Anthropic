@@ -17,7 +17,7 @@ using MoreLinq;
 using System.Text.RegularExpressions;
 using Apps.Anthropic.Invocable;
 using Apps.Anthropic.Models.Entities;
-using DocumentFormat.OpenXml.Office2016.Drawing.ChartDrawing;
+using Blackbird.Applications.Sdk.Common.Exceptions;
 
 namespace Apps.Anthropic.Actions;
 
@@ -135,7 +135,7 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
                    
             if (result.Length != xliff.TranslationUnits.Count)
             {
-                throw new InvalidOperationException(
+                throw new PluginApplicationException(
                     "Anthropic returned inappropriate response. " +
                     "The number of translated texts does not match the number of source texts. " +
                     "Probably there is a duplication or a missing text in translation unit. " +
@@ -216,7 +216,7 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
             }
             else
             {
-                throw new Exception($"Received invalid score from API. Score: {response.Text}");
+                throw new PluginApplicationException($"Received invalid score from API. Score: {response.Text}");
             }
 
             totalUsage += response.Usage;
