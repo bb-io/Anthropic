@@ -132,15 +132,28 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
                                 "Reply only with the serialized JSON array of translated strings without additional formatting. Ensure the structure of the original text is preserved."
             }, glossaryRequest);
 
-            var result = JsonConvert.DeserializeObject<string[]>(response.Text.Substring(response.Text.IndexOf("[")));
+            string[] result;
+            try
+            {
+                result = JsonConvert.DeserializeObject<string[]>(response.Text.Substring(response.Text.IndexOf("[")));
+            } catch (Exception e) 
+            {
+                if (e.Message.Contains("Unterminated string. Expected delimiter:")) 
+                {
+                    throw new PluginApplicationException("Anthropic returned an unexpected response. Try adjusting the model or a lower bucket size or add retries to this action. Original error: " + e.Message);
+                }
+                else 
+                    throw new PluginApplicationException(e.Message);
+            }
+            
                    
-            if (result.Length != xliff.TranslationUnits.Count)
+            if (result != null && result.Length != xliff.TranslationUnits.Count)
             {
                 throw new PluginApplicationException(
-                    "Anthropic returned inappropriate response. " +
+                    "Anthropic returned an unexpected response. " +
                     "The number of translated texts does not match the number of source texts. " +
-                    "Probably there is a duplication or a missing text in translation unit. " +
-                    "Try change model or bucket size (to lower values) or add retries to this action.");
+                    "There is probably a duplicated or a missing text in a translation unit. " +
+                    "Try adjusting the model or lower bucket size or add retries to this action.");
             }
 
             results.AddRange(result);
