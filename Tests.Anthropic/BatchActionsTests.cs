@@ -45,4 +45,22 @@ public class BatchActionsTests : TestBase
         batch.File.Name.Should().NotBeNullOrEmpty();
         Console.WriteLine(JsonConvert.SerializeObject(batch, Formatting.Indented));
     }
+
+    [TestMethod]
+    public async Task GetBatchResults_HasXmlTags_ShouldReturnValidXliff()
+    {
+        var actions = new BatchActions(InvocationContext, FileManager);
+        var batch = await actions.GetBatchResultsAsync(new()
+        {
+            OriginalXliff = new()
+            {
+                Name = "simple_with_html.xlf",
+                ContentType = "text/xml"
+            },
+            BatchId = "msgbatch_016Jc3Au7guFtBDfTbQi1baR"
+        });
+
+        batch.File.Name.Should().NotBeNullOrEmpty();
+        Console.WriteLine(JsonConvert.SerializeObject(batch, Formatting.Indented));
+    }
 }
