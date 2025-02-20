@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
@@ -11,12 +11,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Blackbird.Applications.Sdk.Common" Version="2.11.1" />
+    <PackageReference Include="Blackbird.Applications.Sdk.Common" Version="2.11.0" />
     <PackageReference Include="Blackbird.Applications.SDK.Extensions.FileManagement" Version="1.0.2-alpha1" />
     <PackageReference Include="Blackbird.Applications.Sdk.Glossaries.Utils" Version="1.0.2-alpha1" />
-    <PackageReference Include="Blackbird.Xliff.Utils" Version="1.1.10" />
-    <PackageReference Include="morelinq" Version="4.4.0" />
-    <PackageReference Include="RestSharp.Serializers.NewtonsoftJson" Version="112.1.0" />
+    <PackageReference Include="Blackbird.Xliff.Utils" Version="1.1.6" />
+    <PackageReference Include="morelinq" Version="4.3.0" />
+    <PackageReference Include="RestSharp.Serializers.NewtonsoftJson" Version="110.2.0" />
   </ItemGroup>
 <ItemGroup>
     <EmbeddedResource CopyToOutputDirectory="Always" Include="image\icon.jpg"></EmbeddedResource>
