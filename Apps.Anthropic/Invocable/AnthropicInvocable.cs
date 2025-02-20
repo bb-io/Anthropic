@@ -31,7 +31,9 @@ public class AnthropicInvocable(InvocationContext invocationContext, IFileManage
         return
             $"Please provide a translation for each individual text, even if similar texts have been provided more than once. " +
             $"{instruction} Return the outputs as a serialized JSON array of strings without additional formatting " +
+            $"If you see XML tags in the source also include them in the target text, don't delete or modify them. " +
             $"(it is crucial because your response will be deserialized programmatically. Please ensure that your response is formatted correctly to avoid any deserialization issues). " +
+            $"Review and edit the translated target text as necessary to ensure it is a correct and accurate translation of the source text. " +
             $"Original texts (in serialized array format): {json}";
     }
     
