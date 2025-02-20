@@ -1,11 +1,11 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <Product>Anthropic</Product>
-    <Version>1.1.13</Version>
+    <Version>1.1.14</Version>
     <Description>A next-generation AI assistant for your tasks, no matter the scale</Description>
     <AssemblyName>Apps.Anthropic</AssemblyName>
   </PropertyGroup>
