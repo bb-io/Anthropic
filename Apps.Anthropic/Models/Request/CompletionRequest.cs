@@ -1,6 +1,6 @@
-﻿using Apps.Anthropic.DataSourceHandlers.EnumHandlers;
+﻿using Apps.Anthropic.DataSourceHandlers;
+using Apps.Anthropic.DataSourceHandlers.EnumHandlers;
 using Blackbird.Applications.Sdk.Common;
-using Blackbird.Applications.Sdk.Common.Dictionaries;
 using Blackbird.Applications.Sdk.Common.Dynamic;
 using Newtonsoft.Json;
 
@@ -9,7 +9,7 @@ namespace Apps.Anthropic.Models.Request;
 public class CompletionRequest
 {
     [Display("Model", Description = "This parameter controls which version of Claude answers your request")]
-    [StaticDataSource(typeof(ModelDataSourceHandler))]
+    [DataSource(typeof(ModelDataSource))]
     [JsonProperty("model")]
     public string Model { get; set; }
 
