@@ -27,7 +27,7 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
 {
     private readonly IFileManagementClient _fileManagementClient = fileManagementClient;
 
-    [Action("Create completion", Description = "Send a message")]
+    [Action("Create completion (chat)", Description = "Send a message")]
     public async Task<ResponseMessage> CreateCompletion([ActionParameter] CompletionRequest input,
         [ActionParameter] GlossaryRequest glossaryRequest)
     {
