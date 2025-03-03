@@ -130,7 +130,16 @@ public class BatchActions(InvocationContext invocationContext, IFileManagementCl
             }
         }
 
-        var stream = xliffDocument.ToStream();
+        Stream stream;
+        try
+        {
+            stream = xliffDocument.ToStream();
+        }
+        catch (Exception ex)
+        {
+            throw new PluginApplicationException("Error converting XliffDocument. Please verify that the XLIFF file structure is valid.", ex);
+        }
+
         return new()
         {
             File = await fileManagementClient.UploadAsync(stream, request.OriginalXliff.ContentType,

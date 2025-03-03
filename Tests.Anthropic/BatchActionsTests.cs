@@ -17,7 +17,7 @@ public class BatchActionsTests : TestBase
             Model = "claude-3-5-sonnet-20240620",
             File = new()
             {
-                Name = "simple.xliff",
+                Name = "test.xlf",
                 ContentType = "text/xml"
             }
         });
@@ -36,10 +36,10 @@ public class BatchActionsTests : TestBase
         {
             OriginalXliff = new()
             {
-                Name = "simple.xliff",
+                Name = "test.xlf",
                 ContentType = "text/xml"
             }, 
-            BatchId = "msgbatch_016Jc3Au7guFtBDfTbQi1baR"
+            BatchId = "msgbatch_01KM4XQE7PMGakAAViDkThCG"
         });
 
         batch.File.Name.Should().NotBeNullOrEmpty();

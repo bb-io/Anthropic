@@ -7,6 +7,7 @@ using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
 using Blackbird.Applications.Sdk.Glossaries.Utils.Converters;
 using Blackbird.Xliff.Utils;
 using Blackbird.Xliff.Utils.Extensions;
+using System.Xml.Linq;
 
 namespace Apps.Anthropic.Invocable;
 
@@ -18,10 +19,10 @@ public class AnthropicInvocable(InvocationContext invocationContext, IFileManage
         var memoryStream = new MemoryStream();
         await stream.CopyToAsync(memoryStream);
         memoryStream.Position = 0;
-        
+
         return memoryStream.ToXliffDocument();
     }
-    
+  
     protected string GetUserPrompt(string prompt, XliffDocument xliffDocument, string json)
     {
         string instruction = string.IsNullOrEmpty(prompt)
