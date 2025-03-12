@@ -27,6 +27,10 @@ public class BatchActions(InvocationContext invocationContext, IFileManagementCl
             "Asynchronously process each translation unit in the XLIFF file according to the provided instructions (by default it just translates the source tags) and updates the target text for each unit.")]
     public async Task<BatchResponse> ProcessXliffFileAsync([ActionParameter] ProcessXliffFileRequest request)
     {
+        if (!request.File.Name.EndsWith("xlf", StringComparison.OrdinalIgnoreCase) && !request.File.Name.EndsWith("xliff", StringComparison.OrdinalIgnoreCase) && !request.File.ContentType.Contains("application/x-xliff+xml") && !request.File.ContentType.Contains("application/xliff+xml"))
+        {
+            throw new PluginMisconfigurationException("File does not have a valid XLIFF extension, please provide a valid XLIFF file.");
+        }
         var xliffDocument = await LoadAndParseXliffDocument(request.File);
         var instructions = request.Prompt ?? "Translate the text.";
         var requests = await CreateBatchRequestsAsync(
@@ -45,6 +49,11 @@ public class BatchActions(InvocationContext invocationContext, IFileManagementCl
             "Asynchronously post-edit the target text of each translation unit in the XLIFF file according to the provided instructions and updates the target text for each unit.")]
     public async Task<BatchResponse> PostEditXliffFileAsync([ActionParameter] ProcessXliffFileRequest request)
     {
+        if (!request.File.Name.EndsWith("xlf", StringComparison.OrdinalIgnoreCase) && !request.File.Name.EndsWith("xliff", StringComparison.OrdinalIgnoreCase) && !request.File.ContentType.Contains("application/x-xliff+xml") && !request.File.ContentType.Contains("application/xliff+xml"))
+        {
+            throw new PluginMisconfigurationException("File does not have a valid XLIFF extension, please provide a valid XLIFF file.");
+        }
+
         var xliffDocument = await LoadAndParseXliffDocument(request.File);
         var instructions = request.Prompt
                            ??
@@ -65,6 +74,11 @@ public class BatchActions(InvocationContext invocationContext, IFileManagementCl
     public async Task<BatchResponse> GetQualityScoresForXliffFileAsync(
         [ActionParameter] GetXliffQualityScoreRequest request)
     {
+        if (!request.File.Name.EndsWith("xlf", StringComparison.OrdinalIgnoreCase) && !request.File.Name.EndsWith("xliff", StringComparison.OrdinalIgnoreCase) && !request.File.ContentType.Contains("application/x-xliff+xml") && !request.File.ContentType.Contains("application/xliff+xml"))
+        {
+            throw new PluginMisconfigurationException("File does not have a valid XLIFF extension, please provide a valid XLIFF file.");
+        }
+
         var xliffDocument = await LoadAndParseXliffDocument(request.File);
         var requests = await CreateBatchRequestsAsync(
             xliffDocument,
@@ -153,6 +167,11 @@ public class BatchActions(InvocationContext invocationContext, IFileManagementCl
     public async Task<GetQualityScoreBatchResultResponse> GetQualityScoresResultsAsync(
         [ActionParameter] GetQualityScoreBatchResultRequest request)
     {
+        if (!request.OriginalXliff.Name.EndsWith("xlf", StringComparison.OrdinalIgnoreCase) && !request.OriginalXliff.Name.EndsWith("xliff", StringComparison.OrdinalIgnoreCase) && !request.OriginalXliff.ContentType.Contains("application/x-xliff+xml") && !request.OriginalXliff.ContentType.Contains("application/xliff+xml"))
+        {
+            throw new PluginMisconfigurationException("File does not have a valid XLIFF extension, please provide a valid XLIFF file.");
+        }
+
         var batchRequests = await GetBatchRequestsAsync(request.BatchId);
         var xliffDocument = await LoadAndParseXliffDocument(request.OriginalXliff);
         var totalScore = 0d;

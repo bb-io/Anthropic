@@ -64,6 +64,11 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
                  "Specify the number of source texts to be translated at once. Default value: 1500. (See our documentation for an explanation)")]
         int? bucketSize = 1500)
     {
+        if (!input.Xliff.Name.EndsWith("xlf", StringComparison.OrdinalIgnoreCase) && !input.Xliff.Name.EndsWith("xliff", StringComparison.OrdinalIgnoreCase) && !input.Xliff.ContentType.Contains("application/x-xliff+xml") && !input.Xliff.ContentType.Contains("application/xliff+xml"))
+        {
+            throw new PluginMisconfigurationException("File does not have a valid XLIFF extension, please provide a valid XLIFF file.");
+        }
+
         var xliffDocument = await LoadAndParseXliffDocument(input.Xliff);
         if (xliffDocument.TranslationUnits.Count == 0)
         {
@@ -85,6 +90,11 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
                  "Specify the number of translation units processed at once. Default value: 1500. (See our documentation for an explanation)")]
         int? bucketSize = 1500)
     {
+        if (!input.Xliff.Name.EndsWith("xlf", StringComparison.OrdinalIgnoreCase) && !input.Xliff.Name.EndsWith("xliff", StringComparison.OrdinalIgnoreCase) && !input.Xliff.ContentType.Contains("application/x-xliff+xml") && !input.Xliff.ContentType.Contains("application/xliff+xml"))
+        {
+            throw new PluginMisconfigurationException("File does not have a valid XLIFF extension, please provide a valid XLIFF file.");
+        }
+
         var xliffDocument = await LoadAndParseXliffDocument(input.Xliff);
         if (xliffDocument.TranslationUnits.Count == 0)
         {
@@ -102,6 +112,11 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
     public async Task<ScoreXliffResponse> GetQualityScores([ActionParameter] ProcessXliffRequest input,
         [ActionParameter] GlossaryRequest glossaryRequest)
     {
+        if (!input.Xliff.Name.EndsWith("xlf", StringComparison.OrdinalIgnoreCase) && !input.Xliff.Name.EndsWith("xliff", StringComparison.OrdinalIgnoreCase) && !input.Xliff.ContentType.Contains("application/x-xliff+xml") && !input.Xliff.ContentType.Contains("application/xliff+xml"))
+        {
+            throw new PluginMisconfigurationException("File does not have a valid XLIFF extension, please provide a valid XLIFF file.");
+        }
+
         var xliffDocument = await LoadAndParseXliffDocument(input.Xliff);
         if (xliffDocument.TranslationUnits.Count == 0)
         {
