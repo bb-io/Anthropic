@@ -5,7 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <Product>Anthropic</Product>
-    <Version>1.1.19</Version>
+    <Version>1.1.20</Version>
     <Description>A next-generation AI assistant for your tasks, no matter the scale</Description>
     <AssemblyName>Apps.Anthropic</AssemblyName>
   </PropertyGroup>
@@ -15,8 +15,8 @@
     <PackageReference Include="Blackbird.Applications.SDK.Extensions.FileManagement" Version="1.0.2-alpha1" />
     <PackageReference Include="Blackbird.Applications.Sdk.Glossaries.Utils" Version="1.0.2-alpha1" />
     <PackageReference Include="Blackbird.Xliff.Utils" Version="1.1.11" />
-    <PackageReference Include="morelinq" Version="4.4.0" />
-    <PackageReference Include="RestSharp.Serializers.NewtonsoftJson" Version="112.1.0" />
+    <PackageReference Include="morelinq" Version="4.3.0" />
+    <PackageReference Include="RestSharp.Serializers.NewtonsoftJson" Version="110.2.0" />
   </ItemGroup>
 <ItemGroup>
     <EmbeddedResource CopyToOutputDirectory="Always" Include="image\icon.jpg"></EmbeddedResource>
