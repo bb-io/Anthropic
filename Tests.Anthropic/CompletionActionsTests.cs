@@ -20,7 +20,7 @@ public class CompletionActionsTests : TestBase
         var response = await actions.CreateCompletion(
             new()
             {
-                Prompt = "Hello, world",
+                Prompt = "Hello, world!",
                 Model = "claude-3-5-haiku-20241022"
             }, 
             new());
