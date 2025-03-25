@@ -26,6 +26,7 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
     : AnthropicInvocable(invocationContext, fileManagementClient)
 {
     private readonly IFileManagementClient _fileManagementClient = fileManagementClient;
+    private static List<string> AcceptedExtensions = new() { ".xlf", ".xliff", ".mqxliff", ".mxliff", ".txlf" };
 
     [Action("Create completion (chat)", Description = "Send a message")]
     public async Task<ResponseMessage> CreateCompletion([ActionParameter] CompletionRequest input,
@@ -64,10 +65,7 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
                  "Specify the number of source texts to be translated at once. Default value: 1500. (See our documentation for an explanation)")]
         int? bucketSize = 1500)
     {
-        if (!input.Xliff.Name.EndsWith("xlf", StringComparison.OrdinalIgnoreCase) && !input.Xliff.Name.EndsWith("xliff", StringComparison.OrdinalIgnoreCase) && !input.Xliff.ContentType.Contains("application/x-xliff+xml") && !input.Xliff.ContentType.Contains("application/xliff+xml"))
-        {
-            throw new PluginMisconfigurationException("File does not have a valid XLIFF extension, please provide a valid XLIFF file.");
-        }
+        ThrowIfXliffInvalid(input.Xliff);
 
         var xliffDocument = await LoadAndParseXliffDocument(input.Xliff);
         if (xliffDocument.TranslationUnits.Count == 0)
@@ -90,10 +88,7 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
                  "Specify the number of translation units processed at once. Default value: 1500. (See our documentation for an explanation)")]
         int? bucketSize = 1500)
     {
-        if (!input.Xliff.Name.EndsWith("xlf", StringComparison.OrdinalIgnoreCase) && !input.Xliff.Name.EndsWith("xliff", StringComparison.OrdinalIgnoreCase) && !input.Xliff.ContentType.Contains("application/x-xliff+xml") && !input.Xliff.ContentType.Contains("application/xliff+xml"))
-        {
-            throw new PluginMisconfigurationException("File does not have a valid XLIFF extension, please provide a valid XLIFF file.");
-        }
+        ThrowIfXliffInvalid(input.Xliff);
 
         var xliffDocument = await LoadAndParseXliffDocument(input.Xliff);
         if (xliffDocument.TranslationUnits.Count == 0)
@@ -112,10 +107,7 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
     public async Task<ScoreXliffResponse> GetQualityScores([ActionParameter] ProcessXliffRequest input,
         [ActionParameter] GlossaryRequest glossaryRequest)
     {
-        if (!input.Xliff.Name.EndsWith("xlf", StringComparison.OrdinalIgnoreCase) && !input.Xliff.Name.EndsWith("xliff", StringComparison.OrdinalIgnoreCase) && !input.Xliff.ContentType.Contains("application/x-xliff+xml") && !input.Xliff.ContentType.Contains("application/xliff+xml"))
-        {
-            throw new PluginMisconfigurationException("File does not have a valid XLIFF extension, please provide a valid XLIFF file.");
-        }
+        ThrowIfXliffInvalid(input.Xliff);
 
         var xliffDocument = await LoadAndParseXliffDocument(input.Xliff);
         if (xliffDocument.TranslationUnits.Count == 0)
@@ -127,6 +119,16 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
 
         var fileReference = await UploadUpdatedDocument(xliffDocument, input.Xliff);
         return new ScoreXliffResponse { XliffFile = fileReference, AverageScore = qualityScoresEntity.Score, Usage = qualityScoresEntity.Usage };
+    }
+
+    private void ThrowIfXliffInvalid(FileReference xliffFile)
+    {
+        bool isValidExtension = AcceptedExtensions.Any(ext => xliffFile.Name.EndsWith(ext, StringComparison.OrdinalIgnoreCase));
+            
+        if (!isValidExtension)
+        {
+            throw new PluginMisconfigurationException("File does not have a valid XLIFF extension, please provide a valid XLIFF file.");
+        }
     }
     
     private async Task<TranslateXliffDocumentEntity> TranslateXliffDocument(ProcessXliffRequest request, GlossaryRequest glossaryRequest, XliffDocument xliff, int bucketSize)
