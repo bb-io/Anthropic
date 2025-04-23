@@ -19,8 +19,7 @@ public class AnthropicInvocable(InvocationContext invocationContext, IFileManage
         var memoryStream = new MemoryStream();
         await stream.CopyToAsync(memoryStream);
         memoryStream.Position = 0;
-
-        return memoryStream.ToXliffDocument();
+        return memoryStream.ConvertFromXliff();
     }
   
     protected string GetUserPrompt(string prompt, XliffDocument xliffDocument, string json)

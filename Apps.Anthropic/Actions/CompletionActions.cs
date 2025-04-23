@@ -1,6 +1,4 @@
-﻿using System.Text;
-using System.Xml.Linq;
-using Apps.Anthropic.Api;
+﻿using Apps.Anthropic.Api;
 using Apps.Anthropic.Models.Request;
 using Apps.Anthropic.Models.Response;
 using Blackbird.Applications.Sdk.Common;
@@ -8,9 +6,7 @@ using Blackbird.Applications.Sdk.Common.Actions;
 using Blackbird.Applications.Sdk.Common.Files;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
-using Blackbird.Applications.Sdk.Glossaries.Utils.Converters;
 using Blackbird.Xliff.Utils;
-using Blackbird.Xliff.Utils.Models;
 using RestSharp;
 using Newtonsoft.Json;
 using MoreLinq;
@@ -68,16 +64,29 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
         ThrowIfXliffInvalid(input.Xliff);
 
         var xliffDocument = await LoadAndParseXliffDocument(input.Xliff);
-        if (xliffDocument.TranslationUnits.Count == 0)
+        var translationUnits = xliffDocument.Files.SelectMany(x => x.TranslationUnits).ToList();
+        if (translationUnits.Count == 0)
         {
             return new ProcessXliffResponse { Xliff = input.Xliff };
         }
+        
         var entity = await TranslateXliffDocument(input, glossaryRequest, xliffDocument, bucketSize ?? 1500);
-        var stream = await _fileManagementClient.DownloadAsync(input.Xliff);
-        var updatedFile = Blackbird.Xliff.Utils.Utils.XliffExtensions.UpdateOriginalFile(stream, entity.TranslationUnits);
-        string contentType = input.Xliff.ContentType ?? "application/xml";
-        var fileReference = await _fileManagementClient.UploadAsync(updatedFile, contentType, input.Xliff.Name);
-        return new ProcessXliffResponse { Xliff = fileReference, Usage = entity.Usage };
+        var updatedSegmentsCount = 0;
+        foreach (var (key, value) in entity.TranslationUnits)
+        {
+            var translationUnit = translationUnits.FirstOrDefault(x => x.Id == key);
+            if (translationUnit != null)
+            {
+                if(translationUnit.Target.Content != value)
+                {
+                    translationUnit.Target.Content = value;
+                    updatedSegmentsCount++;
+                }
+            }
+        }
+        
+        var fileReference = await _fileManagementClient.UploadAsync(xliffDocument.ConvertToXliff(), input.Xliff.ContentType, input.Xliff.Name);
+        return new ProcessXliffResponse { Xliff = fileReference, Usage = entity.Usage, UpdatedSegmentsCount = updatedSegmentsCount, TotalSegmentsCount = translationUnits.Count };
     }
     
     [Action("Post-edit XLIFF file", Description = "Updates the targets of XLIFF 1.2 files")]
@@ -91,16 +100,29 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
         ThrowIfXliffInvalid(input.Xliff);
 
         var xliffDocument = await LoadAndParseXliffDocument(input.Xliff);
-        if (xliffDocument.TranslationUnits.Count == 0)
+        var translationUnits = xliffDocument.Files.SelectMany(x => x.TranslationUnits).ToList();
+        if (translationUnits.Count == 0)
         {
             return new ProcessXliffResponse { Xliff = input.Xliff };
         }
+        
         var entity = await PostEditXliffDocument(input, glossaryRequest, xliffDocument, bucketSize ?? 1500);
-        var stream = await _fileManagementClient.DownloadAsync(input.Xliff);
-        var updatedFile = Blackbird.Xliff.Utils.Utils.XliffExtensions.UpdateOriginalFile(stream, entity.TranslationUnits);
-        string contentType = input.Xliff.ContentType ?? "application/xml";
-        var fileReference = await _fileManagementClient.UploadAsync(updatedFile, contentType, input.Xliff.Name);
-        return new ProcessXliffResponse { Xliff = fileReference, Usage = entity.Usage };
+        var updatedSegmentsCount = 0;
+        foreach (var (key, value) in entity.TranslationUnits)
+        {
+            var translationUnit = translationUnits.FirstOrDefault(x => x.Id == key);
+            if (translationUnit != null)
+            {
+                if(translationUnit.Target.Content != value)
+                {
+                    translationUnit.Target.Content = value;
+                    updatedSegmentsCount++;
+                }
+            }
+        }
+        
+        var fileReference = await _fileManagementClient.UploadAsync(xliffDocument.ConvertToXliff(), input.Xliff.ContentType, input.Xliff.Name);
+        return new ProcessXliffResponse { Xliff = fileReference, Usage = entity.Usage, UpdatedSegmentsCount = updatedSegmentsCount, TotalSegmentsCount = translationUnits.Count };
     }
     
     [Action("Get Quality Scores for XLIFF file", Description = "Gets segment and file level quality scores for XLIFF files")]
@@ -110,7 +132,8 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
         ThrowIfXliffInvalid(input.Xliff);
 
         var xliffDocument = await LoadAndParseXliffDocument(input.Xliff);
-        if (xliffDocument.TranslationUnits.Count == 0)
+        var translationUnits = xliffDocument.Files.SelectMany(x => x.TranslationUnits).ToList();
+        if (translationUnits.Count == 0)
         {
             return new ScoreXliffResponse { XliffFile = input.Xliff, AverageScore = 0 };
         }
@@ -134,12 +157,13 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
     private async Task<TranslateXliffDocumentEntity> TranslateXliffDocument(ProcessXliffRequest request, GlossaryRequest glossaryRequest, XliffDocument xliff, int bucketSize)
     {
         var results = new List<string>();
-        var batches = xliff.TranslationUnits.Batch(bucketSize);
+        var translationUnits = xliff.Files.SelectMany(x => x.TranslationUnits).ToList();
+        var batches = translationUnits.Batch(bucketSize);
         
         var totalUsage = new UsageResponse();
         foreach (var batch in batches)
         {
-            string json = JsonConvert.SerializeObject(batch.Select(x => "{ID:" + x.Id + "}" + x.Source ));
+            string json = JsonConvert.SerializeObject(batch.Select(x => "{ID:" + x.Id + "}" + x.Source.Content ));
             var UserPrompt = GetUserPrompt(request.Prompt,xliff,json);
             var response = await CreateCompletion(new(request)
             {
@@ -159,12 +183,13 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
                 {
                     throw new PluginApplicationException("Anthropic returned an unexpected response. Try adjusting the model or a lower bucket size or add retries to this action. Original error: " + e.Message);
                 }
-                else 
+                else
+                {
                     throw new PluginApplicationException(e.Message);
+                }
             }
             
-                   
-            if (result != null && result.Length != xliff.TranslationUnits.Count)
+            if (result != null && result.Length != translationUnits.Count)
             {
                 throw new PluginApplicationException(
                     "Anthropic returned an unexpected response. " +
@@ -186,7 +211,8 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
     private async Task<TranslateXliffDocumentEntity> PostEditXliffDocument(ProcessXliffRequest request, GlossaryRequest glossaryRequest, XliffDocument xliff, int bucketSize)
     {
         var results = new Dictionary<string, string>();
-        var batches = xliff.TranslationUnits.Batch(bucketSize);
+        var translationUnits = xliff.Files.SelectMany(x => x.TranslationUnits).ToList();
+        var batches = translationUnits.Batch(bucketSize);
 
         var totalUsage = new UsageResponse();
         foreach (var batch in batches)
@@ -200,7 +226,7 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
                 "Include only the target texts (including the necessary linguitic updates) in the format [ID:X]{target}. " +
                 $"Example: [ID:1]{{target1}},[ID:2]{{target2}}. " +
                 $"{request.Prompt ?? ""} Sentences: \n" +
-                string.Join("\n", batch.Select(tu => $"ID: {tu.Id}; Source: {tu.Source}; Target: {tu.Target}")),
+                string.Join("\n", batch.Select(tu => $"ID: {tu.Id}; Source: {tu.Source.Content}; Target: {tu.Target.Content}")),
                 SystemPrompt = request.SystemPrompt ?? "You are a linguistic expert that should process the following texts according to the given instructions."
             }, glossaryRequest);
 
@@ -208,9 +234,13 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
             foreach (var match in matches)
             {
                 if (match.Groups[2].Value.Contains("[ID:"))
+                {
                     continue;
+                }
                 else
+                {
                     results.Add(match.Groups[1].Value, match.Groups[2].Value);
+                }
             }
 
             totalUsage += response.Usage;
@@ -225,7 +255,8 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
         double totalScore = 0;
 
         var totalUsage = new UsageResponse();
-        foreach (var translationUnit in xliff.TranslationUnits)
+        var translationUnits = xliff.Files.SelectMany(x => x.TranslationUnits).ToList();
+        foreach (var translationUnit in translationUnits)
         {
             var sourceLanguage = translationUnit.SourceLanguage ?? xliff.SourceLanguage;
             var targetLanguage = translationUnit.TargetLanguage ?? xliff.TargetLanguage;
@@ -236,7 +267,7 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
                          $"The score number is a score from 1 to 10 assessing the quality of the translation, considering the following criteria: {criteria}." +
                          $"Provide only number as response, it's crucial, because your response will be displayed to the user without any further processing" +
                          $"Translation unit: \n" +
-                         $"Source: {translationUnit.Source}; Target: {translationUnit.Target}",
+                         $"Source: {translationUnit.Source.Content}; Target: {translationUnit.Target.Content}",
                 SystemPrompt = request.SystemPrompt ?? "You are a linguistic expert that should process the following texts according to the given instructions."
             }, glossaryRequest);
             
@@ -260,14 +291,13 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
             totalUsage += response.Usage;
         }
         
-        return new(totalScore / xliff.TranslationUnits.Count, totalUsage);
+        return new(totalScore / translationUnits.Count, totalUsage);
     }
 
     private async Task<FileReference> UploadUpdatedDocument(XliffDocument xliffDocument, FileReference originalFile)
     {
-        var outputMemoryStream = xliffDocument.ToStream();
-
-        string contentType = originalFile.ContentType ?? "application/xml";
+        var outputMemoryStream = xliffDocument.ConvertToXliff();
+        var contentType = originalFile.ContentType ?? "application/xml";
         return await _fileManagementClient.UploadAsync(outputMemoryStream, contentType, originalFile.Name);
     }
 
