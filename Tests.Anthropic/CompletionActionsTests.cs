@@ -74,7 +74,7 @@ public class CompletionActionsTests : TestBase
                 {
                     Name = "Markdown entry #1_en-US-Default_HTML-nl-NL#TR_FQTF#.html.txlf"
                 },
-                Model = "claude-3-haiku-20240307", // Use an appropriate model
+                Model = "claude-3-5-sonnet-20241022", // Use an appropriate model
                 Prompt = "Translate the text accurately while maintaining the original formatting"
             },
             new GlossaryRequest(),
@@ -102,7 +102,7 @@ public class CompletionActionsTests : TestBase
                 {
                     Name = "Markdown entry #1_en-US-Default_HTML-nl-NL#TR_FQTF#.html.txlf"
                 },
-                Model = "claude-3-haiku-20240307", // Use an appropriate model
+                Model = "claude-3-5-sonnet-20241022", // Use an appropriate model
                 Prompt = "Improve the fluency and style of the translations while maintaining meaning"
             },
             new GlossaryRequest(),
@@ -130,7 +130,7 @@ public class CompletionActionsTests : TestBase
                 {
                     Name = "Markdown entry #1_en-US-Default_HTML-nl-NL#TR_FQTF#.html.txlf"
                 },
-                Model = "claude-3-haiku-20240307",
+                Model = "claude-3-5-sonnet-20241022",
                 Prompt = "fluency, grammar, terminology, style, and punctuation"
             },
             new GlossaryRequest());

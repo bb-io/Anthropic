@@ -97,11 +97,12 @@ public class BatchActions(InvocationContext invocationContext, IFileManagementCl
     {
         var batchRequests = await GetBatchRequestsAsync(request.BatchId);
         var xliffDocument = await LoadAndParseXliffDocument(request.OriginalXliff);
+        var allTranslationUnits = xliffDocument.Files.SelectMany(f => f.TranslationUnits).ToList();
         var totalUsage = new UsageResponse();
         
         foreach (var batchRequest in batchRequests)
         {
-            var translationUnit = xliffDocument.TranslationUnits.FirstOrDefault(tu => tu.Id == batchRequest.CustomId);
+            var translationUnit = allTranslationUnits.FirstOrDefault(tu => tu.Id == batchRequest.CustomId);
             if (translationUnit == null)
             {
                 throw new PluginApplicationException(
@@ -112,7 +113,7 @@ public class BatchActions(InvocationContext invocationContext, IFileManagementCl
             var newTargetContent = batchRequest.Result.Message.Content.First().Text;
             if (request.AddMissingTrailingTags.HasValue && request.AddMissingTrailingTags == true)
             {
-                var sourceContent = translationUnit.Source!;
+                var sourceContent = translationUnit.Source.Content ?? string.Empty;
                     
                 var tagPattern = @"<(?<tag>\w+)(?<attributes>[^>]*)>(?<content>.*?)</\k<tag>>";
                 var sourceMatch = Regex.Match(sourceContent, tagPattern, RegexOptions.Singleline);
@@ -126,28 +127,28 @@ public class BatchActions(InvocationContext invocationContext, IFileManagementCl
 
                     if (!newTargetContent.Contains(openingTag) && !newTargetContent.Contains(closingTag))
                     {
-                        translationUnit.Target = openingTag + newTargetContent + closingTag;
+                        translationUnit.Target.Content = openingTag + newTargetContent + closingTag;
                     }
                     else
                     {
-                        translationUnit.Target = newTargetContent;
+                        translationUnit.Target.Content = newTargetContent;
                     }
                 }
                 else
                 {
-                    translationUnit.Target = newTargetContent;
+                    translationUnit.Target.Content = newTargetContent;
                 }
             }
             else
             {
-                translationUnit.Target = newTargetContent;
+                translationUnit.Target.Content = newTargetContent;
             }
         }
 
         Stream stream;
         try
         {
-            stream = xliffDocument.ToStream();
+            stream = xliffDocument.ConvertToXliff();
         }
         catch (Exception ex)
         {
@@ -174,10 +175,11 @@ public class BatchActions(InvocationContext invocationContext, IFileManagementCl
 
         var batchRequests = await GetBatchRequestsAsync(request.BatchId);
         var xliffDocument = await LoadAndParseXliffDocument(request.OriginalXliff);
+        var allTranslationUnits = xliffDocument.Files.SelectMany(f => f.TranslationUnits).ToList();
         var totalScore = 0d;
         foreach (var batchRequest in batchRequests)
         {
-            var translationUnit = xliffDocument.TranslationUnits.Find(tu => tu.Id == batchRequest.CustomId);
+            var translationUnit = allTranslationUnits.Find(tu => tu.Id == batchRequest.CustomId);
             if (translationUnit == null)
             {
                 throw new PluginApplicationException(
@@ -205,7 +207,7 @@ public class BatchActions(InvocationContext invocationContext, IFileManagementCl
 
         return new()
         {
-            File = await fileManagementClient.UploadAsync(xliffDocument.ToStream(), request.OriginalXliff.ContentType,
+            File = await fileManagementClient.UploadAsync(xliffDocument.ConvertToXliff(), request.OriginalXliff.ContentType,
                 request.OriginalXliff.Name),
             AverageScore = totalScore / batchRequests.Count,
         };
@@ -215,11 +217,12 @@ public class BatchActions(InvocationContext invocationContext, IFileManagementCl
         XliffDocument xliffDocument,
         T request,
         Func<string, string, string> systemPromptFactory,
-        Func<TranslationUnit, string, string> contentFactory)
+        Func<XliffUnit, string, string> contentFactory)
         where T : BaseXliffRequest
     {
         var requests = new List<object>();
-        foreach (var translationUnit in xliffDocument.TranslationUnits)
+        var allTranslationUnits = xliffDocument.Files.SelectMany(f => f.TranslationUnits).ToList();
+        foreach (var translationUnit in allTranslationUnits)
         {
             var sourceLanguage = translationUnit.SourceLanguage ?? xliffDocument.SourceLanguage;
             var targetLanguage = translationUnit.TargetLanguage ?? xliffDocument.TargetLanguage;
