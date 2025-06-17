@@ -5,6 +5,7 @@ using Apps.Anthropic.Models.Response;
 using Apps.OpenAI.Polling.Models;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.Sdk.Common.Polling;
+using Blackbird.Applications.SDK.Blueprints;
 using RestSharp;
 
 namespace Apps.Anthropic.Polling;
@@ -13,6 +14,7 @@ namespace Apps.Anthropic.Polling;
 public class BatchPollingList(InvocationContext invocationContext) : AnthropicInvocable(invocationContext, null!)
 {
     [PollingEvent("On batch ended", "Triggered when a batch status is set to ended")]
+    [BlueprintEventDefinition(BlueprintEvent.TestEvent2)]
     public async Task<PollingEventResponse<BatchMemory, BatchResponse>> OnBatchFinished(
         PollingEventRequest<BatchMemory> request,
         [PollingEventParameter] BatchIdentifier identifier)

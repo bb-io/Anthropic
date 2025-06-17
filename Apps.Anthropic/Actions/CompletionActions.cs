@@ -14,6 +14,7 @@ using System.Text.RegularExpressions;
 using Apps.Anthropic.Invocable;
 using Apps.Anthropic.Models.Entities;
 using Blackbird.Applications.Sdk.Common.Exceptions;
+using Blackbird.Applications.SDK.Blueprints;
 
 namespace Apps.Anthropic.Actions;
 
@@ -25,6 +26,7 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
     private static List<string> AcceptedExtensions = new() { ".xlf", ".xliff", ".mqxliff", ".mxliff", ".txlf" };
 
     [Action("Create completion (chat)", Description = "Send a message")]
+    [BlueprintActionDefinition(BlueprintAction.TestAction5)]
     public async Task<ResponseMessage> CreateCompletion([ActionParameter] CompletionRequest input,
         [ActionParameter] GlossaryRequest glossaryRequest)
     {
@@ -54,6 +56,7 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
     }
 
     [Action("Process XLIFF", Description = "Process XLIFF file, by default translating it to a target language")]
+    [BlueprintActionDefinition(BlueprintAction.TestAction3)]
     public async Task<ProcessXliffResponse> ProcessXliff([ActionParameter] ProcessXliffRequest input,
         [ActionParameter] GlossaryRequest glossaryRequest, [ActionParameter,
          Display("Bucket size",
@@ -126,6 +129,7 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
     }
     
     [Action("Get Quality Scores for XLIFF file", Description = "Gets segment and file level quality scores for XLIFF files")]
+    [BlueprintActionDefinition(BlueprintAction.TestAction4)]
     public async Task<ScoreXliffResponse> GetQualityScores([ActionParameter] ProcessXliffRequest input,
         [ActionParameter] GlossaryRequest glossaryRequest)
     {
