@@ -14,6 +14,7 @@ using System.Text.RegularExpressions;
 using Apps.Anthropic.Invocable;
 using Apps.Anthropic.Models.Entities;
 using Blackbird.Applications.Sdk.Common.Exceptions;
+using Apps.Anthropic.Utils;
 
 namespace Apps.Anthropic.Actions;
 
@@ -61,33 +62,36 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
                  "Specify the number of source texts to be translated at once. Default value: 1500. (See our documentation for an explanation)")]
         int? bucketSize = 1500)
     {
-        ThrowIfXliffInvalid(input.Xliff);
+        return await ErrorHandler.ExecuteWithErrorHandlingAsync(async () =>
+        {
+            ThrowIfXliffInvalid(input.Xliff);
 
-        var xliffDocument = await LoadAndParseXliffDocument(input.Xliff);
-        var translationUnits = xliffDocument.Files.SelectMany(x => x.TranslationUnits).ToList();
-        if (translationUnits.Count == 0)
-        {
-            return new ProcessXliffResponse { Xliff = input.Xliff };
-        }
-        
-        var entity = await TranslateXliffDocument(input, glossaryRequest, xliffDocument, bucketSize ?? 1500);
-        var updatedSegmentsCount = 0;
-        foreach (var (key, value) in entity.TranslationUnits)
-        {
-            var translationUnit = translationUnits.FirstOrDefault(x => x.Id == key);
-            if (translationUnit != null)
+            var xliffDocument = await LoadAndParseXliffDocument(input.Xliff);
+            var translationUnits = xliffDocument.Files.SelectMany(x => x.TranslationUnits).ToList();
+            if (translationUnits.Count == 0)
             {
-                if(translationUnit.Target.Content != value)
+                return new ProcessXliffResponse { Xliff = input.Xliff };
+            }
+
+            var entity = await TranslateXliffDocument(input, glossaryRequest, xliffDocument, bucketSize ?? 1500);
+            var updatedSegmentsCount = 0;
+            foreach (var (key, value) in entity.TranslationUnits)
+            {
+                var translationUnit = translationUnits.FirstOrDefault(x => x.Id == key);
+                if (translationUnit != null)
                 {
-                    translationUnit.Target.Content = value;
-                    updatedSegmentsCount++;
+                    if (translationUnit.Target.Content != value)
+                    {
+                        translationUnit.Target.Content = value;
+                        updatedSegmentsCount++;
+                    }
                 }
             }
-        }
-        
-        var fileReference = await _fileManagementClient.UploadAsync(xliffDocument.ConvertToXliff(), input.Xliff.ContentType, input.Xliff.Name);
-        return new ProcessXliffResponse { Xliff = fileReference, Usage = entity.Usage, UpdatedSegmentsCount = updatedSegmentsCount, TotalSegmentsCount = translationUnits.Count };
-    }
+
+            var fileReference = await _fileManagementClient.UploadAsync(xliffDocument.ConvertToXliff(), input.Xliff.ContentType, input.Xliff.Name);
+            return new ProcessXliffResponse { Xliff = fileReference, Usage = entity.Usage, UpdatedSegmentsCount = updatedSegmentsCount, TotalSegmentsCount = translationUnits.Count };
+        });
+     }
     
     [Action("Post-edit XLIFF file", Description = "Updates the targets of XLIFF 1.2 files")]
     public async Task<ProcessXliffResponse> PostEditXliff([ActionParameter] ProcessXliffRequest input,

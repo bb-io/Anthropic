@@ -1,4 +1,6 @@
 ﻿using Apps.Anthropic.Actions;
+using Apps.Anthropic.Models.Request;
+using Blackbird.Applications.Sdk.Common.Files;
 using FluentAssertions;
 using Newtonsoft.Json;
 using Tests.Anthropic.Base;
@@ -9,7 +11,7 @@ namespace Tests.Anthropic;
 public class BatchActionsTests : TestBase
 {
     [TestMethod]
-    public async Task ProcessXliffFile_ValidXliff_ShouldCreateBatch()
+    public async Task ProcessXliffFileAsync_ValidXliff_ShouldCreateBatch()
     {
         var actions = new BatchActions(InvocationContext, FileManager);
         var batch = await actions.ProcessXliffFileAsync(new()
@@ -17,7 +19,7 @@ public class BatchActionsTests : TestBase
             Model = "claude-3-5-sonnet-20240620",
             File = new()
             {
-                Name = "test.xlf",
+                Name = "simple.xliff",
                 ContentType = "text/xml"
             }
         });
@@ -26,8 +28,10 @@ public class BatchActionsTests : TestBase
 
         Console.WriteLine(JsonConvert.SerializeObject(batch, Formatting.Indented));
     }
-    
-    
+
+   
+
+
     [TestMethod]
     public async Task GetBatchResults_ValidXliff_ShouldReturnValidXliff()
     {
