@@ -1,6 +1,7 @@
 ﻿using Apps.Anthropic.DataSourceHandlers;
 using Apps.Anthropic.DataSourceHandlers.EnumHandlers;
 using Blackbird.Applications.Sdk.Common;
+using Blackbird.Applications.Sdk.Common.Dictionaries;
 using Blackbird.Applications.Sdk.Common.Dynamic;
 using Blackbird.Applications.Sdk.Common.Files;
 using Newtonsoft.Json;
@@ -33,12 +34,12 @@ public class ProcessXliffRequest
     public List<string>? StopSequences { get; set; }
 
     [Display("Temperature", Description = "Amount of randomness injected into the response.")]
-    [DataSource(typeof(TemperatureDataSourceHandler))]
+    [StaticDataSource(typeof(TemperatureDataSourceHandler))]
     [JsonProperty("temperature")]
     public string? Temperature { get; set; }
 
     [Display("top_p", Description = "Use nucleus sampling.\nIn nucleus sampling, we compute the cumulative distribution over all the options\n for each subsequent token in decreasing probability order and cut it off\n once it reaches a particular probability specified by top_p.\nYou should either alter temperature or top_p, but not both.")]
-    [DataSource(typeof(TopPDataSourceHandler))]
+    [StaticDataSource(typeof(TopPDataSourceHandler))]
     [JsonProperty("top_p")]
     public string? TopP { get; set; }
 

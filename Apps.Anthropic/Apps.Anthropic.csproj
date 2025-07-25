@@ -11,10 +11,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Blackbird.Applications.Sdk.Common" Version="2.12.0" />
+    <PackageReference Include="Blackbird.Applications.SDK.Blueprints" Version="1.0.0" />
     <PackageReference Include="Blackbird.Applications.SDK.Extensions.FileManagement" Version="1.0.2-alpha1" />
     <PackageReference Include="Blackbird.Applications.Sdk.Glossaries.Utils" Version="1.0.2-alpha1" />
     <PackageReference Include="Blackbird.Applications.Sdk.Xliff.Utils" Version="1.0.0" />
+    <PackageReference Include="Blackbird.Filters" Version="1.1.10" />
     <PackageReference Include="morelinq" Version="4.3.0" />
     <PackageReference Include="RestSharp.Serializers.NewtonsoftJson" Version="110.2.0" />
   </ItemGroup>

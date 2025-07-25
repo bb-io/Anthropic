@@ -8,11 +8,25 @@ using Blackbird.Applications.Sdk.Glossaries.Utils.Converters;
 using Blackbird.Xliff.Utils;
 using Blackbird.Xliff.Utils.Extensions;
 using System.Xml.Linq;
+using Blackbird.Applications.Sdk.Common.Exceptions;
 
 namespace Apps.Anthropic.Invocable;
 
 public class AnthropicInvocable(InvocationContext invocationContext, IFileManagementClient fileManagementClient) : BaseInvocable(invocationContext)
 {
+    private static readonly List<string> AcceptedExtensions = [".xlf", ".xliff", ".mqxliff", ".mxliff", ".txlf", ".html"];
+    
+    protected void ThrowIfXliffInvalid(FileReference xliffFile)
+    {
+        bool isValidExtension = AcceptedExtensions.Any(ext => xliffFile.Name.EndsWith(ext, StringComparison.OrdinalIgnoreCase));
+        if (!isValidExtension)
+        {
+            var expectedExtensions = string.Join(", ", AcceptedExtensions);
+            var actualExtension = Path.GetExtension(xliffFile.Name);
+            throw new PluginMisconfigurationException($"Invalid file extension '{actualExtension}'. Expected one of: {expectedExtensions}.");
+        }
+    }
+    
     protected async Task<XliffDocument> LoadAndParseXliffDocument(FileReference inputFile)
     {
         var stream = await fileManagementClient.DownloadAsync(inputFile);
@@ -35,32 +49,5 @@ public class AnthropicInvocable(InvocationContext invocationContext, IFileManage
             $"(it is crucial because your response will be deserialized programmatically. Please ensure that your response is formatted correctly to avoid any deserialization issues). " +
             $"Review and edit the translated target text as necessary to ensure it is a correct and accurate translation of the source text. " +
             $"Original texts (in serialized array format): {json}";
-    }
-    
-    protected async Task<string> GetGlossaryPromptPart(GlossaryRequest input)
-    {
-        var glossaryStream = await fileManagementClient.DownloadAsync(input.Glossary);
-        var blackbirdGlossary = await glossaryStream.ConvertFromTbx();
-
-        var glossaryPromptPart = new StringBuilder();
-        glossaryPromptPart.AppendLine();
-        glossaryPromptPart.AppendLine(
-            "Glossary entries (each entry includes terms in different languages. Each language may have a few synonymous variations which are separated by ;;):");
-
-        
-        foreach (var entry in blackbirdGlossary.ConceptEntries)
-        {
-            
-            glossaryPromptPart.AppendLine();
-            glossaryPromptPart.AppendLine("\tEntry:");
-
-            foreach (var section in entry.LanguageSections)
-            {
-                glossaryPromptPart.AppendLine(
-                    $"\t\t{section.LanguageCode}: {string.Join(";; ", section.Terms.Select(term => term.Term))}");
-            }
-        }
-
-        return glossaryPromptPart.ToString();
     }
 }

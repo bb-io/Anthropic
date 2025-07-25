@@ -8,35 +8,13 @@ using Tests.Anthropic.Base;
 namespace Tests.Anthropic;
 
 [TestClass]
-public class CompletionActionsTests : TestBase
+public class DeprecatedXliffActionsTests : TestBase
 {
-    [TestMethod]
-    public async Task CreateCompletion_WithHelloWorldPrompt_ShouldReturnValidResponse()
-    {
-        // Arrange
-        var actions = new CompletionActions(InvocationContext, FileManager);
-        
-        // Act
-        var response = await actions.CreateCompletion(
-            new()
-            {
-                Prompt = "Hello, world!",
-                Model = "claude-3-5-haiku-20241022"
-            }, 
-            new());
-
-        // Assert
-        response.Text.Should().NotBeNullOrEmpty();
-        response.Usage.InputTokens.Should().BeGreaterThan(0);
-
-        Console.WriteLine(JsonConvert.SerializeObject(response, Formatting.Indented));
-    }
-
     [TestMethod]
     public async Task GetQualityScores_WithTranslatedXliff_ShouldReturnValidScore()
     {
         // Arrange
-        var actions = new CompletionActions(InvocationContext, FileManager);
+        var actions = new DeprecatedXliffActions(InvocationContext, FileManager);
         var xliffRequest = new ProcessXliffRequest
         {
             Xliff = new FileReference
@@ -64,7 +42,7 @@ public class CompletionActionsTests : TestBase
     public async Task ProcessXliff_WithXliffFile_ProcessesSuccessfully()
     {
         // Arrange
-        var completionActions = new CompletionActions(InvocationContext, FileManager);
+        var completionActions = new DeprecatedXliffActions(InvocationContext, FileManager);
 
         // Act
         var result = await completionActions.ProcessXliff(
@@ -92,7 +70,7 @@ public class CompletionActionsTests : TestBase
     public async Task PostEditXliff_WithXliffFile_ProcessesSuccessfully()
     {
         // Arrange
-        var completionActions = new CompletionActions(InvocationContext, FileManager);
+        var completionActions = new DeprecatedXliffActions(InvocationContext, FileManager);
 
         // Act
         var result = await completionActions.PostEditXliff(
@@ -120,7 +98,7 @@ public class CompletionActionsTests : TestBase
     public async Task GetQualityScores_WithXliffFile_ProcessesSuccessfully()
     {
         // Arrange
-        var completionActions = new CompletionActions(InvocationContext, FileManager);
+        var completionActions = new DeprecatedXliffActions(InvocationContext, FileManager);
 
         // Act
         var result = await completionActions.GetQualityScores(
