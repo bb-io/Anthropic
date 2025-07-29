@@ -17,11 +17,11 @@ public class ReviewTextRequest
     public string TargetText { get; set; } = string.Empty;
     
     [Display("Source language")]
-    [StaticDataSource(typeof(LocaleDataSourceHandler))]
+    [DataSource(typeof(LocaleDataSourceHandler))]
     public string? SourceLanguage { get; set; }
     
     [Display("Target language")]
-    [StaticDataSource(typeof(LocaleDataSourceHandler))]
+    [DataSource(typeof(LocaleDataSourceHandler))]
     public string TargetLanguage { get; set; } = string.Empty;
 
     [Display("Model", Description = "This parameter controls which version of Claude answers your request")]
@@ -37,12 +37,12 @@ public class ReviewTextRequest
     public int? MaxTokensToSample { get; set; }
 
     [Display("Temperature", Description = "Amount of randomness injected into the response.")]
-    [StaticDataSource(typeof(TemperatureDataSourceHandler))]
+    [DataSource(typeof(TemperatureDataSourceHandler))]
     [JsonProperty("temperature")]
     public string? Temperature { get; set; }
 
     [Display("top_p", Description = "Use nucleus sampling.")]
-    [StaticDataSource(typeof(TopPDataSourceHandler))]
+    [DataSource(typeof(TopPDataSourceHandler))]
     [JsonProperty("top_p")]
     public string? TopP { get; set; }
 
