@@ -43,7 +43,7 @@ public class EditActions(InvocationContext invocationContext, IFileManagementCli
         {
             content.SourceLanguage = await _aiUtilities.IdentifySourceLanguageAsync(input.Model, content.Source().GetPlaintext());
         }
-
+        
         var segments = content.GetSegments();
         result.TotalSegmentsReviewed = segments.Count();
         segments = segments.Where(x => !x.IsIgnorbale && x.State == SegmentState.Translated).ToList();

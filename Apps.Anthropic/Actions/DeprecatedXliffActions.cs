@@ -23,7 +23,7 @@ public class DeprecatedXliffActions(InvocationContext invocationContext, IFileMa
     private readonly IFileManagementClient _fileManagementClient = fileManagementClient;
     private readonly ChatActions _chatActions = new(invocationContext, fileManagementClient);
 
-    [Action("Process XLIFF", Description = "Process XLIFF file, by default translating it to a target language")]
+    [Action("Process XLIFF", Description = "Process XLIFF file, by default translating it to a target language. Deprected. Use the 'Translate' action")]
     public async Task<ProcessXliffResponse> ProcessXliff([ActionParameter] ProcessXliffRequest input,
         [ActionParameter] GlossaryRequest glossaryRequest, 
         [ActionParameter, Display("Bucket size", Description = "Specify the number of source texts to be translated at once. Default value: 1500. (See our documentation for an explanation)")] int? bucketSize = 1500)
@@ -59,7 +59,7 @@ public class DeprecatedXliffActions(InvocationContext invocationContext, IFileMa
         });
      }
     
-    [Action("Post-edit XLIFF", Description = "Updates the targets of XLIFF 1.2 files")]
+    [Action("Post-edit XLIFF", Description = "Updates the targets of XLIFF files. Deprected. Use the 'Edit' action")]
     public async Task<ProcessXliffResponse> PostEditXliff([ActionParameter] ProcessXliffRequest input,
         [ActionParameter] GlossaryRequest glossaryRequest,[ActionParameter,
          Display("Bucket size",
