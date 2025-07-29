@@ -5,6 +5,7 @@ using Apps.Anthropic.Models.Response;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
 using Blackbird.Applications.Sdk.Glossaries.Utils.Converters;
+using Blackbird.Applications.Sdk.Common.Files;
 using RestSharp;
 
 namespace Apps.Anthropic.Utils;
@@ -67,6 +68,16 @@ public class AiUtilities(InvocationContext invocationContext, IFileManagementCli
 
         var response = await client.ExecuteWithErrorHandling<CompletionResponse>(request);
         return response.Content.FirstOrDefault()?.Text ?? "";
+    }
+    
+    public async Task<string?> GetGlossaryPromptPart(FileReference? glossary, string text, bool includeReverse = false)
+    {
+        if (glossary == null)
+        {
+            return null;
+        }
+        
+        return await GlossaryPromptHelper.GetGlossaryPromptPart(new GlossaryRequest { Glossary = glossary }, fileManagementClient);
     }
     
     private async Task<List<Message>> GenerateChatMessages(CompletionRequest input, GlossaryRequest glossaryRequest)
