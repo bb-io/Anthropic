@@ -1,15 +1,15 @@
-﻿using Apps.Anthropic.Constants;
-using Apps.Anthropic.Invocable;
-using Apps.Anthropic.Models.Entities;
+﻿using Apps.Anthropic.Invocable;
 using Apps.Anthropic.Models.Request;
 using Apps.Anthropic.Models.Response;
 using Apps.Anthropic.Utils;
+using Apps.Anthropic.Models.Entities;
+using Apps.Anthropic.Constants;
 using Blackbird.Applications.SDK.Blueprints;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
-using Blackbird.Applications.Sdk.Common.Exceptions;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
+using Blackbird.Applications.Sdk.Common.Exceptions;
 using Blackbird.Filters.Constants;
 using Blackbird.Filters.Enums;
 using Blackbird.Filters.Extensions;
@@ -18,21 +18,22 @@ using Newtonsoft.Json;
 
 namespace Apps.Anthropic.Actions;
 
-[ActionList("Translation")]
-public class TranslationActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient) : AnthropicInvocable(invocationContext, fileManagementClient)
+[ActionList("Editing")]
+public class EditActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient) : AnthropicInvocable(invocationContext, fileManagementClient)
 {
     private readonly AiUtilities _aiUtilities = new(invocationContext, fileManagementClient);
     
-    [BlueprintActionDefinition(BlueprintAction.TranslateFile)]
-    [Action("Translate", Description = "Translate file content retrieved from a CMS or file storage. The output can be used in compatible actions.")]
-    public async Task<TranslateContentResponse> Translate([ActionParameter] TranslateContentRequest input)
+    [BlueprintActionDefinition(BlueprintAction.EditFile)]
+    [Action("Edit", Description = "Edit a translation. This action assumes you have previously translated content in Blackbird through any translation action.")]
+    public async Task<EditContentResponse> EditContent([ActionParameter] EditContentRequest input)
     {
-        var result = new TranslateContentResponse();
-            
+        var result = new EditContentResponse();
+        
         var stream = await fileManagementClient.DownloadAsync(input.File);
         var content = await ErrorHandler.ExecuteWithErrorHandlingAsync(() => Transformation.Parse(stream, input.File.Name));
         content.SourceLanguage ??= input.SourceLanguage;
         content.TargetLanguage ??= input.TargetLanguage;    
+        
         if (content.TargetLanguage == null)
         {
             throw new PluginMisconfigurationException("The target language is not defined yet. Please assign the target language in this action.");
@@ -43,18 +44,23 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
             content.SourceLanguage = await _aiUtilities.IdentifySourceLanguageAsync(input.Model, content.Source().GetPlaintext());
         }
 
-        var segments = content.GetSegments().ToList();
-        result.TotalSegmentsCount = segments.Count;
-        segments = segments.Where(x => !x.IsIgnorbale && x.IsInitial).ToList();
+        var segments = content.GetSegments();
+        result.TotalSegmentsReviewed = segments.Count();
+        segments = segments.Where(x => !x.IsIgnorbale && x.State == SegmentState.Translated).ToList();
         
-        async Task<IEnumerable<TranslationEntity>> TranslateBatch(IEnumerable<Segment> batch)
+        async Task<IEnumerable<TranslationEntity>> EditBatch(IEnumerable<Segment> batch)
         {
-            var batchForJson = batch.Select((x, i) => new { id = i, source_text = x.GetSource() }).ToList();
+            var batchForJson = batch.Select((x, i) => new { 
+                id = i, 
+                source_text = x.GetSource(), 
+                target_text = x.GetTarget() 
+            }).ToList();
             var batchJson = JsonConvert.SerializeObject(batchForJson);
+            
             var completionRequest = new CompletionRequest
             {
-                Prompt = PromptBuilder.BuildTranslateUserPrompt(input.AdditionalInstructions, content, batchJson),
-                SystemPrompt = input.SystemPrompt ?? PromptBuilder.BuildTranslateSystemPrompt(),
+                Prompt = PromptBuilder.BuildEditUserPrompt(input.AdditionalInstructions, content, batchJson),
+                SystemPrompt = input.SystemPrompt ?? PromptBuilder.BuildEditSystemPrompt(),
                 Temperature = input.Temperature,
                 TopP = input.TopP,
                 TopK = input.TopK,
@@ -69,6 +75,7 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
             });
             
             List<TranslationEntity> translationEntities = new();
+            
             try
             {
                 var deserializeResponse = ResponseDeserializationHelper.DeserializeResponse(response.Text);
@@ -97,25 +104,20 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
             return translationEntities;
         }
         
-        var processedBatches = await segments.Batch(input.BucketSize ?? XliffConstants.DefaultBucketSize).Process(TranslateBatch);
+        var processedBatches = await segments.Batch(input.BucketSize ?? XliffConstants.DefaultBucketSize).Process(EditBatch);
         var updatedCount = 0;
+        
         foreach (var (segment, translation) in processedBatches)
         {
-            var shouldTranslateFromState = segment.State == null || segment.State == SegmentState.Initial;
-            if (!shouldTranslateFromState || string.IsNullOrEmpty(translation.TranslatedText))
-            {
-                continue;
-            }
-
-            if (segment.GetTarget() != translation.TranslatedText)
+            if (!string.IsNullOrEmpty(translation.TranslatedText) && segment.GetTarget() != translation.TranslatedText)
             {
                 updatedCount++;
                 segment.SetTarget(translation.TranslatedText);
-                segment.State = SegmentState.Translated;
+                segment.State = SegmentState.Reviewed;
             }
         }
 
-        result.UpdatedSegmentsCount = updatedCount;
+        result.TotalSegmentsUpdated = updatedCount;
 
         if (input.OutputFileHandling == "original")
         {
@@ -125,50 +127,47 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
         else
         {
             result.File = await fileManagementClient.UploadAsync(content.Serialize().ToStream(), MediaTypes.Xliff, content.XliffFileName);
-        }       
+        }      
 
         return result;
     }
-
-    [BlueprintActionDefinition(BlueprintAction.TranslateText)]
-    [Action("Translate text", Description = "Localize the text provided.")]
-    public async Task<TranslateTextResponse> TranslateText([ActionParameter] TranslateTextRequest input)
+    
+    [BlueprintActionDefinition(BlueprintAction.EditText)]
+    [Action("Edit text", Description = "Review translated text and generate an edited version")]
+    public async Task<EditTextResponse> EditText([ActionParameter] EditTextRequest input)
     {
-        var systemPrompt = "You are a text localizer. Localize the provided text for the specified locale while " +
-                          "preserving the original text structure. Respond with localized text.";
+        var systemPrompt =
+            $"You are receiving a source text{(input.SourceLanguage != null ? $" written in {input.SourceLanguage} " : "")}" +
+            $"that was translated into target text{(input.TargetLanguage != null ? $" written in {input.TargetLanguage}" : "")}. " +
+            "Review the target text and respond ONLY with the edited version of the target text. If no edits are required, respond with the original target text unchanged. " +
+            "Do not include any explanations, comments, or additional text in your response. " +
+            $"{(input.TargetAudience != null ? $"The target audience is {input.TargetAudience}" : string.Empty)}";
 
-        var sourceLanguage = input.SourceLanguage;
-        if (string.IsNullOrEmpty(sourceLanguage))
-        {
-            sourceLanguage = await _aiUtilities.IdentifySourceLanguageAsync(input.Model, input.Text);
-        }
+        if (input.Glossary != null)
+            systemPrompt +=
+            " Use relevant terms from the glossary where applicable, ensuring the translation aligns with the glossary entries for the respective languages.";
 
-        var userPrompt = $@"
-Original text: {input.Text}
-Source language: {sourceLanguage}
-Target language: {input.TargetLanguage}
-";
+        if (input.AdditionalInstructions != null)
+            systemPrompt = $"{systemPrompt} {input.AdditionalInstructions}";
 
-        if (!string.IsNullOrWhiteSpace(input.AdditionalInstructions))
-        {
-            userPrompt += $"\nAdditional instructions: {input.AdditionalInstructions}\n";
-        }
+        var userPrompt = @$"
+    Source text: 
+    {input.SourceText}
+
+    Target text: 
+    {input.TargetText}
+
+    Important: Your response must contain ONLY the edited text, with no explanations or comments.
+    ";
 
         if (input.Glossary != null)
         {
-            var glossaryPromptPart = await _aiUtilities.GetGlossaryPromptPart(input.Glossary, input.Text, true);
+            var glossaryPromptPart = await _aiUtilities.GetGlossaryPromptPart(input.Glossary, input.SourceText, true);
             if (!string.IsNullOrEmpty(glossaryPromptPart))
             {
-                userPrompt +=
-                    "\nEnhance the localized text by incorporating relevant terms from our glossary where applicable. " +
-                    "If you encounter terms from the glossary in the text, ensure that the localized text aligns " +
-                    "with the glossary entries for the respective languages. If a term has variations or synonyms, " +
-                    "consider them and choose the most appropriate translation from the glossary to maintain " +
-                    $"consistency and precision. {glossaryPromptPart}";
+                userPrompt += glossaryPromptPart;
             }
         }
-
-        userPrompt += "\nTranslated text: ";
 
         var completionRequest = new CompletionRequest
         {
@@ -186,11 +185,11 @@ Target language: {input.TargetLanguage}
             Glossary = input.Glossary
         });
 
-        return new TranslateTextResponse
+        return new EditTextResponse
         {
             SystemPrompt = systemPrompt,
             UserPrompt = userPrompt,
-            TranslatedText = response.Text,
+            EditedText = response.Text,
             Usage = response.Usage
         };
     }

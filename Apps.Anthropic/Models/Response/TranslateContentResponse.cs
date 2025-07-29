@@ -4,7 +4,7 @@ using Blackbird.Applications.Sdk.Common.Files;
 
 namespace Apps.Anthropic.Models.Response;
 
-public class TranslateResponse : ITranslateFileOutput
+public class TranslateContentResponse : ITranslateFileOutput
 {
     public FileReference File { get; set; } = new();
 

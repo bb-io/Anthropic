@@ -2,7 +2,7 @@
 using Apps.Anthropic.DataSourceHandlers;
 using Apps.Anthropic.DataSourceHandlers.EnumHandlers;
 using Blackbird.Applications.SDK.Blueprints.Handlers;
-using Blackbird.Applications.SDK.Blueprints.Interfaces.Translate;
+using Blackbird.Applications.SDK.Blueprints.Interfaces.Edit;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Dictionaries;
 using Blackbird.Applications.Sdk.Common.Dynamic;
@@ -11,7 +11,7 @@ using Newtonsoft.Json;
 
 namespace Apps.Anthropic.Models.Request;
 
-public class TranslateRequest : ITranslateFileInput
+public class EditContentRequest : IEditFileInput
 {
     public FileReference File { get; set; } = new();
     

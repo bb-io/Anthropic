@@ -17,7 +17,7 @@ public class TranslationActionsTests : TestBase
 
         // Act
         var result = await translationActions.Translate(
-            new TranslateRequest
+            new TranslateContentRequest
             {
                 File = new FileReference
                 {
