@@ -1,22 +1,39 @@
-﻿using Apps.Anthropic.DataSourceHandlers;
+﻿using Apps.Anthropic.Constants;
+using Apps.Anthropic.DataSourceHandlers;
 using Apps.Anthropic.DataSourceHandlers.EnumHandlers;
+using Blackbird.Applications.SDK.Blueprints.Handlers;
+using Blackbird.Applications.SDK.Blueprints.Interfaces.Edit;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Dictionaries;
 using Blackbird.Applications.Sdk.Common.Dynamic;
+using Blackbird.Applications.Sdk.Common.Files;
 using Newtonsoft.Json;
 
 namespace Apps.Anthropic.Models.Request;
 
-public class CompletionRequest
+public class EditContentRequest : IEditFileInput
 {
+    public FileReference File { get; set; } = new();
+    
+    [Display("Source language")]
+    [StaticDataSource(typeof(LocaleDataSourceHandler))]
+    public string? SourceLanguage { get; set; }
+    
+    [Display("Target language")]
+    [StaticDataSource(typeof(LocaleDataSourceHandler))]
+    public string TargetLanguage { get; set; } = string.Empty;
+    
+    [Display("Output file handling", Description = "Determine the format of the output file. The default Blackbird behavior is to convert to XLIFF for future steps."), StaticDataSource(typeof(ProcessFileFormatHandler))]
+    public string? OutputFileHandling { get; set; }
+
     [Display("Model", Description = "This parameter controls which version of Claude answers your request")]
     [DataSource(typeof(ModelDataSource))]
     [JsonProperty("model")]
-    public string Model { get; set; }
+    public string Model { get; set; } = string.Empty;
 
-    [Display("Prompt", Description = "The prompt that you want Claude to complete.")]
+    [Display("Additional instructions", Description = "The additional instructions that you want to apply to the translation.\nFor example, 'Cater to an older audience.'")]
     [JsonProperty("prompt")]
-    public string Prompt { get; set; }
+    public string? AdditionalInstructions { get; set; }
 
     [Display("System prompt", Description = "A system prompt is a way of providing context and instructions to Claude,\n such as specifying a particular goal or role for Claude before asking it a question or giving it a task.")]
     public string? SystemPrompt { get; set; }
@@ -42,17 +59,12 @@ public class CompletionRequest
     [Display("top_k", Description = "Only sample from the top K options for each subsequent token.\nUsed to remove \"long tail\" low probability responses.")]
     [JsonProperty("top_k")]
     public int? TopK { get; set; }
+    
+    public FileReference? Glossary { get; set; }
+    
+    [Display("Bucket size", Description = "Specify the number of source texts to be translated at once. Default value: 50. (See our documentation for an explanation)")]
+    public int? BucketSize { get; set; } = XliffConstants.DefaultBucketSize;
 
-    public CompletionRequest()
-    { }
-
-    public CompletionRequest(ProcessXliffRequest xliffRequest)
-    {
-        Model = xliffRequest.Model;
-        MaxTokensToSample = xliffRequest.MaxTokensToSample;
-        StopSequences = xliffRequest.StopSequences;
-        Temperature = xliffRequest.Temperature;
-        TopP = xliffRequest.TopP;
-        TopK = xliffRequest.TopK;
-    }
+    [Display("Ignore deserialization errors", Description = "If enabled, the action will ignore deserialization errors and return the response as is.")]
+    public bool? IgnoreDeserializationErrors { get; set; }
 }

@@ -1,5 +1,4 @@
-﻿using Apps.Anthropic.Api;
-using Apps.Anthropic.Models.Request;
+﻿using Apps.Anthropic.Models.Request;
 using Apps.Anthropic.Models.Response;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
@@ -7,7 +6,6 @@ using Blackbird.Applications.Sdk.Common.Files;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
 using Blackbird.Xliff.Utils;
-using RestSharp;
 using Newtonsoft.Json;
 using MoreLinq;
 using System.Text.RegularExpressions;
@@ -18,54 +16,22 @@ using Apps.Anthropic.Utils;
 
 namespace Apps.Anthropic.Actions;
 
-[ActionList]
-public class CompletionActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient)
+[ActionList("Deprecated XLIFF")]
+public class DeprecatedXliffActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient)
     : AnthropicInvocable(invocationContext, fileManagementClient)
 {
     private readonly IFileManagementClient _fileManagementClient = fileManagementClient;
-    private static List<string> AcceptedExtensions = new() { ".xlf", ".xliff", ".mqxliff", ".mxliff", ".txlf" };
+    private readonly ChatActions _chatActions = new(invocationContext, fileManagementClient);
 
-    [Action("Create completion (chat)", Description = "Send a message")]
-    public async Task<ResponseMessage> CreateCompletion([ActionParameter] CompletionRequest input,
-        [ActionParameter] GlossaryRequest glossaryRequest)
-    {
-            var client = new AnthropicRestClient(InvocationContext.AuthenticationCredentialsProviders);
-            var request = new RestRequest("/messages", Method.Post);
-            var messages = await GenerateChatMessages(input, glossaryRequest);
-
-            request.AddJsonBody(new
-            {
-                system = input.SystemPrompt ?? "",
-                model = input.Model,
-                messages = messages,
-                max_tokens = input.MaxTokensToSample ?? 4096,
-                stop_sequences = input.StopSequences != null ? input.StopSequences : new List<string>(),
-                temperature = input.Temperature != null ? float.Parse(input.Temperature) : 1.0f,
-                top_p = input.TopP != null ? float.Parse(input.TopP) : 1.0f,
-                top_k = input.TopK != null ? input.TopK : 1,
-            });
-
-            var response = await client.ExecuteWithErrorHandling<CompletionResponse>(request);
-
-            return new ResponseMessage
-            {
-                Text = response.Content.FirstOrDefault()?.Text ?? "",
-                Usage = response.Usage
-            }; 
-    }
-
-    [Action("Process XLIFF", Description = "Process XLIFF file, by default translating it to a target language")]
+    [Action("Process XLIFF", Description = "Process XLIFF file, by default translating it to a target language. Deprected. Use the 'Translate' action")]
     public async Task<ProcessXliffResponse> ProcessXliff([ActionParameter] ProcessXliffRequest input,
-        [ActionParameter] GlossaryRequest glossaryRequest, [ActionParameter,
-         Display("Bucket size",
-             Description =
-                 "Specify the number of source texts to be translated at once. Default value: 1500. (See our documentation for an explanation)")]
-        int? bucketSize = 1500)
+        [ActionParameter] GlossaryRequest glossaryRequest, 
+        [ActionParameter, Display("Bucket size", Description = "Specify the number of source texts to be translated at once. Default value: 1500. (See our documentation for an explanation)")] int? bucketSize = 1500)
     {
         return await ErrorHandler.ExecuteWithErrorHandlingAsync(async () =>
         {
             ThrowIfXliffInvalid(input.Xliff);
-
+            
             var xliffDocument = await LoadAndParseXliffDocument(input.Xliff);
             var translationUnits = xliffDocument.Files.SelectMany(x => x.TranslationUnits).ToList();
             if (translationUnits.Count == 0)
@@ -93,7 +59,7 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
         });
      }
     
-    [Action("Post-edit XLIFF file", Description = "Updates the targets of XLIFF 1.2 files")]
+    [Action("Post-edit XLIFF", Description = "Updates the targets of XLIFF files. Deprected. Use the 'Edit' action")]
     public async Task<ProcessXliffResponse> PostEditXliff([ActionParameter] ProcessXliffRequest input,
         [ActionParameter] GlossaryRequest glossaryRequest,[ActionParameter,
          Display("Bucket size",
@@ -129,7 +95,7 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
         return new ProcessXliffResponse { Xliff = fileReference, Usage = entity.Usage, UpdatedSegmentsCount = updatedSegmentsCount, TotalSegmentsCount = translationUnits.Count };
     }
     
-    [Action("Get Quality Scores for XLIFF file", Description = "Gets segment and file level quality scores for XLIFF files")]
+    [Action("Get Quality Scores for XLIFF", Description = "Gets segment and file level quality scores for XLIFF files. Deprecated. Use the 'Review' action instead")]
     public async Task<ScoreXliffResponse> GetQualityScores([ActionParameter] ProcessXliffRequest input,
         [ActionParameter] GlossaryRequest glossaryRequest)
     {
@@ -147,16 +113,6 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
         var fileReference = await UploadUpdatedDocument(xliffDocument, input.Xliff);
         return new ScoreXliffResponse { XliffFile = fileReference, AverageScore = qualityScoresEntity.Score, Usage = qualityScoresEntity.Usage };
     }
-
-    private void ThrowIfXliffInvalid(FileReference xliffFile)
-    {
-        bool isValidExtension = AcceptedExtensions.Any(ext => xliffFile.Name.EndsWith(ext, StringComparison.OrdinalIgnoreCase));
-            
-        if (!isValidExtension)
-        {
-            throw new PluginMisconfigurationException("File does not have a valid XLIFF extension, please provide a valid XLIFF file.");
-        }
-    }
     
     private async Task<TranslateXliffDocumentEntity> TranslateXliffDocument(ProcessXliffRequest request, GlossaryRequest glossaryRequest, XliffDocument xliff, int bucketSize)
     {
@@ -169,7 +125,7 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
         {
             string json = JsonConvert.SerializeObject(batch.Select(x => "{ID:" + x.Id + "}" + x.Source.Content ));
             var UserPrompt = GetUserPrompt(request.Prompt,xliff,json);
-            var response = await CreateCompletion(new(request)
+            var response = await _chatActions.CreateCompletion(new(request)
             {
                 Prompt = UserPrompt,
                 SystemPrompt = request.SystemPrompt ?? "You are tasked with localizing the provided text. Consider cultural nuances, idiomatic expressions, " +
@@ -211,7 +167,6 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
             y => Regex.Match(y, "\\{ID:(.*?)\\}(.+)$").Groups[2].Value), totalUsage);
     }
     
-
     private async Task<TranslateXliffDocumentEntity> PostEditXliffDocument(ProcessXliffRequest request, GlossaryRequest glossaryRequest, XliffDocument xliff, int bucketSize)
     {
         var results = new Dictionary<string, string>();
@@ -221,7 +176,7 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
         var totalUsage = new UsageResponse();
         foreach (var batch in batches)
         {
-            var response = await CreateCompletion(new(request)
+            var response = await _chatActions.CreateCompletion(new(request)
             {
                 Prompt = 
                 $"Your input consists of sentences in {xliff.SourceLanguage} language with their translations into {xliff.TargetLanguage}. " +
@@ -264,7 +219,7 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
         {
             var sourceLanguage = translationUnit.SourceLanguage ?? xliff.SourceLanguage;
             var targetLanguage = translationUnit.TargetLanguage ?? xliff.TargetLanguage;
-            var response = await CreateCompletion(new(request)
+            var response = await _chatActions.CreateCompletion(new(request)
             {
                 Prompt = $"Your input is going to be a sentence in {sourceLanguage} as source language and their translation into {targetLanguage}. " +
                          "You need to review the target text and respond with scores for the target text. " +
@@ -303,20 +258,5 @@ public class CompletionActions(InvocationContext invocationContext, IFileManagem
         var outputMemoryStream = xliffDocument.ConvertToXliff();
         var contentType = originalFile.ContentType ?? "application/xml";
         return await _fileManagementClient.UploadAsync(outputMemoryStream, contentType, originalFile.Name);
-    }
-
-    private async Task<List<Message>> GenerateChatMessages(CompletionRequest input, GlossaryRequest glossaryRequest)
-    {
-        var messages = new List<Message>();
-
-        string prompt = input.Prompt;
-        if (glossaryRequest.Glossary != null)
-        {
-            var glossaryPromptPart = await GetGlossaryPromptPart(glossaryRequest);
-            prompt += glossaryPromptPart;
-        }
-
-        messages.Add(new Message { Role = "user", Content = prompt });
-        return messages;
     }
 }

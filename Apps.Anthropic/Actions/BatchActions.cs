@@ -5,6 +5,7 @@ using Apps.Anthropic.Invocable;
 using Apps.Anthropic.Models.Entities;
 using Apps.Anthropic.Models.Request;
 using Apps.Anthropic.Models.Response;
+using Apps.Anthropic.Utils;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
 using Blackbird.Applications.Sdk.Common.Exceptions;
@@ -18,11 +19,11 @@ using RestSharp;
 
 namespace Apps.Anthropic.Actions;
 
-[ActionList]
+[ActionList("Batch processing")]
 public class BatchActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient)
     : AnthropicInvocable(invocationContext, fileManagementClient)
 {
-    [Action("(Batch) Process XLIFF file",
+    [Action("(Batch) Process XLIFF",
         Description =
             "Asynchronously process each translation unit in the XLIFF file according to the provided instructions (by default it just translates the source tags) and updates the target text for each unit.")]
     public async Task<BatchResponse> ProcessXliffFileAsync([ActionParameter] ProcessXliffFileRequest request)
@@ -44,7 +45,7 @@ public class BatchActions(InvocationContext invocationContext, IFileManagementCl
         return await SendBatchRequestsAsync(requests);
     }
 
-    [Action("(Batch) Post-edit XLIFF file",
+    [Action("(Batch) Post-edit XLIFF",
         Description =
             "Asynchronously post-edit the target text of each translation unit in the XLIFF file according to the provided instructions and updates the target text for each unit.")]
     public async Task<BatchResponse> PostEditXliffFileAsync([ActionParameter] ProcessXliffFileRequest request)
@@ -69,7 +70,7 @@ public class BatchActions(InvocationContext invocationContext, IFileManagementCl
         return await SendBatchRequestsAsync(requests);
     }
 
-    [Action("(Batch) Get Quality Scores for XLIFF file",
+    [Action("(Batch) Get Quality Scores for XLIFF",
         Description = "Asynchronously get quality scores for each translation unit in the XLIFF file.")]
     public async Task<BatchResponse> GetQualityScoresForXliffFileAsync(
         [ActionParameter] GetXliffQualityScoreRequest request)
@@ -229,7 +230,7 @@ public class BatchActions(InvocationContext invocationContext, IFileManagementCl
             var glossaryText = "";
             if (request.Glossary != null)
             {
-                glossaryText = await GetGlossaryPromptPart(new() { Glossary = request.Glossary });
+                glossaryText = await GlossaryPromptHelper.GetGlossaryPromptPart(new() { Glossary = request.Glossary }, fileManagementClient);
             }
 
             var content = contentFactory(translationUnit, glossaryText);

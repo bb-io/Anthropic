@@ -1,0 +1,312 @@
+<xliff srcLang="en" trgLang="fr" version="2,2" xmlns:mda="urn:oasis:names:tc:xliff:metadata:2.0" xmlns="urn:oasis:names:tc:xliff:document:2.2">
+    <file id="f1">
+        <mda:metadata>
+            <mda:metaGroup category="blackbird">
+                <mda:meta type="original-name">contentful.html</mda:meta>
+                <mda:meta type="original-media-type">text/html</mda:meta>
+            </mda:metaGroup>
+        </mda:metadata>
+        <skeleton>&lt;html&gt;&lt;head&gt;&lt;meta name="blackbird-entry-id" content="6QP21paXUzebsbOvBXLIGr"&gt;&lt;meta name="blackbird-locale" content="en"&gt;&lt;/head&gt;&lt;body&gt;&lt;div data-contentful-entry-id="6QP21paXUzebsbOvBXLIGr"&gt;&lt;div data-contentful-field-type="RichText" data-contentful-field-id="name"&gt;&lt;p&gt;Blackbird investigation&lt;/p&gt;&lt;/div&gt;&lt;div data-contentful-field-type="Symbol" data-contentful-field-id="slug"&gt;Blackbird investigation entry&lt;/div&gt;&lt;div data-contentful-field-type="RichText" data-contentful-field-id="groupName"&gt;&lt;p&gt;AEDs and monitors/defibrillators&lt;/p&gt;&lt;/div&gt;&lt;div data-contentful-field-type="RichText" data-contentful-field-id="headline"&gt;&lt;p&gt;Why Philips AEDs?&lt;/p&gt;&lt;/div&gt;&lt;div data-contentful-field-type="RichText" data-contentful-field-id="introduction"&gt;&lt;p&gt;&lt;p&gt;Designed for ease of use, Philips automated external defibrillators (AEDs) are ready to act when you are. They provide the treatment of the most common cause of sudden cardiac arrest (SCA) by delivering a shock quickly and effectively, wherever SCA happens.&lt;/p&gt;
+            &lt;p&gt;HeartStart AEDs guide you through the rescue process, including CPR and how to initiate an electrical current if recommended. Our AED devices are designed for every use type, whether inside or outside, in varying environments so you can help save a life anytime, anywhere.&lt;/p&gt;
+            &lt;/div&gt;&lt;div data-contentful-field-type="RichText" data-contentful-field-id="demonstratedResultsHeadline"&gt;&lt;p&gt;Demonstrated results headline&lt;/p&gt;&lt;/div&gt;&lt;div data-contentful-field-type="Object" data-contentful-field-id="demonstratedResults" data-array-json-object="true"&gt;&lt;div data-field="customField" data-path="demonstratedResults.en[0]" data-contentful-json-value="{&amp;quot;ctaUrl&amp;quot;:&amp;quot;&amp;quot;,&amp;quot;result&amp;quot;:{&amp;quot;assetUrl&amp;quot;:&amp;quot;&amp;quot;,&amp;quot;assetName&amp;quot;:&amp;quot;&amp;quot;,&amp;quot;assetType&amp;quot;:&amp;quot;Asset&amp;quot;,&amp;quot;youtubeID&amp;quot;:&amp;quot;&amp;quot;,&amp;quot;assetFileSize&amp;quot;:&amp;quot;&amp;quot;,&amp;quot;assetTypeDetails&amp;quot;:&amp;quot;&amp;quot;,&amp;quot;assetUrlCoverImg&amp;quot;:&amp;quot;&amp;quot;,&amp;quot;assetNameCoverImg&amp;quot;:&amp;quot;&amp;quot;,&amp;quot;assetTypeCoverImg&amp;quot;:&amp;quot;Asset&amp;quot;,&amp;quot;assetFileExtension&amp;quot;:&amp;quot;&amp;quot;},&amp;quot;teaser&amp;quot;:{&amp;quot;data&amp;quot;:{},&amp;quot;content&amp;quot;:[{&amp;quot;data&amp;quot;:{},&amp;quot;content&amp;quot;:[{&amp;quot;data&amp;quot;:{},&amp;quot;marks&amp;quot;:[],&amp;quot;value&amp;quot;:&amp;quot;people affected by cardiovascular diseases globally&amp;quot;,&amp;quot;nodeType&amp;quot;:&amp;quot;text&amp;quot;}],&amp;quot;nodeType&amp;quot;:&amp;quot;paragraph&amp;quot;}],&amp;quot;nodeType&amp;quot;:&amp;quot;document&amp;quot;},&amp;quot;summary&amp;quot;:{&amp;quot;data&amp;quot;:{},&amp;quot;content&amp;quot;:[{&amp;quot;data&amp;quot;:{},&amp;quot;content&amp;quot;:[{&amp;quot;data&amp;quot;:{},&amp;quot;marks&amp;quot;:[],&amp;quot;value&amp;quot;:&amp;quot;More than half a billion people around the world continue to be affected by cardiovascular diseases, which accounted for 20.5 million deaths in 2021 – close to a third of all deaths globally and an overall increase on the estimated 121 million CVD deaths.&amp;quot;,&amp;quot;nodeType&amp;quot;:&amp;quot;text&amp;quot;},{&amp;quot;data&amp;quot;:{},&amp;quot;marks&amp;quot;:[{&amp;quot;type&amp;quot;:&amp;quot;sup&amp;quot;}],&amp;quot;value&amp;quot;:&amp;quot;1&amp;quot;,&amp;quot;nodeType&amp;quot;:&amp;quot;text&amp;quot;}],&amp;quot;nodeType&amp;quot;:&amp;quot;paragraph&amp;quot;}],&amp;quot;nodeType&amp;quot;:&amp;quot;document&amp;quot;},&amp;quot;pageLink&amp;quot;:{&amp;quot;id&amp;quot;:&amp;quot;&amp;quot;,&amp;quot;slug&amp;quot;:&amp;quot;&amp;quot;,&amp;quot;type&amp;quot;:&amp;quot;&amp;quot;,&amp;quot;locale&amp;quot;:&amp;quot;&amp;quot;},&amp;quot;statistics&amp;quot;:{&amp;quot;data&amp;quot;:{},&amp;quot;content&amp;quot;:[{&amp;quot;data&amp;quot;:{},&amp;quot;content&amp;quot;:[{&amp;quot;data&amp;quot;:{},&amp;quot;marks&amp;quot;:[],&amp;quot;value&amp;quot;:&amp;quot;500 million&amp;quot;,&amp;quot;nodeType&amp;quot;:&amp;quot;text&amp;quot;}],&amp;quot;nodeType&amp;quot;:&amp;quot;paragraph&amp;quot;}],&amp;quot;nodeType&amp;quot;:&amp;quot;document&amp;quot;}}"&gt;&lt;div data-field="value" data-path="demonstratedResults.en[0].teaser.content[0].content[0].value"&gt;people affected by cardiovascular diseases globally [updated]&lt;/div&gt;&lt;div data-field="value" data-path="demonstratedResults.en[0].summary.content[0].content[0].value"&gt;More than half a billion people around the world continue to be affected by cardiovascular diseases, which accounted for 20.5 million deaths in 2021 – close to a third of all deaths globally and an overall increase on the estimated 121 million CVD deaths.&lt;/div&gt;&lt;div data-field="type" data-path="demonstratedResults.en[0].summary.content[0].content[1].marks[0].type"&gt;sup&lt;/div&gt;&lt;div data-field="value" data-path="demonstratedResults.en[0].summary.content[0].content[1].value"&gt;1&lt;/div&gt;&lt;div data-field="value" data-path="demonstratedResults.en[0].statistics.content[0].content[0].value"&gt;500 million [updated]&lt;/div&gt;&lt;/div&gt;&lt;div data-field="customField" data-path="demonstratedResults.en[1]" data-contentful-json-value="{&amp;quot;ctaUrl&amp;quot;:&amp;quot;&amp;quot;,&amp;quot;result&amp;quot;:{&amp;quot;assetUrl&amp;quot;:&amp;quot;&amp;quot;,&amp;quot;assetName&amp;quot;:&amp;quot;&amp;quot;,&amp;quot;assetType&amp;quot;:&amp;quot;Asset&amp;quot;,&amp;quot;youtubeID&amp;quot;:&amp;quot;&amp;quot;,&amp;quot;assetFileSize&amp;quot;:&amp;quot;&amp;quot;,&amp;quot;assetTypeDetails&amp;quot;:&amp;quot;&amp;quot;,&amp;quot;assetUrlCoverImg&amp;quot;:&amp;quot;&amp;quot;,&amp;quot;assetNameCoverImg&amp;quot;:&amp;quot;&amp;quot;,&amp;quot;assetTypeCoverImg&amp;quot;:&amp;quot;Asset&amp;quot;,&amp;quot;assetFileExtension&amp;quot;:&amp;quot;&amp;quot;},&amp;quot;teaser&amp;quot;:{&amp;quot;data&amp;quot;:{},&amp;quot;content&amp;quot;:[{&amp;quot;data&amp;quot;:{},&amp;quot;content&amp;quot;:[{&amp;quot;data&amp;quot;:{},&amp;quot;marks&amp;quot;:[],&amp;quot;value&amp;quot;:&amp;quot;fatality rate&amp;quot;,&amp;quot;nodeType&amp;quot;:&amp;quot;text&amp;quot;}],&amp;quot;nodeType&amp;quot;:&amp;quot;paragraph&amp;quot;}],&amp;quot;nodeType&amp;quot;:&amp;quot;document&amp;quot;},&amp;quot;summary&amp;quot;:{&amp;quot;data&amp;quot;:{},&amp;quot;content&amp;quot;:[{&amp;quot;data&amp;quot;:{},&amp;quot;content&amp;quot;:[{&amp;quot;data&amp;quot;:{},&amp;quot;marks&amp;quot;:[],&amp;quot;value&amp;quot;:&amp;quot;Sudden cardiac arrest is a global public health problem with a mortality rate of more than 90%.&amp;quot;,&amp;quot;nodeType&amp;quot;:&amp;quot;text&amp;quot;},{&amp;quot;data&amp;quot;:{},&amp;quot;marks&amp;quot;:[{&amp;quot;type&amp;quot;:&amp;quot;sup&amp;quot;}],&amp;quot;value&amp;quot;:&amp;quot;2&amp;quot;,&amp;quot;nodeType&amp;quot;:&amp;quot;text&amp;quot;}],&amp;quot;nodeType&amp;quot;:&amp;quot;paragraph&amp;quot;}],&amp;quot;nodeType&amp;quot;:&amp;quot;document&amp;quot;},&amp;quot;pageLink&amp;quot;:{&amp;quot;id&amp;quot;:&amp;quot;&amp;quot;,&amp;quot;slug&amp;quot;:&amp;quot;&amp;quot;,&amp;quot;type&amp;quot;:&amp;quot;&amp;quot;,&amp;quot;locale&amp;quot;:&amp;quot;&amp;quot;},&amp;quot;statistics&amp;quot;:{&amp;quot;data&amp;quot;:{},&amp;quot;content&amp;quot;:[{&amp;quot;data&amp;quot;:{},&amp;quot;content&amp;quot;:[{&amp;quot;data&amp;quot;:{},&amp;quot;marks&amp;quot;:[],&amp;quot;value&amp;quot;:&amp;quot;90%&amp;quot;,&amp;quot;nodeType&amp;quot;:&amp;quot;text&amp;quot;}],&amp;quot;nodeType&amp;quot;:&amp;quot;paragraph&amp;quot;}],&amp;quot;nodeType&amp;quot;:&amp;quot;document&amp;quot;}}"&gt;&lt;div data-field="value" data-path="demonstratedResults.en[1].teaser.content[0].content[0].value"&gt;fatality rate&lt;/div&gt;&lt;div data-field="value" data-path="demonstratedResults.en[1].summary.content[0].content[0].value"&gt;Sudden cardiac arrest is a global public health problem with a mortality rate of more than 90%.&lt;/div&gt;&lt;div data-field="type" data-path="demonstratedResults.en[1].summary.content[0].content[1].marks[0].type"&gt;sup&lt;/div&gt;&lt;div data-field="value" data-path="demonstratedResults.en[1].summary.content[0].content[1].value"&gt;2&lt;/div&gt;&lt;div data-field="value" data-path="demonstratedResults.en[1].statistics.content[0].content[0].value"&gt;90%&lt;/div&gt;&lt;/div&gt;&lt;div data-field="customField" data-path="demonstratedResults.en[2]" data-contentful-json-value="{&amp;quot;ctaUrl&amp;quot;:&amp;quot;&amp;quot;,&amp;quot;result&amp;quot;:{&amp;quot;assetUrl&amp;quot;:&amp;quot;&amp;quot;,&amp;quot;assetName&amp;quot;:&amp;quot;&amp;quot;,&amp;quot;assetType&amp;quot;:&amp;quot;Asset&amp;quot;,&amp;quot;youtubeID&amp;quot;:&amp;quot;&amp;quot;,&amp;quot;assetFileSize&amp;quot;:&amp;quot;&amp;quot;,&amp;quot;assetTypeDetails&amp;quot;:&amp;quot;&amp;quot;,&amp;quot;assetUrlCoverImg&amp;quot;:&amp;quot;&amp;quot;,&amp;quot;assetNameCoverImg&amp;quot;:&amp;quot;&amp;quot;,&amp;quot;assetTypeCoverImg&amp;quot;:&amp;quot;Asset&amp;quot;,&amp;quot;assetFileExtension&amp;quot;:&amp;quot;&amp;quot;},&amp;quot;teaser&amp;quot;:{&amp;quot;data&amp;quot;:{},&amp;quot;content&amp;quot;:[{&amp;quot;data&amp;quot;:{},&amp;quot;content&amp;quot;:[{&amp;quot;data&amp;quot;:{},&amp;quot;marks&amp;quot;:[],&amp;quot;value&amp;quot;:&amp;quot;for the best chance of survival&amp;quot;,&amp;quot;nodeType&amp;quot;:&amp;quot;text&amp;quot;}],&amp;quot;nodeType&amp;quot;:&amp;quot;paragraph&amp;quot;}],&amp;quot;nodeType&amp;quot;:&amp;quot;document&amp;quot;},&amp;quot;summary&amp;quot;:{&amp;quot;data&amp;quot;:{},&amp;quot;content&amp;quot;:[{&amp;quot;data&amp;quot;:{},&amp;quot;content&amp;quot;:[{&amp;quot;data&amp;quot;:{},&amp;quot;marks&amp;quot;:[],&amp;quot;value&amp;quot;:&amp;quot;A shock delivered by an AED within 3-5 minutes can save a life. After 5 minutes, survival rates decrease by 10% with each minute of delay.&amp;quot;,&amp;quot;nodeType&amp;quot;:&amp;quot;text&amp;quot;},{&amp;quot;data&amp;quot;:{},&amp;quot;marks&amp;quot;:[{&amp;quot;type&amp;quot;:&amp;quot;sup&amp;quot;}],&amp;quot;value&amp;quot;:&amp;quot;3&amp;quot;,&amp;quot;nodeType&amp;quot;:&amp;quot;text&amp;quot;}],&amp;quot;nodeType&amp;quot;:&amp;quot;paragraph&amp;quot;}],&amp;quot;nodeType&amp;quot;:&amp;quot;document&amp;quot;},&amp;quot;pageLink&amp;quot;:{&amp;quot;id&amp;quot;:&amp;quot;&amp;quot;,&amp;quot;slug&amp;quot;:&amp;quot;&amp;quot;,&amp;quot;type&amp;quot;:&amp;quot;&amp;quot;,&amp;quot;locale&amp;quot;:&amp;quot;&amp;quot;},&amp;quot;statistics&amp;quot;:{&amp;quot;data&amp;quot;:{},&amp;quot;content&amp;quot;:[{&amp;quot;data&amp;quot;:{},&amp;quot;content&amp;quot;:[{&amp;quot;data&amp;quot;:{},&amp;quot;marks&amp;quot;:[],&amp;quot;value&amp;quot;:&amp;quot;3-5 minutes&amp;quot;,&amp;quot;nodeType&amp;quot;:&amp;quot;text&amp;quot;}],&amp;quot;nodeType&amp;quot;:&amp;quot;paragraph&amp;quot;}],&amp;quot;nodeType&amp;quot;:&amp;quot;document&amp;quot;}}"&gt;&lt;div data-field="value" data-path="demonstratedResults.en[2].teaser.content[0].content[0].value"&gt;for the best chance of survival&lt;/div&gt;&lt;div data-field="value" data-path="demonstratedResults.en[2].summary.content[0].content[0].value"&gt;A shock delivered by an AED within 3-5 minutes can save a life. After 5 minutes, survival rates decrease by 10% with each minute of delay.&lt;/div&gt;&lt;div data-field="type" data-path="demonstratedResults.en[2].summary.content[0].content[1].marks[0].type"&gt;sup&lt;/div&gt;&lt;div data-field="value" data-path="demonstratedResults.en[2].summary.content[0].content[1].value"&gt;3&lt;/div&gt;&lt;div data-field="value" data-path="demonstratedResults.en[2].statistics.content[0].content[0].value"&gt;3-5 minutes&lt;/div&gt;&lt;/div&gt;&lt;div data-field="customField" data-path="demonstratedResults.en[3]" data-contentful-json-value="{&amp;quot;ctaUrl&amp;quot;:&amp;quot;&amp;quot;,&amp;quot;result&amp;quot;:{&amp;quot;assetUrl&amp;quot;:&amp;quot;&amp;quot;,&amp;quot;assetName&amp;quot;:&amp;quot;&amp;quot;,&amp;quot;assetType&amp;quot;:&amp;quot;Asset&amp;quot;,&amp;quot;youtubeID&amp;quot;:&amp;quot;&amp;quot;,&amp;quot;assetFileSize&amp;quot;:&amp;quot;&amp;quot;,&amp;quot;assetTypeDetails&amp;quot;:&amp;quot;&amp;quot;,&amp;quot;assetUrlCoverImg&amp;quot;:&amp;quot;&amp;quot;,&amp;quot;assetNameCoverImg&amp;quot;:&amp;quot;&amp;quot;,&amp;quot;assetTypeCoverImg&amp;quot;:&amp;quot;Asset&amp;quot;,&amp;quot;assetFileExtension&amp;quot;:&amp;quot;&amp;quot;},&amp;quot;teaser&amp;quot;:{&amp;quot;data&amp;quot;:{},&amp;quot;content&amp;quot;:[{&amp;quot;data&amp;quot;:{},&amp;quot;content&amp;quot;:[{&amp;quot;data&amp;quot;:{},&amp;quot;marks&amp;quot;:[],&amp;quot;value&amp;quot;:&amp;quot;is the average response time from emergency medical services&amp;quot;,&amp;quot;nodeType&amp;quot;:&amp;quot;text&amp;quot;}],&amp;quot;nodeType&amp;quot;:&amp;quot;paragraph&amp;quot;}],&amp;quot;nodeType&amp;quot;:&amp;quot;document&amp;quot;},&amp;quot;summary&amp;quot;:{&amp;quot;data&amp;quot;:{},&amp;quot;content&amp;quot;:[{&amp;quot;data&amp;quot;:{},&amp;quot;content&amp;quot;:[{&amp;quot;data&amp;quot;:{},&amp;quot;marks&amp;quot;:[],&amp;quot;value&amp;quot;:&amp;quot;Emergency medical service units average 7 minutes from the time of a 911 call to arrival on scene. That median time increases to more than 14 minutes in rural settings, with nearly 1 of 10 encounters waiting almost a half hour for the arrival of EMS personnel.&amp;quot;,&amp;quot;nodeType&amp;quot;:&amp;quot;text&amp;quot;},{&amp;quot;data&amp;quot;:{},&amp;quot;marks&amp;quot;:[{&amp;quot;type&amp;quot;:&amp;quot;sup&amp;quot;}],&amp;quot;value&amp;quot;:&amp;quot;4&amp;quot;,&amp;quot;nodeType&amp;quot;:&amp;quot;text&amp;quot;}],&amp;quot;nodeType&amp;quot;:&amp;quot;paragraph&amp;quot;}],&amp;quot;nodeType&amp;quot;:&amp;quot;document&amp;quot;},&amp;quot;pageLink&amp;quot;:{&amp;quot;id&amp;quot;:&amp;quot;&amp;quot;,&amp;quot;slug&amp;quot;:&amp;quot;&amp;quot;,&amp;quot;type&amp;quot;:&amp;quot;&amp;quot;,&amp;quot;locale&amp;quot;:&amp;quot;&amp;quot;},&amp;quot;statistics&amp;quot;:{&amp;quot;data&amp;quot;:{},&amp;quot;content&amp;quot;:[{&amp;quot;data&amp;quot;:{},&amp;quot;content&amp;quot;:[{&amp;quot;data&amp;quot;:{},&amp;quot;marks&amp;quot;:[],&amp;quot;value&amp;quot;:&amp;quot;7 minutes&amp;quot;,&amp;quot;nodeType&amp;quot;:&amp;quot;text&amp;quot;}],&amp;quot;nodeType&amp;quot;:&amp;quot;paragraph&amp;quot;}],&amp;quot;nodeType&amp;quot;:&amp;quot;document&amp;quot;}}"&gt;&lt;div data-field="value" data-path="demonstratedResults.en[3].teaser.content[0].content[0].value"&gt;is the average response time from emergency medical services&lt;/div&gt;&lt;div data-field="value" data-path="demonstratedResults.en[3].summary.content[0].content[0].value"&gt;Emergency medical service units average 7 minutes from the time of a 911 call to arrival on scene. That median time increases to more than 14 minutes in rural settings, with nearly 1 of 10 encounters waiting almost a half hour for the arrival of EMS personnel.&lt;/div&gt;&lt;div data-field="type" data-path="demonstratedResults.en[3].summary.content[0].content[1].marks[0].type"&gt;sup&lt;/div&gt;&lt;div data-field="value" data-path="demonstratedResults.en[3].summary.content[0].content[1].value"&gt;4&lt;/div&gt;&lt;div data-field="value" data-path="demonstratedResults.en[3].statistics.content[0].content[0].value"&gt;7 minutes&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;&lt;div data-contentful-field-type="RichText" data-contentful-field-id="overviewSubhead"&gt;&lt;p&gt;Philips AED Solutions provide an end-to-end solution&lt;/p&gt;&lt;/div&gt;&lt;div data-contentful-field-type="RichText" data-contentful-field-id="overviewText"&gt;&lt;p&gt;Most people have never been in a position to administer an AED. When the moment arrives, it is easy to panic. A calm voice walking you through the process step by step means you are never alone. With Philips AED Solutions, you can have an expert by your side. AED Solutions are designed for ease of use and reliability, with real-time guidance and support – all brought to you by Philips, the trusted global leader in emergency care resuscitation.&lt;/p&gt;&lt;/div&gt;&lt;div data-contentful-field-type="RichText" data-contentful-field-id="benefitsSubhead"&gt;&lt;p&gt;With expert guidance and support, Philips AED Solutions are here when you need us most.&lt;/p&gt;&lt;/div&gt;&lt;div data-contentful-field-type="RichText" data-contentful-field-id="keyFeaturesSubhead"&gt;&lt;p&gt;With expert guidance and support, Philips AED Solutions are here when you need us most.&lt;/p&gt;&lt;/div&gt;&lt;div data-contentful-field-type="RichText" data-contentful-field-id="keyFeaturesText"&gt;&lt;br&gt;&lt;ul&gt;&lt;li&gt;&lt;p&gt;Quick Shock feature allows the HeartStart AED to typically deliver a shock within eight seconds after CPR.&lt;/p&gt;&lt;/li&gt;&lt;li&gt;&lt;p&gt;Count on Philips HeartStart AEDs to help you deliver the right therapy quickly and confidently – even on wet and metal surfaces.&lt;/p&gt;&lt;/li&gt;&lt;li&gt;&lt;p&gt;HeartStart AEDs provide practical, real-time guidance through step-by-step voice commands and CPR guidance.&lt;/p&gt;&lt;/li&gt;&lt;li&gt;&lt;p&gt;HeartStart AEDs perform a series of automatic self-tests daily, weekly and monthly to check pad readiness and verify functionality and calibration of circuits and systems.&lt;/p&gt;&lt;/li&gt;&lt;/ul&gt;&lt;br&gt;&lt;/div&gt;&lt;div data-contentful-field-type="RichText" data-contentful-field-id="featuredSolutionsHeadline"&gt;&lt;p&gt;for SCA defibrilation&lt;/p&gt;&lt;/div&gt;&lt;div data-contentful-field-type="RichText" data-contentful-field-id="footnotes"&gt;&lt;p&gt;World Heart Federation. (2023). World Heart Report 2023 Confronting The World’s Number One Killer. Retrieved 17 September 2024 from &lt;a href="https://world-heart-federation.org/wp-content/uploads/World-Heart-Report-2023.pdf"&gt;World-Heart-Report-2023.pdf&lt;/a&gt;.&lt;/p&gt;&lt;p&gt;Reinier K, et al. (2023). Warning symptoms associated with imminent sudden cardiac arrest: a population-based case-control study with external validation. The Lancet, 5(11). DOI: &lt;a href="https://doi.org/10.1016/S2589-7500(23)00147-4"&gt;10.1016/S2589-7500(23)00147-4&lt;/a&gt;&lt;span&gt;&lt;/span&gt;&lt;/p&gt;&lt;p&gt;UC Davis Health. (2023). Sudden cardiac arrest and heart attack: How to perform CPR and use an AED. Retrieved 17 September 2024 from &lt;a href="https://health.ucdavis.edu/blog/cultivating-health/sudden-cardiac-arrest-and-heart-attack-how-to-perform-cpr-and-use-an-aed/2023/01"&gt;Sudden cardiac arrest and heart attack: How to perform CPR and use an AED&lt;/a&gt;.&lt;/p&gt;&lt;p&gt;Mell HK, Mumma SN, Hiestand B, Carr BG, Holland T, Stopyra J. Emergency Medical Services Response Times in Rural, Suburban, and Urban Areas. JAMA Surg. 2017 Oct 1;152(10):983-984. &lt;a href="https://jamanetwork.com/journals/jamasurgery/fullarticle/2643992"&gt;doi: 10.1001/jamasurg.2017.2230&lt;/a&gt;.&lt;/p&gt;&lt;/div&gt;&lt;div data-contentful-field-type="RichText" data-contentful-field-id="disclaimers"&gt;&lt;p&gt;Disclaimers 1&lt;/p&gt;&lt;/div&gt;&lt;div data-contentful-field-type="Symbol" data-contentful-field-id="palValidationId"&gt;536007&lt;/div&gt;&lt;div data-contentful-field-type="Symbol" data-contentful-field-id="campaignId"&gt;7010W0000024U0H&lt;/div&gt;&lt;div data-contentful-field-type="Symbol" data-contentful-field-id="pageTitle"&gt;Why Philips AEDs&lt;/div&gt;&lt;div data-contentful-field-type="RichText" data-contentful-field-id="navigationTitle"&gt;&lt;p&gt;Why Philips AEDs?&lt;/p&gt;&lt;/div&gt;&lt;div data-contentful-field-type="RichText" data-contentful-field-id="navigationDescription"&gt;&lt;p&gt;HeartStart AEDs allow anyone to treat the most common cause of sudden cardiac arrest by delivering a shock quickly and effectively.&lt;/p&gt;&lt;/div&gt;&lt;div data-contentful-field-type="Symbol" data-contentful-field-id="validation"&gt;false&lt;/div&gt;&lt;/div&gt;&lt;/body&gt;&lt;/html&gt;</skeleton>
+        <unit id="u1" name="/html[1]/body[1]/div[1]/div[1]/p[1]">
+            <segment state="translated">
+                <source>Blackbird investigation</source>
+                <target>Enquête Blackbird</target>
+            </segment>
+        </unit>
+        <unit id="u2" name="/html[1]/body[1]/div[1]/div[2]">
+            <segment state="translated">
+                <source>Blackbird investigation entry</source>
+                <target>Entrée d'enquête Blackbird</target>
+            </segment>
+        </unit>
+        <unit id="u3" name="/html[1]/body[1]/div[1]/div[3]/p[1]">
+            <segment state="translated">
+                <source>AEDs and monitors/defibrillators</source>
+                <target>DEA et moniteurs/défibrillateurs</target>
+            </segment>
+        </unit>
+        <unit id="u4" name="/html[1]/body[1]/div[1]/div[4]/p[1]">
+            <segment state="translated">
+                <source>Why Philips AEDs?</source>
+                <target>Pourquoi les DEA Philips ?</target>
+            </segment>
+        </unit>
+        <unit id="u5" name="/html[1]/body[1]/div[1]/div[5]/p[2]">
+            <segment state="translated">
+                <source>Designed for ease of use, Philips automated external defibrillators (AEDs) are ready to act when you are. They provide the treatment of the most common cause of sudden cardiac arrest (SCA) by delivering a shock quickly and effectively, wherever SCA happens.</source>
+                <target>Conçus pour être faciles à utiliser, les défibrillateurs externes automatisés (DEA) Philips sont prêts à agir quand vous l'êtes. Ils fournissent le traitement de la cause la plus courante d'arrêt cardiaque soudain (ACS) en délivrant un choc rapidement et efficacement, où que l'ACS survienne.</target>
+            </segment>
+        </unit>
+        <unit id="u6" name="/html[1]/body[1]/div[1]/div[5]/p[3]">
+            <segment state="translated">
+                <source>HeartStart AEDs guide you through the rescue process, including CPR and how to initiate an electrical current if recommended. Our AED devices are designed for every use type, whether inside or outside, in varying environments so you can help save a life anytime, anywhere.</source>
+                <target>Les DEA HeartStart vous guident tout au long du processus de sauvetage, y compris la RCP et la manière d'initier un courant électrique si recommandé. Nos dispositifs DEA sont conçus pour tous les types d'utilisation, à l'intérieur comme à l'extérieur, dans des environnements variés pour vous permettre de sauver une vie à tout moment et en tout lieu.</target>
+            </segment>
+        </unit>
+        <unit id="u7" name="/html[1]/body[1]/div[1]/div[6]/p[1]">
+            <segment state="translated">
+                <source>Demonstrated results headline</source>
+                <target>Titre des résultats démontrés</target>
+            </segment>
+        </unit>
+        <unit id="u8" name="/html[1]/body[1]/div[1]/div[7]/div[1]/div[1]">
+            <segment state="translated">
+                <source>people affected by cardiovascular diseases globally [updated]</source>
+                <target>personnes touchées par les maladies cardiovasculaires dans le monde [mis à jour]</target>
+            </segment>
+        </unit>
+        <unit id="u9" name="/html[1]/body[1]/div[1]/div[7]/div[1]/div[2]">
+            <segment state="translated">
+                <source>More than half a billion people around the world continue to be affected by cardiovascular diseases, which accounted for 20.5 million deaths in 2021 – close to a third of all deaths globally and an overall increase on the estimated 121 million CVD deaths.</source>
+                <target>Plus d'un demi-milliard de personnes dans le monde continuent d'être affectées par les maladies cardiovasculaires, qui ont causé 20,5 millions de décès en 2021 – près d'un tiers de tous les décès dans le monde et une augmentation globale par rapport aux 121 millions de décès estimés dus aux MCV.</target>
+            </segment>
+        </unit>
+        <unit id="u10" name="/html[1]/body[1]/div[1]/div[7]/div[1]/div[3]">
+            <segment state="translated">
+                <source>sup</source>
+                <target>sup</target>
+            </segment>
+        </unit>
+        <unit id="u11" name="/html[1]/body[1]/div[1]/div[7]/div[1]/div[4]">
+            <segment state="translated">
+                <source>1</source>
+                <target>1</target>
+            </segment>
+        </unit>
+        <unit id="u12" name="/html[1]/body[1]/div[1]/div[7]/div[1]/div[5]">
+            <segment state="translated">
+                <source>500 million [updated]</source>
+                <target>500 millions [mis à jour]</target>
+            </segment>
+        </unit>
+        <unit id="u13" name="/html[1]/body[1]/div[1]/div[7]/div[2]/div[1]">
+            <segment state="translated">
+                <source>fatality rate</source>
+                <target>taux de mortalité</target>
+            </segment>
+        </unit>
+        <unit id="u14" name="/html[1]/body[1]/div[1]/div[7]/div[2]/div[2]">
+            <segment state="translated">
+                <source>Sudden cardiac arrest is a global public health problem with a mortality rate of more than 90%.</source>
+                <target>L'arrêt cardiaque soudain est un problème de santé publique mondial avec un taux de mortalité de plus de 90 %.</target>
+            </segment>
+        </unit>
+        <unit id="u15" name="/html[1]/body[1]/div[1]/div[7]/div[2]/div[3]">
+            <segment state="translated">
+                <source>sup</source>
+                <target>sup</target>
+            </segment>
+        </unit>
+        <unit id="u16" name="/html[1]/body[1]/div[1]/div[7]/div[2]/div[4]">
+            <segment state="translated">
+                <source>2</source>
+                <target>2</target>
+            </segment>
+        </unit>
+        <unit id="u17" name="/html[1]/body[1]/div[1]/div[7]/div[2]/div[5]">
+            <segment state="translated">
+                <source>90%</source>
+                <target>90 %</target>
+            </segment>
+        </unit>
+        <unit id="u18" name="/html[1]/body[1]/div[1]/div[7]/div[3]/div[1]">
+            <segment state="translated">
+                <source>for the best chance of survival</source>
+                <target>pour les meilleures chances de survie</target>
+            </segment>
+        </unit>
+        <unit id="u19" name="/html[1]/body[1]/div[1]/div[7]/div[3]/div[2]">
+            <segment state="translated">
+                <source>A shock delivered by an AED within 3-5 minutes can save a life. After 5 minutes, survival rates decrease by 10% with each minute of delay.</source>
+                <target>Un choc délivré par un DEA dans les 3 à 5 minutes peut sauver une vie. Après 5 minutes, les taux de survie diminuent de 10 % à chaque minute de retard.</target>
+            </segment>
+        </unit>
+        <unit id="u20" name="/html[1]/body[1]/div[1]/div[7]/div[3]/div[3]">
+            <segment state="translated">
+                <source>sup</source>
+                <target>sup</target>
+            </segment>
+        </unit>
+        <unit id="u21" name="/html[1]/body[1]/div[1]/div[7]/div[3]/div[4]">
+            <segment state="translated">
+                <source>3</source>
+                <target>3</target>
+            </segment>
+        </unit>
+        <unit id="u22" name="/html[1]/body[1]/div[1]/div[7]/div[3]/div[5]">
+            <segment state="translated">
+                <source>3-5 minutes</source>
+                <target>3-5 minutes</target>
+            </segment>
+        </unit>
+        <unit id="u23" name="/html[1]/body[1]/div[1]/div[7]/div[4]/div[1]">
+            <segment state="translated">
+                <source>is the average response time from emergency medical services</source>
+                <target>est le temps de réponse moyen des services médicaux d'urgence</target>
+            </segment>
+        </unit>
+        <unit id="u24" name="/html[1]/body[1]/div[1]/div[7]/div[4]/div[2]">
+            <segment state="translated">
+                <source>Emergency medical service units average 7 minutes from the time of a 911 call to arrival on scene. That median time increases to more than 14 minutes in rural settings, with nearly 1 of 10 encounters waiting almost a half hour for the arrival of EMS personnel.</source>
+                <target>Les unités de services médicaux d'urgence mettent en moyenne 7 minutes entre l'appel au 911 et l'arrivée sur les lieux. Ce temps médian augmente à plus de 14 minutes en milieu rural, avec près d'1 intervention sur 10 nécessitant presque une demi-heure pour l'arrivée du personnel des SMU.</target>
+            </segment>
+        </unit>
+        <unit id="u25" name="/html[1]/body[1]/div[1]/div[7]/div[4]/div[3]">
+            <segment state="translated">
+                <source>sup</source>
+                <target>sup</target>
+            </segment>
+        </unit>
+        <unit id="u26" name="/html[1]/body[1]/div[1]/div[7]/div[4]/div[4]">
+            <segment state="translated">
+                <source>4</source>
+                <target>4</target>
+            </segment>
+        </unit>
+        <unit id="u27" name="/html[1]/body[1]/div[1]/div[7]/div[4]/div[5]">
+            <segment state="translated">
+                <source>7 minutes</source>
+                <target>7 minutes</target>
+            </segment>
+        </unit>
+        <unit id="u28" name="/html[1]/body[1]/div[1]/div[8]/p[1]">
+            <segment state="translated">
+                <source>Philips AED Solutions provide an end-to-end solution</source>
+                <target>Les Solutions DEA Philips offrent une solution complète</target>
+            </segment>
+        </unit>
+        <unit id="u29" name="/html[1]/body[1]/div[1]/div[9]/p[1]">
+            <segment state="translated">
+                <source>Most people have never been in a position to administer an AED. When the moment arrives, it is easy to panic. A calm voice walking you through the process step by step means you are never alone. With Philips AED Solutions, you can have an expert by your side. AED Solutions are designed for ease of use and reliability, with real-time guidance and support – all brought to you by Philips, the trusted global leader in emergency care resuscitation.</source>
+                <target>La plupart des gens n'ont jamais eu à utiliser un DEA. Quand le moment arrive, il est facile de paniquer. Une voix calme qui vous guide pas à pas signifie que vous n'êtes jamais seul. Avec les Solutions DEA Philips, vous pouvez avoir un expert à vos côtés. Les Solutions DEA sont conçues pour être faciles à utiliser et fiables, avec des conseils et un support en temps réel – le tout vous étant proposé par Philips, le leader mondial de confiance en réanimation de soins d'urgence.</target>
+            </segment>
+        </unit>
+        <unit id="u30" name="/html[1]/body[1]/div[1]/div[10]/p[1]">
+            <segment state="translated">
+                <source>With expert guidance and support, Philips AED Solutions are here when you need us most.</source>
+                <target>Avec des conseils et un support d'expert, les Solutions DEA Philips sont là quand vous en avez le plus besoin.</target>
+            </segment>
+        </unit>
+        <unit id="u31" name="/html[1]/body[1]/div[1]/div[11]/p[1]">
+            <segment state="translated">
+                <source>With expert guidance and support, Philips AED Solutions are here when you need us most.</source>
+                <target>Avec des conseils et un support d'expert, les Solutions DEA Philips sont là quand vous en avez le plus besoin.</target>
+            </segment>
+        </unit>
+        <unit id="u32" name="/html[1]/body[1]/div[1]/div[12]/ul[1]/li[1]/p[1]">
+            <segment state="translated">
+                <source>Quick Shock feature allows the HeartStart AED to typically deliver a shock within eight seconds after CPR.</source>
+                <target>La fonction Quick Shock permet au DEA HeartStart de délivrer généralement un choc dans les huit secondes après la RCP.</target>
+            </segment>
+        </unit>
+        <unit id="u33" name="/html[1]/body[1]/div[1]/div[12]/ul[1]/li[2]/p[1]">
+            <segment state="translated">
+                <source>Count on Philips HeartStart AEDs to help you deliver the right therapy quickly and confidently – even on wet and metal surfaces.</source>
+                <target>Comptez sur les DEA HeartStart Philips pour vous aider à délivrer la bonne thérapie rapidement et en toute confiance – même sur des surfaces mouillées et métalliques.</target>
+            </segment>
+        </unit>
+        <unit id="u34" name="/html[1]/body[1]/div[1]/div[12]/ul[1]/li[3]/p[1]">
+            <segment state="translated">
+                <source>HeartStart AEDs provide practical, real-time guidance through step-by-step voice commands and CPR guidance.</source>
+                <target>Les DEA HeartStart fournissent des conseils pratiques en temps réel grâce à des instructions vocales étape par étape et des conseils pour la RCP.</target>
+            </segment>
+        </unit>
+        <unit id="u35" name="/html[1]/body[1]/div[1]/div[12]/ul[1]/li[4]/p[1]">
+            <segment state="translated">
+                <source>HeartStart AEDs perform a series of automatic self-tests daily, weekly and monthly to check pad readiness and verify functionality and calibration of circuits and systems.</source>
+                <target>Les DEA HeartStart effectuent une série d'auto-tests automatiques quotidiens, hebdomadaires et mensuels pour vérifier l'état des électrodes et vérifier la fonctionnalité et l'étalonnage des circuits et des systèmes.</target>
+            </segment>
+        </unit>
+        <unit id="u36" name="/html[1]/body[1]/div[1]/div[13]/p[1]">
+            <segment state="translated">
+                <source>for SCA defibrilation</source>
+                <target>pour la défibrillation de l'ACS</target>
+            </segment>
+        </unit>
+        <unit id="u37" name="/html[1]/body[1]/div[1]/div[14]/p[1]">
+            <segment state="translated">
+                <source>World Heart Federation. (2023). World Heart Report 2023 Confronting The World’s Number One Killer. Retrieved 17 September 2024 from <sc id="1" dataRef="d1" />World-Heart-Report-2023.pdf<ec dataRef="d2" />.</source>
+                <target>Fédération Mondiale du Cœur. (2023). Rapport Mondial sur le Cœur 2023 Confronter le Tueur Numéro Un au Monde. Consulté le 17 septembre 2024 sur <sc id="2" dataRef="d1" />World-Heart-Report-2023.pdf<ec dataRef="d2" />.</target>
+            </segment>
+            <originalData>
+                <data id="d1">&lt;a href="https://world-heart-federation.org/wp-content/uploads/World-Heart-Report-2023.pdf"&gt;</data>
+                <data id="d2">&lt;/a&gt;</data>
+            </originalData>
+        </unit>
+        <unit id="u38" name="/html[1]/body[1]/div[1]/div[14]/p[2]">
+            <segment state="translated">
+                <source>Reinier K, et al. (2023). Warning symptoms associated with imminent sudden cardiac arrest: a population-based case-control study with external validation. The Lancet, 5(11). DOI: <sc id="1" dataRef="d1" />10.1016/S2589-7500(23)00147-4<ec dataRef="d2" /><ph id="2" dataRef="d3" /></source>
+                <target>Reinier K, et al. (2023). Symptômes d'alerte associés à un arrêt cardiaque soudain imminent : une étude cas-témoins basée sur la population avec validation externe. The Lancet, 5(11). DOI : <sc id="3" dataRef="d1" />10.1016/S2589-7500(23)00147-4<ec dataRef="d2" /><ph id="4" dataRef="d3" /></target>
+            </segment>
+            <originalData>
+                <data id="d1">&lt;a href="https://doi.org/10.1016/S2589-7500(23)00147-4"&gt;</data>
+                <data id="d2">&lt;/a&gt;</data>
+                <data id="d3">&lt;span&gt;&lt;/span&gt;</data>
+            </originalData>
+        </unit>
+        <unit id="u39" name="/html[1]/body[1]/div[1]/div[14]/p[3]">
+            <segment state="translated">
+                <source>UC Davis Health. (2023). Sudden cardiac arrest and heart attack: How to perform CPR and use an AED. Retrieved 17 September 2024 from <sc id="1" dataRef="d1" />Sudden cardiac arrest and heart attack: How to perform CPR and use an AED<ec dataRef="d2" />.</source>
+                <target>UC Davis Health. (2023). Arrêt cardiaque soudain et crise cardiaque : Comment pratiquer la RCP et utiliser un DEA. Consulté le 17 septembre 2024 sur <sc id="2" dataRef="d1" />Arrêt cardiaque soudain et crise cardiaque : Comment pratiquer la RCP et utiliser un DEA<ec dataRef="d2" />.</target>
+            </segment>
+            <originalData>
+                <data id="d1">&lt;a href="https://health.ucdavis.edu/blog/cultivating-health/sudden-cardiac-arrest-and-heart-attack-how-to-perform-cpr-and-use-an-aed/2023/01"&gt;</data>
+                <data id="d2">&lt;/a&gt;</data>
+            </originalData>
+        </unit>
+        <unit id="u40" name="/html[1]/body[1]/div[1]/div[14]/p[4]">
+            <segment state="translated">
+                <source>Mell HK, Mumma SN, Hiestand B, Carr BG, Holland T, Stopyra J. Emergency Medical Services Response Times in Rural, Suburban, and Urban Areas. JAMA Surg. 2017 Oct 1;152(10):983-984. <sc id="1" dataRef="d1" />doi: 10.1001/jamasurg.2017.2230<ec dataRef="d2" />.</source>
+                <target>Mell HK, Mumma SN, Hiestand B, Carr BG, Holland T, Stopyra J. Temps de réponse des services médicaux d'urgence dans les zones rurales, suburbaines et urbaines. JAMA Surg. 2017 Oct 1;152(10):983-984. <sc id="2" dataRef="d1" />doi: 10.1001/jamasurg.2017.2230<ec dataRef="d2" />.</target>
+            </segment>
+            <originalData>
+                <data id="d1">&lt;a href="https://jamanetwork.com/journals/jamasurgery/fullarticle/2643992"&gt;</data>
+                <data id="d2">&lt;/a&gt;</data>
+            </originalData>
+        </unit>
+        <unit id="u41" name="/html[1]/body[1]/div[1]/div[15]/p[1]">
+            <segment state="translated">
+                <source>Disclaimers 1</source>
+                <target>Avertissements 1</target>
+            </segment>
+        </unit>
+        <unit id="u42" name="/html[1]/body[1]/div[1]/div[16]">
+            <segment state="translated">
+                <source>536007</source>
+                <target>536007</target>
+            </segment>
+        </unit>
+        <unit id="u43" name="/html[1]/body[1]/div[1]/div[17]">
+            <segment state="translated">
+                <source>7010W0000024U0H</source>
+                <target>7010W0000024U0H</target>
+            </segment>
+        </unit>
+        <unit id="u44" name="/html[1]/body[1]/div[1]/div[18]">
+            <segment state="translated">
+                <source>Why Philips AEDs</source>
+                <target>Pourquoi les DEA Philips</target>
+            </segment>
+        </unit>
+        <unit id="u45" name="/html[1]/body[1]/div[1]/div[19]/p[1]">
+            <segment state="translated">
+                <source>Why Philips AEDs?</source>
+                <target>Pourquoi les DEA Philips ?</target>
+            </segment>
+        </unit>
+        <unit id="u46" name="/html[1]/body[1]/div[1]/div[20]/p[1]">
+            <segment state="translated">
+                <source>HeartStart AEDs allow anyone to treat the most common cause of sudden cardiac arrest by delivering a shock quickly and effectively.</source>
+                <target>Les DEA HeartStart permettent à quiconque de traiter la cause la plus courante d'arrêt cardiaque soudain en délivrant un choc rapidement et efficacement.</target>
+            </segment>
+        </unit>
+        <unit id="u47" name="/html[1]/body[1]/div[1]/div[21]">
+            <segment state="translated">
+                <source>false</source>
+                <target>faux</target>
+            </segment>
+        </unit>
+    </file>
+</xliff>

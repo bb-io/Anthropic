@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Apps.Anthropic", "Apps.Anth
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tests.Anthropic", "Tests.Anthropic\Tests.Anthropic.csproj", "{58AC1477-EF83-4E6B-B6F4-33A63F5340E7}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{E0B9FEA0-D2CE-4085-8045-7AF4C815440F}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution items", "Solution items", "{E0B9FEA0-D2CE-4085-8045-7AF4C815440F}"
 	ProjectSection(SolutionItems) = preProject
 		.gitignore = .gitignore
 		README.md = README.md
