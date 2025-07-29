@@ -40,9 +40,12 @@ For more in-depth information about action consult the [Anthropic API reference]
 
 ### XLIFF actions
 
-- **Process XLIFF** processes the XLIFF file and returns updated XLIFF with the translated content. By default it will translate source and place the translation in the target field. But you can modify behavior by providing your custom `prompt`
-- **Post-edit XLIFF file** action is used to post-edit the XLIFF file.
-- **Get Quality Scores for XLIFF file** action is used to get quality scores for the XLIFF file by adding `extradata` attribute to the translation unit of the file. Default criteria are `fluency`, `grammar`, `terminology`, `style`, and `punctuation`, but you can add your own by filling `prompt` optional input.
+- **Translate** Translate file content retrieved from a CMS or file storage. The output can be used in compatible actions.
+- **Edit** Edit a translation. This action assumes you have previously translated content in Blackbird through any translation action.
+- **Review** Review translation. This action assumes you have previously translated content in Blackbird through any translation action.
+- **Process XLIFF** processes the XLIFF file and returns updated XLIFF with the translated content. By default it will translate source and place the translation in the target field. But you can modify behavior by providing your custom `prompt`. Deprecated: use the 'Translate' action instead.
+- **Post-edit XLIFF file** action is used to post-edit the XLIFF file. Deprecated: use the 'Edit' action instead.
+- **Get Quality Scores for XLIFF file** action is used to get quality scores for the XLIFF file by adding `extradata` attribute to the translation unit of the file. Default criteria are `fluency`, `grammar`, `terminology`, `style`, and `punctuation`, but you can add your own by filling `prompt` optional input. Deprecated: use the 'Review' action instead.
 
 ### Batch actions
 

@@ -95,7 +95,7 @@ public class DeprecatedXliffActions(InvocationContext invocationContext, IFileMa
         return new ProcessXliffResponse { Xliff = fileReference, Usage = entity.Usage, UpdatedSegmentsCount = updatedSegmentsCount, TotalSegmentsCount = translationUnits.Count };
     }
     
-    [Action("Get Quality Scores for XLIFF", Description = "Gets segment and file level quality scores for XLIFF files")]
+    [Action("Get Quality Scores for XLIFF", Description = "Gets segment and file level quality scores for XLIFF files. Deprecated. Use the 'Review' action instead")]
     public async Task<ScoreXliffResponse> GetQualityScores([ActionParameter] ProcessXliffRequest input,
         [ActionParameter] GlossaryRequest glossaryRequest)
     {
