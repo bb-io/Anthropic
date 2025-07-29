@@ -21,7 +21,7 @@ public class DeprecatedXliffActions(InvocationContext invocationContext, IFileMa
     : AnthropicInvocable(invocationContext, fileManagementClient)
 {
     private readonly IFileManagementClient _fileManagementClient = fileManagementClient;
-    private readonly ChatActions _chatActions = new(invocationContext, fileManagementClient);
+    private readonly AiUtilities _aiUtilities = new(invocationContext, fileManagementClient);
 
     [Action("Process XLIFF", Description = "Process XLIFF file, by default translating it to a target language. Deprected. Use the 'Translate' action")]
     public async Task<ProcessXliffResponse> ProcessXliff([ActionParameter] ProcessXliffRequest input,
@@ -125,7 +125,7 @@ public class DeprecatedXliffActions(InvocationContext invocationContext, IFileMa
         {
             string json = JsonConvert.SerializeObject(batch.Select(x => "{ID:" + x.Id + "}" + x.Source.Content ));
             var UserPrompt = GetUserPrompt(request.Prompt,xliff,json);
-            var response = await _chatActions.CreateCompletion(new(request)
+            var response = await _aiUtilities.SendMessageAsync(new(request)
             {
                 Prompt = UserPrompt,
                 SystemPrompt = request.SystemPrompt ?? "You are tasked with localizing the provided text. Consider cultural nuances, idiomatic expressions, " +
@@ -176,7 +176,7 @@ public class DeprecatedXliffActions(InvocationContext invocationContext, IFileMa
         var totalUsage = new UsageResponse();
         foreach (var batch in batches)
         {
-            var response = await _chatActions.CreateCompletion(new(request)
+            var response = await _aiUtilities.SendMessageAsync(new(request)
             {
                 Prompt = 
                 $"Your input consists of sentences in {xliff.SourceLanguage} language with their translations into {xliff.TargetLanguage}. " +
@@ -219,7 +219,7 @@ public class DeprecatedXliffActions(InvocationContext invocationContext, IFileMa
         {
             var sourceLanguage = translationUnit.SourceLanguage ?? xliff.SourceLanguage;
             var targetLanguage = translationUnit.TargetLanguage ?? xliff.TargetLanguage;
-            var response = await _chatActions.CreateCompletion(new(request)
+            var response = await _aiUtilities.SendMessageAsync(new(request)
             {
                 Prompt = $"Your input is going to be a sentence in {sourceLanguage} as source language and their translation into {targetLanguage}. " +
                          "You need to review the target text and respond with scores for the target text. " +

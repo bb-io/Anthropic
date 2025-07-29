@@ -1,12 +1,10 @@
 ﻿using Apps.Anthropic.Extensions;
-using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Dynamic;
 using Blackbird.Applications.Sdk.Common.Invocation;
 
 namespace Apps.Anthropic.DataSourceHandlers.EnumHandlers;
 
-public class TopPDataSourceHandler(InvocationContext invocationContext)
-    : BaseInvocable(invocationContext), IDataSourceItemHandler
+public class TopPDataSourceHandler(InvocationContext invocationContext) : IDataSourceItemHandler
 {
     public IEnumerable<DataSourceItem> GetData(DataSourceContext context)
     {
