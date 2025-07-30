@@ -29,7 +29,7 @@ Before you can connect you need to make sure that:
 - **Chat** action has the following input values in order to configure the generated response:
 1. Model (All current and available models are listed in the dropdown)
 2. Prompt
-3. Max tokens to sampleC
+3. Max tokens to sample
 4. Temperature
 5. top_p
 6. top_k

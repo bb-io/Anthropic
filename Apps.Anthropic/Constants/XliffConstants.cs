@@ -1,6 +1,6 @@
 ﻿namespace Apps.Anthropic.Constants;
 
-public class XliffConstants
+public static class XliffConstants
 {
-    public static int DefaultBucketSize = 50;
+    public const int DefaultBucketSize = 50;
 }
