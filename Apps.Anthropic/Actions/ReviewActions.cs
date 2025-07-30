@@ -111,6 +111,7 @@ public class ReviewActions(InvocationContext invocationContext, IFileManagementC
         return result;
     }
 
+    [BlueprintActionDefinition(BlueprintAction.ReviewText)]
     [Action("Review text", Description = "Review the quality of translated text.")]
     public async Task<ReviewTextResponse> ReviewText([ActionParameter] ReviewTextRequest input)
     {

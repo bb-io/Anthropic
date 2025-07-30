@@ -1,9 +1,7 @@
 using Apps.Anthropic.DataSourceHandlers;
 using Apps.Anthropic.DataSourceHandlers.EnumHandlers;
 using Blackbird.Applications.SDK.Blueprints.Interfaces.Edit;
-using Blackbird.Applications.SDK.Blueprints.Interfaces.Translate;
 using Blackbird.Applications.Sdk.Common;
-using Blackbird.Applications.Sdk.Common.Dictionaries;
 using Blackbird.Applications.Sdk.Common.Dynamic;
 using Blackbird.Applications.Sdk.Common.Files;
 using Newtonsoft.Json;
@@ -19,11 +17,11 @@ public class EditTextRequest : IEditTextInput
     public string TargetText { get; set; } = string.Empty;
     
     [Display("Source language")]
-    [StaticDataSource(typeof(LocaleDataSourceHandler))]
+    [DataSource(typeof(LocaleDataSourceHandler))]
     public string? SourceLanguage { get; set; }
     
     [Display("Target language")]
-    [StaticDataSource(typeof(LocaleDataSourceHandler))]
+    [DataSource(typeof(LocaleDataSourceHandler))]
     public string? TargetLanguage { get; set; }
 
     [Display("Target audience", Description = "Specify the target audience for the edited text")]
@@ -42,12 +40,12 @@ public class EditTextRequest : IEditTextInput
     public int? MaxTokensToSample { get; set; }
 
     [Display("Temperature", Description = "Amount of randomness injected into the response.")]
-    [StaticDataSource(typeof(TemperatureDataSourceHandler))]
+    [DataSource(typeof(TemperatureDataSourceHandler))]
     [JsonProperty("temperature")]
     public string? Temperature { get; set; }
 
     [Display("top_p", Description = "Use nucleus sampling.")]
-    [StaticDataSource(typeof(TopPDataSourceHandler))]
+    [DataSource(typeof(TopPDataSourceHandler))]
     [JsonProperty("top_p")]
     public string? TopP { get; set; }
 

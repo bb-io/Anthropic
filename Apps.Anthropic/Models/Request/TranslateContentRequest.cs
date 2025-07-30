@@ -16,11 +16,11 @@ public class TranslateContentRequest : ITranslateFileInput
     public FileReference File { get; set; } = new();
     
     [Display("Source language")]
-    [StaticDataSource(typeof(LocaleDataSourceHandler))]
+    [DataSource(typeof(LocaleDataSourceHandler))]
     public string? SourceLanguage { get; set; }
     
     [Display("Target language")]
-    [StaticDataSource(typeof(LocaleDataSourceHandler))]
+    [DataSource(typeof(LocaleDataSourceHandler))]
     public string TargetLanguage { get; set; } = string.Empty;
     
     [Display("Output file handling", Description = "Determine the format of the output file. The default Blackbird behavior is to convert to XLIFF for future steps."), StaticDataSource(typeof(ProcessFileFormatHandler))]
@@ -47,12 +47,12 @@ public class TranslateContentRequest : ITranslateFileInput
     public List<string>? StopSequences { get; set; }
 
     [Display("Temperature", Description = "Amount of randomness injected into the response.")]
-    [StaticDataSource(typeof(TemperatureDataSourceHandler))]
+    [DataSource(typeof(TemperatureDataSourceHandler))]
     [JsonProperty("temperature")]
     public string? Temperature { get; set; }
 
     [Display("top_p", Description = "Use nucleus sampling.\nIn nucleus sampling, we compute the cumulative distribution over all the options\n for each subsequent token in decreasing probability order and cut it off\n once it reaches a particular probability specified by top_p.\nYou should either alter temperature or top_p, but not both.")]
-    [StaticDataSource(typeof(TopPDataSourceHandler))]
+    [DataSource(typeof(TopPDataSourceHandler))]
     [JsonProperty("top_p")]
     public string? TopP { get; set; }
 

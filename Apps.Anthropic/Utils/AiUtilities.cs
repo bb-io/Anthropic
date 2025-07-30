@@ -4,7 +4,6 @@ using Apps.Anthropic.Models.Request;
 using Apps.Anthropic.Models.Response;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
-using Blackbird.Applications.Sdk.Glossaries.Utils.Converters;
 using Blackbird.Applications.Sdk.Common.Files;
 using RestSharp;
 
