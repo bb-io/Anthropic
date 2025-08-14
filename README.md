@@ -55,6 +55,25 @@ For more in-depth information about action consult the [Anthropic API reference]
 - **(Batch) Get XLIFF from the batch** get the results of the batch process. This action is suitable only for processing and post-editing XLIFF file and should be called after the async process is completed.
 - **(Batch) Get XLIFF from the quality score batch** get the quality scores results of the batch process. This action is suitable only for getting quality scores for XLIFF file and should be called after the async process is completed.
 
+## Token usage
+
+For all actions you can configure the 'Max tokens' optional input. This value limits the number of tokens generated in the response. If left empty, the default value will be the **maximum** number of tokens allowed by the model. For example, Claude Sonnet 4 has a maximum of 64,000 output tokens - leaving this field empty means 64,000 will be used as the value. To limit the tokens generated in the response, set this value to a lower number.
+
+### Model Comparison
+
+The following table compares the key characteristics of Claude models:
+
+| Model | Max Output | Context Window |
+|-------|------------|---------------|
+| Claude Opus 4.1 | 32,000 tokens | 200K tokens |
+| Claude Opus 4 | 32,000 tokens | 200K tokens |
+| Claude Sonnet 4 | 64,000 tokens | 200K / 1M (beta) tokens |
+| Claude Sonnet 3.7 | 64,000 tokens | 200K tokens |
+| Claude Haiku 3.5 | 8,192 tokens | 200K tokens |
+| Claude Haiku 3 | 4,096 tokens | 200K tokens |
+
+> Max output is the most important metric to consider when choosing a model for translation tasks, as it determines how much text can be generated in a single response. The context window is also important, especially for tasks that require understanding of larger documents or conversations like glossaries.
+
 ## Feedback
 
 Do you want to use this app or do you have feedback on our implementation? Reach out to us using the [established channels](https://www.blackbird.io/) or create an issue.
