@@ -24,7 +24,7 @@ public class EditActionsTests : TestBase
                     Name = "contentful.html.xlf",
                     ContentType = "application/xliff+xml"
                 },
-                Model = "claude-3-5-sonnet-20241022",
+                Model = "claude-sonnet-4-20250514",
                 SourceLanguage = "en",
                 TargetLanguage = "fr",
                 AdditionalInstructions = "Improve fluency and ensure natural expression while maintaining accuracy"
@@ -56,7 +56,7 @@ public class EditActionsTests : TestBase
                 SourceLanguage = "en",
                 TargetLanguage = "es",
                 TargetAudience = "Professional business context",
-                Model = "claude-3-5-sonnet-20241022",
+                Model = "claude-sonnet-4-20250514",
                 AdditionalInstructions = "Ensure the tone is formal and professional"
             });
 

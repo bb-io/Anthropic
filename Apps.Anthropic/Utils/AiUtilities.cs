@@ -16,13 +16,14 @@ public class AiUtilities(InvocationContext invocationContext, IFileManagementCli
         var client = new AnthropicRestClient(invocationContext.AuthenticationCredentialsProviders);
         var messages = await GenerateChatMessages(input, glossaryRequest);
 
+        var maxTokensDefaultValue = ModelTokenService.GetMaxTokensForModel(input.Model);
         var request = new RestRequest("/messages", Method.Post)
             .AddJsonBody(new
             {
-                system = input.SystemPrompt ?? "",
+                system = input.SystemPrompt ?? string.Empty,
                 model = input.Model,
                 messages,
-                max_tokens = input.MaxTokensToSample ?? 4096,
+                max_tokens = input.MaxTokensToSample ?? maxTokensDefaultValue,
                 stop_sequences = input.StopSequences != null ? input.StopSequences : new List<string>(),
                 temperature = input.Temperature != null ? float.Parse(input.Temperature) : 1.0f,
                 top_p = input.TopP != null ? float.Parse(input.TopP) : 1.0f,
