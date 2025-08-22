@@ -11,19 +11,14 @@ public class ConnectionValidator : IConnectionValidator
         IEnumerable<AuthenticationCredentialsProvider> authProviders, CancellationToken cancellationToken)
     {
         var client = new AnthropicRestClient(authProviders);
-        var request = new RestRequest("/complete", Method.Post);
-        request.AddJsonBody(new
-        {
-            model = "claude-2",
-            prompt = "\n\nHuman: hello \n\nAssistant:",
-            max_tokens_to_sample = 20
-        });
+        var request = new RestRequest("/models", Method.Get);
+
         try
         {
-            await client.ExecuteWithErrorHandling(request);
+            var response = await client.ExecuteWithErrorHandling(request);
             return new()
             {
-                IsValid = true
+                IsValid = response.IsSuccessful,
             };
         }
         catch (Exception ex)
