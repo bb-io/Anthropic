@@ -44,7 +44,7 @@ public class AiUtilities(InvocationContext invocationContext, IFileManagementCli
             "You are a linguist. Identify the language of the following text. Your response should be in the BCP 47 (language) or (language-country). " +
             "You respond with the language only, not other text is required.";
 
-        var snippet = content.Length > 200 ? content.Substring(0, 300) : content;
+        var snippet = content.Length > 200 ? content.Substring(0, Math.Min(300, content.Length)) : content;
         var userPrompt = snippet + ". The BCP 47 language code: ";
 
         var client = new AnthropicRestClient(invocationContext.AuthenticationCredentialsProviders);
