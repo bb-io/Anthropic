@@ -59,7 +59,7 @@ public class AiUtilities(InvocationContext invocationContext, IFileManagementCli
                 system = systemPrompt,
                 model,
                 messages,
-                max_tokens = 4096,
+                max_tokens = ModelTokenService.GetMaxTokensForModel(model),
                 stop_sequences = new List<string>(),
                 temperature = 1.0f,
                 top_p = 1.0f,
