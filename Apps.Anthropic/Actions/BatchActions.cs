@@ -240,7 +240,7 @@ public class BatchActions(InvocationContext invocationContext, IFileManagementCl
                 @params = new
                 {
                     model = request.Model,
-                    max_tokens = request.MaxTokens ?? 4096,
+                    max_tokens = request.MaxTokens ?? ModelTokenService.GetMaxTokensForModel(request.Model),
                     messages = new List<object>
                     {
                         new
