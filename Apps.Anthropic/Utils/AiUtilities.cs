@@ -1,10 +1,9 @@
-﻿using System.Text;
-using Apps.Anthropic.Api;
+﻿using Apps.Anthropic.Api;
 using Apps.Anthropic.Models.Request;
 using Apps.Anthropic.Models.Response;
+using Blackbird.Applications.Sdk.Common.Files;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
-using Blackbird.Applications.Sdk.Common.Files;
 using RestSharp;
 
 namespace Apps.Anthropic.Utils;
@@ -17,18 +16,21 @@ public class AiUtilities(InvocationContext invocationContext, IFileManagementCli
         var messages = await GenerateChatMessages(input, glossaryRequest);
 
         var maxTokensDefaultValue = ModelTokenService.GetMaxTokensForModel(input.Model);
-        var request = new RestRequest("/messages", Method.Post)
-            .AddJsonBody(new
-            {
-                system = input.SystemPrompt ?? string.Empty,
-                model = input.Model,
-                messages,
-                max_tokens = input.MaxTokensToSample ?? maxTokensDefaultValue,
-                stop_sequences = input.StopSequences != null ? input.StopSequences : new List<string>(),
-                temperature = input.Temperature != null ? float.Parse(input.Temperature) : 1.0f,
-                top_p = input.TopP != null ? float.Parse(input.TopP) : 1.0f,
-                top_k = input.TopK != null ? input.TopK : 1,
-            });
+        var request = new RestRequest("/messages", Method.Post);
+
+        var body = new MessageRequest
+        {
+            System = input.SystemPrompt ?? string.Empty,
+            Model = input.Model,
+            Messages = messages,
+            MaxTokens = input.MaxTokensToSample ?? maxTokensDefaultValue,
+            StopSequences = input.StopSequences != null ? input.StopSequences : new List<string>(),
+            Temperature = input.Temperature != null ? (float?)float.Parse(input.Temperature) : null,
+            TopP = input.TopP != null ? (float?)float.Parse(input.TopP) : null,
+            TopK = input.TopK,
+        };
+
+        request.AddJsonBody(body);
 
         var response = await client.ExecuteWithErrorHandling<CompletionResponse>(request);
         return new ResponseMessage
@@ -61,8 +63,6 @@ public class AiUtilities(InvocationContext invocationContext, IFileManagementCli
                 messages,
                 max_tokens = ModelTokenService.GetMaxTokensForModel(model),
                 stop_sequences = new List<string>(),
-                temperature = 1.0f,
-                top_p = 1.0f,
                 top_k = 1
             });
 
