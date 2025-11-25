@@ -24,7 +24,7 @@ public class TranslationActionsTests : TestBase
                     Name = "contentful.html",
                     ContentType = "application/xliff+xml"
                 },
-                Model = "claude-3-5-sonnet-20241022",
+                Model = "claude-opus-4-5-20251101",
                 TargetLanguage = "fr",
                 AdditionalInstructions = "Translate accurately while maintaining the original meaning"
             });
@@ -45,15 +45,15 @@ public class TranslationActionsTests : TestBase
     {
         // Arrange
         var translationActions = new TranslationActions(InvocationContext, FileManager);
+        var original = "Brat mir einer einen Storch.";
 
         // Act
         var result = await translationActions.TranslateText(
             new TranslateTextRequest
             {
-                Text = "Hello, how are you today? I hope you're having a wonderful day!",
-                Model = "claude-3-5-sonnet-20241022",
-                TargetLanguage = "es",
-                AdditionalInstructions = "Use formal Spanish"
+                Text = original,
+                Model = "claude-opus-4-5-20251101",
+                TargetLanguage = "en-US",
             });
 
         // Assert
@@ -63,7 +63,7 @@ public class TranslationActionsTests : TestBase
         Assert.IsFalse(string.IsNullOrEmpty(result.UserPrompt));
         Assert.IsNotNull(result.Usage);
 
-        Console.WriteLine($"Original text: Hello, how are you today? I hope you're having a wonderful day!");
+        Console.WriteLine($"Original text: {original}");
         Console.WriteLine($"Translated text: {result.TranslatedText}");
         Console.WriteLine($"System prompt: {result.SystemPrompt}");
         Console.WriteLine($"User prompt: {result.UserPrompt}");

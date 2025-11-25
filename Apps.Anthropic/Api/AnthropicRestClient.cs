@@ -1,18 +1,20 @@
-﻿using System.Net;
-using Apps.Anthropic.Models.Response;
+﻿using Apps.Anthropic.Models.Response;
 using Blackbird.Applications.Sdk.Common.Authentication;
 using Blackbird.Applications.Sdk.Common.Exceptions;
 using Blackbird.Applications.Sdk.Utils.RestSharp;
 using Newtonsoft.Json;
 using RestSharp;
+using RestSharp.Serializers.Json;
+using System.Net;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Apps.Anthropic.Api;
 
-public class AnthropicRestClient : BlackBirdRestClient
+public class AnthropicRestClient : RestClient
 {
     private readonly Dictionary<string, string> AnthropicErrors = new()
     {
-        { "invalid_request_error", "There was an issue with the format or content of your request." },
         { "authentication_error", "There's an issue with your API key. Check if your key is valid or has expired." },
         { "permission_error", "Your API key does not have permission to use the specified resource." },
         { "not_found_error", "The requested resource was not found." },
@@ -22,18 +24,25 @@ public class AnthropicRestClient : BlackBirdRestClient
         { "overloaded_error", "Anthropic’s API is temporarily overloaded. Please retry after some time." }
 
     };
-    protected override JsonSerializerSettings JsonSettings =>
+    protected JsonSerializerSettings JsonSettings =>
            new JsonSerializerSettings { MissingMemberHandling = MissingMemberHandling.Ignore };
 
     public AnthropicRestClient(IEnumerable<AuthenticationCredentialsProvider> authenticationCredentialsProviders) :
-            base(new RestClientOptions { ThrowOnAnyError = false, BaseUrl = new Uri("https://api.anthropic.com/v1"), MaxTimeout = (int)TimeSpan.FromMinutes(10).TotalMilliseconds })
+            base(new RestClientOptions { 
+                ThrowOnAnyError = false, 
+                BaseUrl = new Uri("https://api.anthropic.com/v1"), 
+                MaxTimeout = (int)TimeSpan.FromMinutes(10).TotalMilliseconds,
+            }, configureSerialization: s => s.UseSystemTextJson(
+                new JsonSerializerOptions(JsonSerializerDefaults.Web)
+                {
+                    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+                }))
     {
         this.AddDefaultHeader("x-api-key", authenticationCredentialsProviders.First(x => x.KeyName == "apiKey").Value);
         this.AddDefaultHeader("anthropic-version", "2023-06-01");
-
     }
 
-    protected override Exception ConfigureErrorException(RestResponse response)
+    protected Exception ConfigureErrorException(RestResponse response)
     {
         if (response.Content == null)
             throw new PluginApplicationException(response.ErrorMessage);
@@ -47,14 +56,33 @@ public class AnthropicRestClient : BlackBirdRestClient
 
         if (AnthropicErrors.TryGetValue(errorType, out var message))
         {
-            return errorType switch
-            {
-                "not_found_error" or "api_error" or "overloaded_error" =>
-                     new PluginApplicationException(message),
-                _ => new PluginMisconfigurationException(message)
-            };
+            return new PluginApplicationException(error?.Error?.Message ?? message);
         }
 
-        return new PluginApplicationException(error?.Error?.Message ?? response.ErrorException.Message);
+        // We should explicitly throw errors here to be notified of invalid request errors that we can fix
+        return new Exception(error?.Error?.Message ?? response.ErrorException.Message);
+    }
+
+    public async Task<T> ExecuteWithErrorHandling<T>(RestRequest request)
+    {
+        string content = (await ExecuteWithErrorHandling(request)).Content;
+        T val = JsonConvert.DeserializeObject<T>(content, JsonSettings);
+        if (val == null)
+        {
+            throw new Exception($"Could not parse {content} to {typeof(T)}");
+        }
+
+        return val;
+    }
+
+    public async Task<RestResponse> ExecuteWithErrorHandling(RestRequest request)
+    {
+        RestResponse restResponse = await ExecuteAsync(request);
+        if (!restResponse.IsSuccessStatusCode)
+        {
+            throw ConfigureErrorException(restResponse);
+        }
+
+        return restResponse;
     }
 }
