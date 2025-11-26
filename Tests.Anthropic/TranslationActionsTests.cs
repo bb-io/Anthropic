@@ -52,7 +52,7 @@ public class TranslationActionsTests : TestBase
             new TranslateTextRequest
             {
                 Text = original,
-                Model = "claude-opus-4-5-20251101",
+                Model = "claude-haiku-4-5-20251001",
                 TargetLanguage = "en-US",
             });
 
