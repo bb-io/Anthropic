@@ -135,7 +135,7 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
     public async Task<TranslateTextResponse> TranslateText([ActionParameter] TranslateTextRequest input)
     {
         var systemPrompt = "You are a text localizer. Localize the provided text for the specified locale while " +
-                          "preserving the original text structure. Respond with localized text.";
+                          "preserving the original text structure. Respond with localized text. Do not give any other answer but the translation. No explanation or other headers.";
 
         var sourceLanguage = input.SourceLanguage;
         if (string.IsNullOrEmpty(sourceLanguage))
