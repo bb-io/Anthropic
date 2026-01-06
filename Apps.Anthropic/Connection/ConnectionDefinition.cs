@@ -10,6 +10,7 @@ public class ConnectionDefinition : IConnectionDefinition
     {
         new()
         {
+            DisplayName = "Anthropic API token",
             Name = ConnectionTypes.AnthropicNative,
             AuthenticationType = ConnectionAuthenticationType.Undefined,
             ConnectionProperties = 
@@ -19,6 +20,7 @@ public class ConnectionDefinition : IConnectionDefinition
         },
         new()
         {
+            DisplayName = "Amazon Bedrock",
             Name = ConnectionTypes.Bedrock,
             AuthenticationType = ConnectionAuthenticationType.Undefined,
             ConnectionProperties = 

@@ -1,17 +1,16 @@
 ﻿using Apps.Anthropic.Models.Response;
 using Blackbird.Applications.Sdk.Common.Authentication;
+using Blackbird.Applications.Sdk.Common.Connections;
 using Blackbird.Applications.Sdk.Common.Exceptions;
-using Blackbird.Applications.Sdk.Utils.RestSharp;
 using Newtonsoft.Json;
 using RestSharp;
 using RestSharp.Serializers.Json;
-using System.Net;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace Apps.Anthropic.Api;
 
-public class AnthropicRestClient : RestClient
+public class AnthropicRestClient : RestClient, IAnthropicClient
 {
     private readonly Dictionary<string, string> AnthropicErrors = new()
     {
@@ -40,6 +39,28 @@ public class AnthropicRestClient : RestClient
     {
         this.AddDefaultHeader("x-api-key", authenticationCredentialsProviders.First(x => x.KeyName == "apiKey").Value);
         this.AddDefaultHeader("anthropic-version", "2023-06-01");
+    }
+
+    public async Task<ConnectionValidationResponse> ValidateConnection(IEnumerable<AuthenticationCredentialsProvider> creds)
+    {
+        var request = new RestRequest("/models", Method.Get);
+
+        try
+        {
+            var response = await ExecuteWithErrorHandling(request);
+            return new()
+            {
+                IsValid = response.IsSuccessful,
+            };
+        }
+        catch (Exception ex)
+        {
+            return new()
+            {
+                IsValid = false,
+                Message = ex.Message
+            };
+        }
     }
 
     protected Exception ConfigureErrorException(RestResponse response)
