@@ -1,23 +1,29 @@
-using Apps.Anthropic.Connection;
-using Blackbird.Applications.Sdk.Common.Authentication;
 using Tests.Anthropic.Base;
+using Apps.Anthropic.Connection;
+using Blackbird.Applications.Sdk.Common.Invocation;
+using Blackbird.Applications.Sdk.Common.Authentication;
 
 namespace Tests.Anthropic;
 
 [TestClass]
-public class ConnectionValidatorTests : TestBase
+public class ConnectionValidatorTests : TestBaseMultipleConnections
 {
-    [TestMethod]
-    public async Task ValidatesCorrectConnection()
+    [TestMethod, ContextDataSource]
+    public async Task ValidatesCorrectConnection(InvocationContext context)
     {
+        // Arrange
         var validator = new ConnectionValidator();
+        var tasks = CredentialGroups.Select(x => validator.ValidateConnection(x, CancellationToken.None).AsTask());
 
-        var result = await validator.ValidateConnection(Creds, CancellationToken.None);
-        Assert.IsTrue(result.IsValid);
+        // Act
+        var results = await Task.WhenAll(tasks);
+
+        // Assert
+        Assert.IsTrue(results.All(x => x.IsValid));
     }
 
-    [TestMethod]
-    public async Task DoesNotValidateIncorrectConnection()
+    [TestMethod, ContextDataSource]
+    public async Task DoesNotValidateIncorrectConnection(InvocationContext context)
     {
         var validator = new ConnectionValidator();
 
