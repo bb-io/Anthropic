@@ -8,4 +8,5 @@ public interface IAnthropicClient
 {
     Task<ConnectionValidationResponse> ValidateConnection();
     Task<ResponseMessage> ExecuteChat(MessageRequest message);
+    Task<List<ModelResponse>> ListModels();
 }

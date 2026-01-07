@@ -48,6 +48,14 @@ public class AmazonBedrockSdkClient : IAnthropicClient
         }
     }
 
+    public async Task<List<ModelResponse>> ListModels()
+    {
+        var models = await ExecuteWithErrorHandling(async () => 
+            await ManagementClient.ListFoundationModelsAsync(new ListFoundationModelsRequest { ByProvider = "anthropic" })
+        );
+        return models.ModelSummaries.Select(x => new ModelResponse(x.ModelId, x.ModelName)).ToList();
+    }
+
     public async Task<ResponseMessage> ExecuteChat(MessageRequest request)
     {
         var messages = request?.Messages?.Select(m => new Message

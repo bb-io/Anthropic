@@ -1,16 +1,11 @@
 ﻿using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Apps.Anthropic.Models.Request;
-public class ModelResponse
+
+public class ModelResponse(string id, string displayName)
 {
-    public string Type { get; set; }
-    public string Id { get; set; }
+    public string Id { get; set; } = id;
 
     [JsonProperty("display_name")]
-    public string DisplayName { get; set; }
+    public string DisplayName { get; set; } = displayName;
 }

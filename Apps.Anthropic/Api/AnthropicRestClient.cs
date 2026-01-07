@@ -65,6 +65,13 @@ public class AnthropicRestClient : RestClient, IAnthropicClient
         }
     }
 
+    public async Task<List<ModelResponse>> ListModels()
+    {
+        var request = new RestRequest("/models");
+        var models = await ExecuteWithErrorHandling<DataResponse<ModelResponse>>(request);
+        return models.Data.Select(x => new ModelResponse(x.Id, x.DisplayName)).ToList();
+    }
+
     public async Task<ResponseMessage> ExecuteChat(MessageRequest message)
     {
         message.MaxTokens = ModelTokenService.GetMaxTokensForModel(message.Model);
