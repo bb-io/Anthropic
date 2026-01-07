@@ -1,19 +1,19 @@
+using Tests.Anthropic.Base;
 using Apps.Anthropic.Actions;
 using Apps.Anthropic.Models.Request;
 using Blackbird.Applications.Sdk.Common.Files;
-using Newtonsoft.Json;
-using Tests.Anthropic.Base;
+using Blackbird.Applications.Sdk.Common.Invocation;
 
 namespace Tests.Anthropic;
 
 [TestClass]
-public class EditActionsTests : TestBase
+public class EditActionsTests : TestBaseMultipleConnections
 {
-    [TestMethod]
-    public async Task EditContent_WithTranslatedXliff_ProcessesSuccessfully()
+    [TestMethod, ContextDataSource]
+    public async Task EditContent_WithTranslatedXliff_ProcessesSuccessfully(InvocationContext context)
     {
         // Arrange
-        var editActions = new EditActions(InvocationContext, FileManager);
+        var editActions = new EditActions(context, FileManager);
 
         // Act
         var result = await editActions.EditContent(
@@ -31,21 +31,21 @@ public class EditActionsTests : TestBase
             });
 
         // Assert
+        TestContext.WriteLine($"Total segments reviewed: {result.TotalSegmentsReviewed}");
+        TestContext.WriteLine($"Total segments updated: {result.TotalSegmentsUpdated}");
+        PrintResult(result);
+
         Assert.IsNotNull(result);
         Assert.IsNotNull(result.File);
-        Assert.IsTrue(result.TotalSegmentsReviewed >= 0);
+        Assert.IsGreaterThanOrEqualTo(0, result.TotalSegmentsReviewed);
         Assert.IsNotNull(result.Usage);
-
-        Console.WriteLine($"Total segments reviewed: {result.TotalSegmentsReviewed}");
-        Console.WriteLine($"Total segments updated: {result.TotalSegmentsUpdated}");
-        Console.WriteLine(JsonConvert.SerializeObject(result, Formatting.Indented));
     }
-    
-    [TestMethod]
-    public async Task EditText_WithTranslatedText_ProcessesSuccessfully()
+
+    [TestMethod, ContextDataSource]
+    public async Task EditText_WithTranslatedText_ProcessesSuccessfully(InvocationContext context)
     {
         // Arrange
-        var editActions = new EditActions(InvocationContext, FileManager);
+        var editActions = new EditActions(context, FileManager);
 
         // Act
         var result = await editActions.EditText(
@@ -61,15 +61,15 @@ public class EditActionsTests : TestBase
             });
 
         // Assert
+        TestContext.WriteLine($"Edited text: {result.EditedText}");
+        TestContext.WriteLine($"System prompt: {result.SystemPrompt}");
+        TestContext.WriteLine($"User prompt: {result.UserPrompt}");
+        PrintResult(result);
+
         Assert.IsNotNull(result);
         Assert.IsFalse(string.IsNullOrEmpty(result.EditedText));
         Assert.IsFalse(string.IsNullOrEmpty(result.SystemPrompt));
         Assert.IsFalse(string.IsNullOrEmpty(result.UserPrompt));
         Assert.IsNotNull(result.Usage);
-        
-        Console.WriteLine($"Edited text: {result.EditedText}");
-        Console.WriteLine($"System prompt: {result.SystemPrompt}");
-        Console.WriteLine($"User prompt: {result.UserPrompt}");
-        Console.WriteLine(JsonConvert.SerializeObject(result, Formatting.Indented));
     }
 }

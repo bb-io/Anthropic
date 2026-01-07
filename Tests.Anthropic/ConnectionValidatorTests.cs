@@ -1,15 +1,14 @@
 using Tests.Anthropic.Base;
 using Apps.Anthropic.Connection;
-using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.Sdk.Common.Authentication;
 
 namespace Tests.Anthropic;
 
 [TestClass]
-public class ConnectionValidatorTests : TestBaseMultipleConnections
+public class ConnectionValidatorTests : TestBase
 {
-    [TestMethod, ContextDataSource]
-    public async Task ValidatesCorrectConnection(InvocationContext context)
+    [TestMethod]
+    public async Task ValidatesCorrectConnection()
     {
         // Arrange
         var validator = new ConnectionValidator();
@@ -22,13 +21,19 @@ public class ConnectionValidatorTests : TestBaseMultipleConnections
         Assert.IsTrue(results.All(x => x.IsValid));
     }
 
-    [TestMethod, ContextDataSource]
-    public async Task DoesNotValidateIncorrectConnection(InvocationContext context)
+    [TestMethod]
+    public async Task DoesNotValidateIncorrectConnection()
     {
+        // Arrange
         var validator = new ConnectionValidator();
+        var newCreds = CredentialGroups
+            .First()
+            .Select(x => new AuthenticationCredentialsProvider(x.KeyName, x.Value + "_incorrect"));
 
-        var newCreds = Creds.Select(x => new AuthenticationCredentialsProvider(x.KeyName, x.Value + "_incorrect"));
+        // Act
         var result = await validator.ValidateConnection(newCreds, CancellationToken.None);
+
+        // Assert
         Assert.IsFalse(result.IsValid);
     }
 }

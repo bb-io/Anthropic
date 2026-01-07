@@ -1,33 +1,38 @@
-﻿using Apps.Anthropic.DataSourceHandlers;
-using FluentAssertions;
-using Newtonsoft.Json;
-using Tests.Anthropic.Base;
+﻿using Tests.Anthropic.Base;
+using Apps.Anthropic.Constants;
+using Apps.Anthropic.DataSourceHandlers;
+using Blackbird.Applications.Sdk.Common.Invocation;
 
 namespace Tests.Anthropic;
 
 [TestClass]
-public class DataSourceTests : TestBase
+public class DataSourceTests : TestBaseMultipleConnections
 {
-    [TestMethod]
-    public async Task BatchDataSource_GetData_WithoutSearchParameter_ShouldNotNullCollection()
+    [TestMethod, ContextDataSource(ConnectionTypes.AnthropicNative)]
+    public async Task BatchDataSource_WithoutSearchParameter_ShouldNotNullCollection(InvocationContext context)
     {
-        var dataSource = new BatchDataSource(InvocationContext);
+        // Arrange
+        var dataSource = new BatchDataSource(context);
+
+        // Act
         var data = await dataSource.GetDataAsync(new(), default);
 
-        data.Should().NotBeNull();
-
-        Console.WriteLine(JsonConvert.SerializeObject(data, Formatting.Indented));
+        // Assert
+        PrintDataHandlerResult(data);
+        Assert.IsNotNull(data);
     }
 
-    [TestMethod]
-    public async Task Models_ShouldNotNullCollection()
+    [TestMethod, ContextDataSource(ConnectionTypes.AnthropicNative)]
+    public async Task ModelDataSource_ShouldNotNullCollection(InvocationContext context)
     {
-        var dataSource = new ModelDataSource(InvocationContext);
+        // Arrange
+        var dataSource = new ModelDataSource(context);
+
+        // Act
         var data = await dataSource.GetDataAsync(new(), default);
 
-        data.Should().NotBeNull();
-
-        Console.WriteLine(JsonConvert.SerializeObject(data, Formatting.Indented));
+        // Assert
+        PrintDataHandlerResult(data);
+        Assert.IsNotNull(data);
     }
-
 }
