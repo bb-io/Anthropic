@@ -3,6 +3,7 @@ using Amazon.Bedrock;
 using Amazon.Bedrock.Model;
 using Amazon.BedrockRuntime;
 using Amazon.BedrockRuntime.Model;
+using Amazon.Runtime.Documents;
 using Apps.Anthropic.Constants;
 using Apps.Anthropic.Models.Request;
 using Apps.Anthropic.Models.Response;
@@ -79,7 +80,10 @@ public class AmazonBedrockSdkClient : IAnthropicClient
                 Temperature = request?.Temperature,
                 TopP = request?.TopP
             }
-        };
+        }; 
+        
+        if (request.TopK.HasValue)
+            bedrockRequest.AdditionalModelRequestFields = new Document { { "top_k", request.TopK.Value } };
 
         var response = await ExecuteWithErrorHandling(async () => await ChatClient.ConverseAsync(bedrockRequest));
 
