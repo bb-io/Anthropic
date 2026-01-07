@@ -10,6 +10,6 @@ public class ConnectionValidator : IConnectionValidator
         IEnumerable<AuthenticationCredentialsProvider> authProviders, CancellationToken cancellationToken)
     {
         IAnthropicClient client = ClientFactory.Create(authProviders);
-        return await client.ValidateConnection(authProviders);
+        return await client.ValidateConnection();
     }
 }

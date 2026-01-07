@@ -8,7 +8,7 @@ public class MessageRequest
     public List<Message>? Messages { get; set; }
 
     [JsonPropertyName("max_tokens")]
-    public int MaxTokens { get; set; }
+    public int? MaxTokens { get; set; }
 
     [JsonPropertyName("stop_sequences")]
     public List<string> StopSequences { get; set; }

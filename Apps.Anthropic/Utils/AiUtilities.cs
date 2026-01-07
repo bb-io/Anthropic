@@ -12,32 +12,22 @@ public class AiUtilities(InvocationContext invocationContext, IFileManagementCli
 {
     public async Task<ResponseMessage> SendMessageAsync(CompletionRequest input, GlossaryRequest glossaryRequest)
     {
-        var client = new AnthropicRestClient(invocationContext.AuthenticationCredentialsProviders);
         var messages = await GenerateChatMessages(input, glossaryRequest);
-
-        var maxTokensDefaultValue = ModelTokenService.GetMaxTokensForModel(input.Model);
-        var request = new RestRequest("/messages", Method.Post);
 
         var body = new MessageRequest
         {
             System = input.SystemPrompt ?? string.Empty,
             Model = input.Model,
             Messages = messages,
-            MaxTokens = input.MaxTokensToSample ?? maxTokensDefaultValue,
+            MaxTokens = input.MaxTokensToSample,
             StopSequences = input.StopSequences != null ? input.StopSequences : new List<string>(),
-            Temperature = input.Temperature != null ? (float?)float.Parse(input.Temperature) : null,
-            TopP = input.TopP != null ? (float?)float.Parse(input.TopP) : null,
+            Temperature = input.Temperature != null ? float.Parse(input.Temperature) : null,
+            TopP = input.TopP != null ? float.Parse(input.TopP) : null,
             TopK = input.TopK,
         };
 
-        request.AddJsonBody(body);
-
-        var response = await client.ExecuteWithErrorHandling<CompletionResponse>(request);
-        return new ResponseMessage
-        {
-            Text = response.Content.FirstOrDefault()?.Text ?? "",
-            Usage = response.Usage
-        }; 
+        var client = ClientFactory.Create(invocationContext.AuthenticationCredentialsProviders);
+        return await client.ExecuteChat(body);
     }
     
     public async Task<string> IdentifySourceLanguageAsync(string model, string content)

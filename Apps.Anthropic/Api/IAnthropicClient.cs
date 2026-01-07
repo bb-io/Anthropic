@@ -1,9 +1,11 @@
-﻿using Blackbird.Applications.Sdk.Common.Connections;
-using Blackbird.Applications.Sdk.Common.Authentication;
+﻿using Apps.Anthropic.Models.Request;
+using Apps.Anthropic.Models.Response;
+using Blackbird.Applications.Sdk.Common.Connections;
 
 namespace Apps.Anthropic.Api;
 
 public interface IAnthropicClient
 {
-    Task<ConnectionValidationResponse> ValidateConnection(IEnumerable<AuthenticationCredentialsProvider> creds);
+    Task<ConnectionValidationResponse> ValidateConnection();
+    Task<ResponseMessage> ExecuteChat(MessageRequest message);
 }

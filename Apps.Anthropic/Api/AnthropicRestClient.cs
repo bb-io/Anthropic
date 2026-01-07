@@ -1,12 +1,14 @@
-﻿using Apps.Anthropic.Models.Response;
-using Blackbird.Applications.Sdk.Common.Authentication;
-using Blackbird.Applications.Sdk.Common.Connections;
-using Blackbird.Applications.Sdk.Common.Exceptions;
-using Newtonsoft.Json;
-using RestSharp;
+﻿using RestSharp;
 using RestSharp.Serializers.Json;
+using Newtonsoft.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Apps.Anthropic.Utils;
+using Apps.Anthropic.Models.Request;
+using Apps.Anthropic.Models.Response;
+using Blackbird.Applications.Sdk.Common.Exceptions;
+using Blackbird.Applications.Sdk.Common.Connections;
+using Blackbird.Applications.Sdk.Common.Authentication;
 
 namespace Apps.Anthropic.Api;
 
@@ -41,7 +43,7 @@ public class AnthropicRestClient : RestClient, IAnthropicClient
         this.AddDefaultHeader("anthropic-version", "2023-06-01");
     }
 
-    public async Task<ConnectionValidationResponse> ValidateConnection(IEnumerable<AuthenticationCredentialsProvider> creds)
+    public async Task<ConnectionValidationResponse> ValidateConnection()
     {
         var request = new RestRequest("/models", Method.Get);
 
@@ -61,6 +63,21 @@ public class AnthropicRestClient : RestClient, IAnthropicClient
                 Message = ex.Message
             };
         }
+    }
+
+    public async Task<ResponseMessage> ExecuteChat(MessageRequest message)
+    {
+        message.MaxTokens = ModelTokenService.GetMaxTokensForModel(message.Model);
+
+        var request = new RestRequest("/messages", Method.Post);
+        request.AddJsonBody(message);
+
+        var response = await ExecuteWithErrorHandling<CompletionResponse>(request);
+        return new ResponseMessage
+        {
+            Text = response.Content.FirstOrDefault()?.Text ?? "",
+            Usage = response.Usage
+        };
     }
 
     protected Exception ConfigureErrorException(RestResponse response)
