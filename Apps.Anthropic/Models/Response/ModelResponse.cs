@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
 
-namespace Apps.Anthropic.Models.Request;
+namespace Apps.Anthropic.Models.Response;
 
 public class ModelResponse(string id, string displayName)
 {

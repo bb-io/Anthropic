@@ -20,14 +20,25 @@ public class ConnectionDefinition : IConnectionDefinition
         },
         new()
         {
-            DisplayName = "Amazon Bedrock",
-            Name = ConnectionTypes.Bedrock,
+            DisplayName = "Amazon Bedrock (AWS Credentials)",
+            Name = ConnectionTypes.BedrockCreds,
             AuthenticationType = ConnectionAuthenticationType.Undefined,
             ConnectionProperties = 
             [
                 new(CredNames.AccessKey) { DisplayName = "Access key" },
                 new(CredNames.SecretKey) { DisplayName = "Secret key", Sensitive = true },
                 new(CredNames.Region) { DisplayName = "Region" },
+            ]
+        },
+        new()
+        {
+            DisplayName = "Amazon Bedrock (API Key)",
+            Name = ConnectionTypes.BedrockApiKey,
+            AuthenticationType = ConnectionAuthenticationType.Undefined,
+            ConnectionProperties = 
+            [
+                new(CredNames.ApiKey) { DisplayName = "API token", Sensitive = true },
+                new(CredNames.Region) { DisplayName = "Region" }
             ]
         }
     };

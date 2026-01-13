@@ -12,7 +12,8 @@ public static class ClientFactory
         return connectionType switch
         {
             ConnectionTypes.AnthropicNative => new AnthropicRestClient(creds),
-            ConnectionTypes.Bedrock => new AmazonBedrockSdkClient(creds),
+            ConnectionTypes.BedrockCreds => new AmazonBedrockSdkClient(creds),
+            ConnectionTypes.BedrockApiKey => new AmazonBedrockRestClient(creds),
             _ => throw new Exception($"Unsupported connection type: {connectionType}")
         };
     }

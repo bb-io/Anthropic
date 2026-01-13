@@ -5,9 +5,14 @@
       "apiKey": ""
     },
     {
-      "connectionType": "Amazon Bedrock",
+      "connectionType": "Amazon Bedrock (AWS Credentials)",
       "accessKey": "",
       "secretKey": "",
+      "region": ""
+    },
+    {
+      "connectionType": "Amazon Bedrock (API Key)",
+      "apiKey": "",
       "region": ""
     }
   ],
