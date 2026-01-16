@@ -1,17 +1,18 @@
-﻿using Apps.Anthropic.Models.Response;
-using Blackbird.Applications.Sdk.Common.Authentication;
-using Blackbird.Applications.Sdk.Common.Exceptions;
-using Blackbird.Applications.Sdk.Utils.RestSharp;
-using Newtonsoft.Json;
-using RestSharp;
+﻿using RestSharp;
 using RestSharp.Serializers.Json;
-using System.Net;
+using Newtonsoft.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Apps.Anthropic.Utils;
+using Apps.Anthropic.Models.Request;
+using Apps.Anthropic.Models.Response;
+using Blackbird.Applications.Sdk.Common.Exceptions;
+using Blackbird.Applications.Sdk.Common.Connections;
+using Blackbird.Applications.Sdk.Common.Authentication;
 
 namespace Apps.Anthropic.Api;
 
-public class AnthropicRestClient : RestClient
+public class AnthropicRestClient : RestClient, IAnthropicClient
 {
     private readonly Dictionary<string, string> AnthropicErrors = new()
     {
@@ -40,6 +41,50 @@ public class AnthropicRestClient : RestClient
     {
         this.AddDefaultHeader("x-api-key", authenticationCredentialsProviders.First(x => x.KeyName == "apiKey").Value);
         this.AddDefaultHeader("anthropic-version", "2023-06-01");
+    }
+
+    public async Task<ConnectionValidationResponse> ValidateConnection()
+    {
+        var request = new RestRequest("/models", Method.Get);
+
+        try
+        {
+            var response = await ExecuteWithErrorHandling(request);
+            return new()
+            {
+                IsValid = response.IsSuccessful,
+            };
+        }
+        catch (Exception ex)
+        {
+            return new()
+            {
+                IsValid = false,
+                Message = ex.Message
+            };
+        }
+    }
+
+    public async Task<List<ModelResponse>> ListModels()
+    {
+        var request = new RestRequest("/models");
+        var models = await ExecuteWithErrorHandling<DataResponse<ModelResponse>>(request);
+        return models.Data.Select(x => new ModelResponse(x.Id, x.DisplayName)).ToList();
+    }
+
+    public async Task<ResponseMessage> ExecuteChat(MessageRequest message)
+    {
+        message.MaxTokens = ModelTokenService.GetMaxTokensForModel(message.Model);
+
+        var request = new RestRequest("/messages", Method.Post);
+        request.AddJsonBody(message);
+
+        var response = await ExecuteWithErrorHandling<CompletionResponse>(request);
+        return new ResponseMessage
+        {
+            Text = response.Content.FirstOrDefault()?.Text ?? "",
+            Usage = response.Usage
+        };
     }
 
     protected Exception ConfigureErrorException(RestResponse response)

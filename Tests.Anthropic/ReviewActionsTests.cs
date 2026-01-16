@@ -1,19 +1,19 @@
+using Tests.Anthropic.Base;
 using Apps.Anthropic.Actions;
 using Apps.Anthropic.Models.Request;
 using Blackbird.Applications.Sdk.Common.Files;
-using Newtonsoft.Json;
-using Tests.Anthropic.Base;
+using Blackbird.Applications.Sdk.Common.Invocation;
 
 namespace Tests.Anthropic;
 
 [TestClass]
-public class ReviewActionsTests : TestBase
+public class ReviewActionsTests : TestBaseMultipleConnections
 {
-    [TestMethod]
-    public async Task ReviewContent_WithTranslatedXliff_ProcessesSuccessfully()
+    [TestMethod, ContextDataSource]
+    public async Task ReviewContent_WithTranslatedXliff_ProcessesSuccessfully(InvocationContext context)
     {
         // Arrange
-        var reviewActions = new ReviewActions(InvocationContext, FileManager);
+        var reviewActions = new ReviewActions(context, FileManager);
 
         // Act
         var result = await reviewActions.ReviewContent(
@@ -31,26 +31,26 @@ public class ReviewActionsTests : TestBase
             });
 
         // Assert
+        TestContext.WriteLine($"Total segments processed: {result.TotalSegmentsProcessed}");
+        TestContext.WriteLine($"Total segments finalized: {result.TotalSegmentsFinalized}");
+        TestContext.WriteLine($"Total segments under threshold: {result.TotalSegmentsUnderThreshhold}");
+        TestContext.WriteLine($"Average quality score: {result.AverageMetric:F3}");
+        TestContext.WriteLine($"Percentage under threshold: {result.PercentageSegmentsUnderThreshhold:F1}%");
+        PrintResult(result);
+
         Assert.IsNotNull(result);
         Assert.IsNotNull(result.File);
-        Assert.IsTrue(result.TotalSegmentsProcessed > 0);
+        Assert.IsGreaterThan(0, result.TotalSegmentsProcessed);
         Assert.IsNotNull(result.Usage);
         Assert.IsTrue(result.AverageMetric >= 0.0f && result.AverageMetric <= 1.0f);
         Assert.IsTrue(result.PercentageSegmentsUnderThreshhold >= 0.0f && result.PercentageSegmentsUnderThreshhold <= 100.0f);
-
-        Console.WriteLine($"Total segments processed: {result.TotalSegmentsProcessed}");
-        Console.WriteLine($"Total segments finalized: {result.TotalSegmentsFinalized}");
-        Console.WriteLine($"Total segments under threshold: {result.TotalSegmentsUnderThreshhold}");
-        Console.WriteLine($"Average quality score: {result.AverageMetric:F3}");
-        Console.WriteLine($"Percentage under threshold: {result.PercentageSegmentsUnderThreshhold:F1}%");
-        Console.WriteLine(JsonConvert.SerializeObject(result, Formatting.Indented));
     }
 
-    [TestMethod]
-    public async Task ReviewText_WithTranslatedText_ProcessesSuccessfully()
+    [TestMethod, ContextDataSource]
+    public async Task ReviewText_WithTranslatedText_ProcessesSuccessfully(InvocationContext context)
     {
         // Arrange
-        var reviewActions = new ReviewActions(InvocationContext, FileManager);
+        var reviewActions = new ReviewActions(context, FileManager);
 
         // Act
         var result = await reviewActions.ReviewText(
@@ -65,12 +65,12 @@ public class ReviewActionsTests : TestBase
             });
 
         // Assert
+        PrintResult(result);
+
         Assert.IsNotNull(result);
         Assert.IsTrue(result.Score >= 0.0f && result.Score <= 1.0f);
         Assert.IsFalse(string.IsNullOrEmpty(result.SystemPrompt));
         Assert.IsFalse(string.IsNullOrEmpty(result.UserPrompt));
         Assert.IsNotNull(result.Usage);
-
-        Console.WriteLine(JsonConvert.SerializeObject(result, Formatting.Indented));
     }
 }

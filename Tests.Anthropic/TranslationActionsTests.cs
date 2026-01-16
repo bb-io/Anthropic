@@ -1,19 +1,19 @@
+using Tests.Anthropic.Base;
 using Apps.Anthropic.Actions;
 using Apps.Anthropic.Models.Request;
 using Blackbird.Applications.Sdk.Common.Files;
-using Newtonsoft.Json;
-using Tests.Anthropic.Base;
+using Blackbird.Applications.Sdk.Common.Invocation;
 
 namespace Tests.Anthropic;
 
 [TestClass]
-public class TranslationActionsTests : TestBase
+public class TranslationActionsTests : TestBaseMultipleConnections
 {
-    [TestMethod]
-    public async Task Translate_WithSimpleXliff_ProcessesSuccessfully()
+    [TestMethod, ContextDataSource]
+    public async Task Translate_WithSimpleXliff_ProcessesSuccessfully(InvocationContext context)
     {
         // Arrange
-        var translationActions = new TranslationActions(InvocationContext, FileManager);
+        var translationActions = new TranslationActions(context, FileManager);
 
         // Act
         var result = await translationActions.Translate(
@@ -30,21 +30,21 @@ public class TranslationActionsTests : TestBase
             });
 
         // Assert
+        TestContext.WriteLine($"Total segments: {result.TotalSegmentsCount}");
+        TestContext.WriteLine($"Updated segments: {result.UpdatedSegmentsCount}");
+        PrintResult(result);
+
         Assert.IsNotNull(result);
         Assert.IsNotNull(result.File);
-        Assert.IsTrue(result.TotalSegmentsCount > 0);
+        Assert.IsGreaterThan(0, result.TotalSegmentsCount);
         Assert.IsNotNull(result.Usage);
-
-        Console.WriteLine($"Total segments: {result.TotalSegmentsCount}");
-        Console.WriteLine($"Updated segments: {result.UpdatedSegmentsCount}");
-        Console.WriteLine(JsonConvert.SerializeObject(result, Formatting.Indented));
     }
 
-    [TestMethod]
-    public async Task TranslateText_WithSimpleText_ProcessesSuccessfully()
+    [TestMethod, ContextDataSource]
+    public async Task TranslateText_WithSimpleText_ProcessesSuccessfully(InvocationContext context)
     {
         // Arrange
-        var translationActions = new TranslationActions(InvocationContext, FileManager);
+        var translationActions = new TranslationActions(context, FileManager);
         var original = "Brat mir einer einen Storch.";
 
         // Act
@@ -57,16 +57,16 @@ public class TranslationActionsTests : TestBase
             });
 
         // Assert
+        TestContext.WriteLine($"Original text: {original}");
+        TestContext.WriteLine($"Translated text: {result.TranslatedText}");
+        TestContext.WriteLine($"System prompt: {result.SystemPrompt}");
+        TestContext.WriteLine($"User prompt: {result.UserPrompt}");
+        PrintResult(result);
+
         Assert.IsNotNull(result);
         Assert.IsFalse(string.IsNullOrEmpty(result.TranslatedText));
         Assert.IsFalse(string.IsNullOrEmpty(result.SystemPrompt));
         Assert.IsFalse(string.IsNullOrEmpty(result.UserPrompt));
         Assert.IsNotNull(result.Usage);
-
-        Console.WriteLine($"Original text: {original}");
-        Console.WriteLine($"Translated text: {result.TranslatedText}");
-        Console.WriteLine($"System prompt: {result.SystemPrompt}");
-        Console.WriteLine($"User prompt: {result.UserPrompt}");
-        Console.WriteLine(JsonConvert.SerializeObject(result, Formatting.Indented));
     }
 }

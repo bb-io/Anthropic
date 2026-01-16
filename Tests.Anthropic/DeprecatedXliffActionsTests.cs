@@ -1,20 +1,19 @@
-﻿using Apps.Anthropic.Actions;
+﻿using Tests.Anthropic.Base;
+using Apps.Anthropic.Actions;
 using Apps.Anthropic.Models.Request;
 using Blackbird.Applications.Sdk.Common.Files;
-using FluentAssertions;
-using Newtonsoft.Json;
-using Tests.Anthropic.Base;
+using Blackbird.Applications.Sdk.Common.Invocation;
 
 namespace Tests.Anthropic;
 
 [TestClass]
-public class DeprecatedXliffActionsTests : TestBase
+public class DeprecatedXliffActionsTests : TestBaseMultipleConnections
 {
-    [TestMethod]
-    public async Task GetQualityScores_WithTranslatedXliff_ShouldReturnValidScore()
+    [TestMethod, ContextDataSource]
+    public async Task GetQualityScores_WithTranslatedXliff_ShouldReturnValidScore(InvocationContext context)
     {
         // Arrange
-        var actions = new DeprecatedXliffActions(InvocationContext, FileManager);
+        var actions = new DeprecatedXliffActions(context, FileManager);
         var xliffRequest = new ProcessXliffRequest
         {
             Xliff = new FileReference
@@ -31,18 +30,17 @@ public class DeprecatedXliffActionsTests : TestBase
         var result = await actions.GetQualityScores(xliffRequest, glossaryRequest);
 
         // Assert
-        result.Should().NotBeNull();
-        result.AverageScore.Should().BeGreaterThanOrEqualTo(0);
-        result.AverageScore.Should().BeLessThanOrEqualTo(10);
-
-        Console.WriteLine($"Average Quality Score: {result.AverageScore}");
+        TestContext.WriteLine($"Average Quality Score: {result.AverageScore}");
+        Assert.IsNotNull(result);
+        Assert.IsGreaterThanOrEqualTo(result.AverageScore, 0);
+        Assert.IsLessThanOrEqualTo(result.AverageScore, 10);
     }
 
-    [TestMethod]
-    public async Task ProcessXliff_WithXliffFile_ProcessesSuccessfully()
+    [TestMethod, ContextDataSource]
+    public async Task ProcessXliff_WithXliffFile_ProcessesSuccessfully(InvocationContext context)
     {
         // Arrange
-        var completionActions = new DeprecatedXliffActions(InvocationContext, FileManager);
+        var completionActions = new DeprecatedXliffActions(context, FileManager);
 
         // Act
         var result = await completionActions.ProcessXliff(
@@ -59,18 +57,17 @@ public class DeprecatedXliffActionsTests : TestBase
             1500);
 
         // Assert
+        PrintResult(result);
         Assert.IsNotNull(result);
         Assert.IsNotNull(result.Xliff);
-        Assert.IsTrue(result.Xliff.Name.Contains("Markdown entry"));
-
-        Console.WriteLine(JsonConvert.SerializeObject(result, Formatting.Indented));
+        Assert.Contains("Markdown entry", result.Xliff.Name);
     }
 
-    [TestMethod]
-    public async Task PostEditXliff_WithXliffFile_ProcessesSuccessfully()
+    [TestMethod, ContextDataSource]
+    public async Task PostEditXliff_WithXliffFile_ProcessesSuccessfully(InvocationContext context)
     {
         // Arrange
-        var completionActions = new DeprecatedXliffActions(InvocationContext, FileManager);
+        var completionActions = new DeprecatedXliffActions(context, FileManager);
 
         // Act
         var result = await completionActions.PostEditXliff(
@@ -87,18 +84,17 @@ public class DeprecatedXliffActionsTests : TestBase
             1500);
 
         // Assert
+        PrintResult(result);
         Assert.IsNotNull(result);
         Assert.IsNotNull(result.Xliff);
-        Assert.IsTrue(result.Xliff.Name.Contains("Markdown entry"));
-
-        Console.WriteLine(JsonConvert.SerializeObject(result, Formatting.Indented));
+        Assert.Contains("Markdown entry", result.Xliff.Name);
     }
 
-    [TestMethod]
-    public async Task GetQualityScores_WithXliffFile_ProcessesSuccessfully()
+    [TestMethod, ContextDataSource]
+    public async Task GetQualityScores_WithXliffFile_ProcessesSuccessfully(InvocationContext context)
     {
         // Arrange
-        var completionActions = new DeprecatedXliffActions(InvocationContext, FileManager);
+        var completionActions = new DeprecatedXliffActions(context, FileManager);
 
         // Act
         var result = await completionActions.GetQualityScores(
@@ -114,11 +110,10 @@ public class DeprecatedXliffActionsTests : TestBase
             new GlossaryRequest());
 
         // Assert
+        PrintResult(result);
         Assert.IsNotNull(result);
         Assert.IsNotNull(result.XliffFile);
-        Assert.IsTrue(result.XliffFile.Name.Contains("Markdown entry"));
+        Assert.Contains("Markdown entry", result.XliffFile.Name);
         Assert.IsTrue(result.AverageScore >= 0 && result.AverageScore <= 10);
-
-        Console.WriteLine(JsonConvert.SerializeObject(result, Formatting.Indented));
     }
 }

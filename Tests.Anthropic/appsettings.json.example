@@ -1,6 +1,20 @@
 {
-    "ConnectionDefinition": {
-        "apiKey": ""
+  "ConnectionDefinition": [
+    {
+      "connectionType": "API Token", // Anthropic Native
+      "apiKey": ""
     },
-    "TestFolder": "C:\\Users\\..."
+    {
+      "connectionType": "Amazon Bedrock (AWS Credentials)",
+      "accessKey": "",
+      "secretKey": "",
+      "region": ""
+    },
+    {
+      "connectionType": "Amazon Bedrock (API Key)",
+      "apiKey": "",
+      "region": ""
+    }
+  ],
+  "TestFolder": "C:\\Users\\..."
 }
