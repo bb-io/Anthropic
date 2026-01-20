@@ -22,7 +22,7 @@ public class DataSourceTests : TestBaseMultipleConnections
         Assert.IsNotNull(data);
     }
 
-    [TestMethod, ContextDataSource(ConnectionTypes.AnthropicNative)]
+    [TestMethod, ContextDataSource(ConnectionTypes.BedrockApiKey)]
     public async Task ModelDataSource_ShouldNotNullCollection(InvocationContext context)
     {
         // Arrange

@@ -9,7 +9,7 @@ namespace Tests.Anthropic;
 [TestClass]
 public class ChatActionsTests : TestBaseMultipleConnections
 {
-    [TestMethod, ContextDataSource(ConnectionTypes.AnthropicNative)]
+    [TestMethod, ContextDataSource(ConnectionTypes.BedrockApiKey)]
     public async Task CreateCompletion_ReturnsValidChatResponse(InvocationContext context)
     {
 		// Arrange
@@ -17,7 +17,7 @@ public class ChatActionsTests : TestBaseMultipleConnections
         var completionRequest = new CompletionRequest 
         {
             Prompt = "Hello, please state your model and your creator",
-            Model = "claude-haiku-4-5-20251001"
+            Model = "anthropic.claude-3-sonnet-20240229-v1:0"
         };
         var glossary = new GlossaryRequest { };
 

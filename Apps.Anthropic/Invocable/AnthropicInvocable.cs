@@ -1,21 +1,22 @@
-﻿using System.Text;
-using Apps.Anthropic.Models.Request;
-using Blackbird.Applications.Sdk.Common;
+﻿using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Files;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
-using Blackbird.Applications.Sdk.Glossaries.Utils.Converters;
 using Blackbird.Xliff.Utils;
 using Blackbird.Xliff.Utils.Extensions;
-using System.Xml.Linq;
 using Blackbird.Applications.Sdk.Common.Exceptions;
+using Blackbird.Applications.Sdk.Utils.Extensions.Sdk;
+using Apps.Anthropic.Constants;
 
 namespace Apps.Anthropic.Invocable;
 
 public class AnthropicInvocable(InvocationContext invocationContext, IFileManagementClient fileManagementClient) : BaseInvocable(invocationContext)
 {
     private static readonly List<string> AcceptedExtensions = [".xlf", ".xliff", ".mqxliff", ".mxliff", ".txlf", ".html"];
-    
+
+    protected readonly string ConnectionType =
+        invocationContext.AuthenticationCredentialsProviders.Get(CredNames.ConnectionType).Value;
+
     protected void ThrowIfXliffInvalid(FileReference xliffFile)
     {
         bool isValidExtension = AcceptedExtensions.Any(ext => xliffFile.Name.EndsWith(ext, StringComparison.OrdinalIgnoreCase));
