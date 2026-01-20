@@ -21,13 +21,16 @@ public class EditActionsTests : TestBaseMultipleConnections
             {
                 File = new FileReference
                 {
-                    Name = "contentful.html.xlf",
-                    ContentType = "application/xliff+xml"
+                    Name = "Boost the output and quality of your existing localization tools-en-it-TRA.mxliff",
                 },
-                Model = "claude-sonnet-4-20250514",
+                Glossary= new FileReference
+                {
+                    Name = "Localization Term Base (MT).tbx",
+                },
+                Model = "claude-sonnet-4-5-20250929",
                 SourceLanguage = "en",
-                TargetLanguage = "fr",
-                AdditionalInstructions = "Improve fluency and ensure natural expression while maintaining accuracy"
+                TargetLanguage = "it",
+                AdditionalInstructions = "Use \"Lei\" to address the reader. Make sure terms are translated consistently.  "
             });
 
         // Assert
