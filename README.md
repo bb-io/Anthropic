@@ -12,15 +12,39 @@ A next-generation AI assistant for your tasks, no matter the scale
 
 Before you can connect you need to make sure that:
 
-- You have an [Anthropic account](https://console.anthropic.com) and have access to the API keys.
+- **Anthropic API token connection type**: You have an [Anthropic account](https://console.anthropic.com) and have access to the API keys.
+- **Amazon Bedrock (AWS Credentials) connection type**: You have AWS `Access key` and `Secret key` and the `Region` code where the models were enabled. The IAM user must have these policies enabled: `bedrock:InvokeModel`, `bedrock:ListFoundationModels`.
+- **Amazon Bedrock (API Key) connection type**: You have a Bedrock `API token` generated in the AWS console under Bedrock -> Settings -> API keys, and you have the `Region` code.
+
+**Note**: For Amazon Bedrock connection types, you also need to have access to the specific Anthropic models. 
+Go to AWS Bedrock Console -> Model access -> Manage model access and check the boxes for the Anthropic models.
 
 ## Connecting
 
-1. Navigate to apps and search for Anthropic. If you cannot find Anthropic then click _Add App_ in the top right corner, select Anthropic and add the app to your Blackbird environment.
-2. Click _Add Connection_.
-3. Name your connection for future reference e.g. 'My Anthropic connection'.
-4. Fill in your API key. You can create a new API key under [API keys](https://console.anthropic.com/account/keys). The API key has the shape `sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`.
-5. Click _Connect_.
+Navigate to apps and search for Anthropic. If you cannot find Anthropic then click _Add App_ in the top right corner, 
+select Anthropic and add the app to your Blackbird environment. Click _Add Connection_ and name your connection for 
+future reference e.g. 'My connection'.
+
+### Anthropic API token
+
+1. Fill in your `API key`. You can create a new API key under [API keys](https://console.anthropic.com/account/keys). The API key has the shape `sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`.
+2. Click _Connect_.
+
+![Anthropic API token](image/README/anthropic_apikey.png)
+
+### Amazon Bedrock (AWS Credentials)
+
+1. Fill in your `Access key`, `Secret key` and `Region`.
+2. Click _Connect_.
+
+![Amazon Bedrock AWS Creds](image/README/bedrock_aws.png)
+
+### Amazon Bedrock (API Key)
+
+1. Fill in your `API token` and `Region`.
+2. Click _Connect_.
+
+![Amazon Bedrock API Key](image/README/bedrock_apikey.png)
 
 ## Actions
 
@@ -48,6 +72,8 @@ For more in-depth information about action consult the [Anthropic API reference]
 - **Get Quality Scores for XLIFF file** action is used to get quality scores for the XLIFF file by adding `extradata` attribute to the translation unit of the file. Default criteria are `fluency`, `grammar`, `terminology`, `style`, and `punctuation`, but you can add your own by filling `prompt` optional input. Deprecated: use the 'Review' action instead.
 
 ### Batch actions
+
+**Note**: Currently, batch actions are not supported for Amazon Bedrock connection types.
 
 - **(Batch) Process XLIFF file** asynchronously process each translation unit in the XLIFF file according to the provided instructions (by default it just translates the source tags) and updates the target text for each unit.
 - **(Batch) Post-edit XLIFF file** asynchronously post-edit the target text of each translation unit in the XLIFF file according to the provided instructions and updates the target text for each unit. 

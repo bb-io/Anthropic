@@ -52,7 +52,13 @@ public class AmazonBedrockSdkClient : IAnthropicClient
     public async Task<List<ModelResponse>> ListModels()
     {
         var models = await ExecuteWithErrorHandling(async () => 
-            await ManagementClient.ListFoundationModelsAsync(new ListFoundationModelsRequest { ByProvider = "anthropic" })
+            await ManagementClient.ListFoundationModelsAsync(
+                new ListFoundationModelsRequest 
+                { 
+                    ByProvider = "anthropic",
+                    ByInferenceType = "ON_DEMAND"
+                }
+            )
         );
         return models.ModelSummaries.Select(x => new ModelResponse(x.ModelId, x.ModelName)).ToList();
     }

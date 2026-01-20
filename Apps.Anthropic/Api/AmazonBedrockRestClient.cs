@@ -81,7 +81,9 @@ public class AmazonBedrockRestClient : RestClient, IAnthropicClient
     public async Task<List<ModelResponse>> ListModels()
     {
         var url = $"{_standardUrl}/foundation-models";
-        var request = new RestRequest(url, Method.Get).AddQueryParameter("byProvider", "anthropic");
+        var request = new RestRequest(url, Method.Get)
+            .AddQueryParameter("byProvider", "anthropic")
+            .AddQueryParameter("byInferenceType", "ON_DEMAND");
 
         var response = await ExecuteWithErrorHandling<ListModelsBedrockRestResponse>(request);
         return response.Models.Select(x => new ModelResponse(x.Id, x.Name)).ToList();
@@ -132,8 +134,11 @@ public class AmazonBedrockRestClient : RestClient, IAnthropicClient
 
     protected static Exception ConfigureErrorException(RestResponse response)
     {
-        if (response.Content != null && response.ErrorMessage != null)
-            throw new PluginApplicationException(response.ErrorMessage);
+        if (response.Content != null)
+        {
+            var error = JsonConvert.DeserializeObject<RestErrorBedrockResponse>(response.Content);
+            return new PluginApplicationException(error?.Message ?? "Error - could not parse the response");
+        }
 
         return new PluginApplicationException("Error - could not parse the response");
     }
