@@ -21,7 +21,7 @@ public class GetMQMReportRequest
 
     [Display("Target language")]
     [DataSource(typeof(LocaleDataSourceHandler))]
-    public string TargetLanguage { get; set; } = string.Empty;
+    public string? TargetLanguage { get; set; } = string.Empty;
 
     [Display("Model", Description = "This parameter controls which version of Claude answers your request")]
     [DataSource(typeof(ModelDataSource))]
@@ -32,7 +32,7 @@ public class GetMQMReportRequest
     [JsonProperty("prompt")]
     public string? AdditionalInstructions { get; set; }
 
-    [Display("System prompt", Description = "A system prompt is a way of providing context and instructions to Claude,\n such as specifying a particular goal or role for Claude before asking it a question or giving it a task.")]
+    [Display("System prompt (fully replace MQM instructions)", Description = "A system prompt is a way of providing context and instructions to Claude,\n such as specifying a particular goal or role for Claude before asking it a question or giving it a task.")]
     public string? SystemPrompt { get; set; }
 
     [Display("Max tokens", Description = "The maximum number of tokens to generate before stopping.")]
