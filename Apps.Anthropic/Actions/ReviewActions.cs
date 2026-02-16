@@ -32,10 +32,13 @@ public class ReviewActions(InvocationContext invocationContext, IFileManagementC
         content.SourceLanguage ??= input.SourceLanguage;
         content.TargetLanguage ??= input.TargetLanguage;
 
-        var segments = content.GetSegments().Where(x => !x.IsIgnorbale && !string.IsNullOrWhiteSpace(x.GetTarget()))
+        
+        var units = content.GetUnits().ToList();
+        var segments = units.SelectMany(x => x.Segments)
+            .Where(x => !x.IsIgnorbale && !string.IsNullOrWhiteSpace(x.GetTarget()))
             .ToList();
+        
         result.TotalSegmentsProcessed = segments.Count;
-
         var totalScore = 0.0f;
         var finalizedSegments = 0;
         var underThresholdSegments = 0;

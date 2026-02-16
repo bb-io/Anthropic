@@ -341,16 +341,18 @@ public class DeprecatedXliffActions(InvocationContext invocationContext, IFileMa
             systemPrompt += " " + input.AdditionalInstructions;
         }
 
-        var unitsToProcess = content.GetSegments()
-            .Where(x => x.State > 0 || x.State is null).ToList();
+        
+        var units = content.GetUnits().ToList();
+        var segments = units.SelectMany(x => x.Segments).ToList();
+        var segmentsToProcess = segments.Where(x => x.State > 0 || x.State is null).ToList();
 
-        if (!content.GetSegments().Any())
+        if (!segments.Any())
         {
             throw new PluginMisconfigurationException("No translatable segments were found in the file.");
         }
 
         var tuJson = System.Text.Json.JsonSerializer.Serialize(
-            unitsToProcess.Select(x => new
+            segmentsToProcess.Select(x => new
             {
                 x.Id,
                 Source = x.GetSource(),
