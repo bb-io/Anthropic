@@ -44,13 +44,14 @@ public class EditActions(InvocationContext invocationContext, IFileManagementCli
             content.SourceLanguage = await _aiUtilities.IdentifySourceLanguageAsync(input.Model, content.Source().GetPlaintext());
         }
         
-        var segments = content.GetSegments();
+        var units = content.GetUnits().ToList();
+        var segments = units.SelectMany(x => x.Segments).ToList();
+        
         result.TotalSegmentsReviewed = segments.Count();
         segments = segments.Where(x => !x.IsIgnorbale && x.State == SegmentState.Translated).ToList();
-        
-        async Task<IEnumerable<TranslationEntity>> EditBatch(IEnumerable<Segment> batch)
+        async Task<IEnumerable<TranslationEntity>> EditBatch(IEnumerable<(Unit Unit, Segment Segment)> batch)
         {
-            var batchForJson = batch.Select((x, i) => new { 
+            var batchForJson = batch.Select(x => x.Segment).Select((x, i) => new { 
                 id = i, 
                 source_text = x.GetSource(), 
                 target_text = x.GetTarget() 
@@ -104,15 +105,18 @@ public class EditActions(InvocationContext invocationContext, IFileManagementCli
             return translationEntities;
         }
         
-        var processedBatches = await segments.Batch(input.BucketSize ?? XliffConstants.DefaultBucketSize).Process(EditBatch);
+        var processedBatches = await units.Batch(input.BucketSize ?? XliffConstants.DefaultBucketSize).Process(EditBatch);
         var updatedCount = 0;
         
-        foreach (var (segment, translation) in processedBatches)
+        foreach (var (unit, results) in processedBatches)
         {
-            if (!string.IsNullOrEmpty(translation.TranslatedText) && segment.GetTarget() != translation.TranslatedText)
+            foreach (var (segment, translation) in results)
             {
-                updatedCount++;
-                segment.SetTarget(translation.TranslatedText);
+                if (segment.GetTarget() != translation.TranslatedText)
+                {
+                    updatedCount++;
+                    segment.SetTarget(translation.TranslatedText);
+                }
                 segment.State = SegmentState.Reviewed;
             }
         }
