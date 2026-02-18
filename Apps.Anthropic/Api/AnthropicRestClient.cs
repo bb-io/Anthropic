@@ -100,10 +100,23 @@ public class AnthropicRestClient : RestClient, IAnthropicClient
                         }
                     });
                 }
+                else if (FileFormatHelper.IsImage(ext))
+                {
+                    contentList.Add(new
+                    {
+                        type = "image",
+                        source = new
+                        {
+                            type = "base64",
+                            media_type = FileFormatHelper.GetAnthropicImageMediaType(ext),
+                            data = base64Data
+                        }
+                    });
+                }
                 else
                 {
                     throw new PluginMisconfigurationException(
-                        $"The file format '{ext}' is not supported. Only .pdf is currently allowed"
+                        $"The file format '{ext}' is not supported. Only .pdf and image files are currently allowed"
                     );
                 }
 
