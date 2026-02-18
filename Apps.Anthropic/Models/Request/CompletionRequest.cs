@@ -1,8 +1,8 @@
 ﻿using Apps.Anthropic.DataSourceHandlers;
 using Apps.Anthropic.DataSourceHandlers.EnumHandlers;
 using Blackbird.Applications.Sdk.Common;
-using Blackbird.Applications.Sdk.Common.Dictionaries;
 using Blackbird.Applications.Sdk.Common.Dynamic;
+using Blackbird.Applications.Sdk.Common.Files;
 using Newtonsoft.Json;
 
 namespace Apps.Anthropic.Models.Request;
@@ -42,6 +42,9 @@ public class CompletionRequest
     [Display("top_k", Description = "Only sample from the top K options for each subsequent token.\nUsed to remove \"long tail\" low probability responses.")]
     [JsonProperty("top_k")]
     public int? TopK { get; set; }
+
+    [Display("File")]
+    public FileReference? File { get; set; }
 
     public CompletionRequest()
     { }

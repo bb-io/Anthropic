@@ -9,7 +9,7 @@ namespace Tests.Anthropic;
 public class DataSourceTests : TestBaseMultipleConnections
 {
     [TestMethod, ContextDataSource(ConnectionTypes.AnthropicNative)]
-    public async Task BatchDataSource_WithoutSearchParameter_ShouldNotNullCollection(InvocationContext context)
+    public async Task BatchDataSource_Anthropic_ReturnsBatches(InvocationContext context)
     {
         // Arrange
         var dataSource = new BatchDataSource(context);
@@ -23,7 +23,21 @@ public class DataSourceTests : TestBaseMultipleConnections
     }
 
     [TestMethod, ContextDataSource(ConnectionTypes.BedrockApiKey)]
-    public async Task ModelDataSource_ShouldNotNullCollection(InvocationContext context)
+    public async Task ModelDataSource_Bedrock_ReturnsModels(InvocationContext context)
+    {
+        // Arrange
+        var dataSource = new ModelDataSource(context);
+
+        // Act
+        var data = await dataSource.GetDataAsync(new(), default);
+
+        // Assert
+        PrintDataHandlerResult(data);
+        Assert.IsNotNull(data);
+    }
+
+    [TestMethod, ContextDataSource(ConnectionTypes.AnthropicNative)]
+    public async Task ModelDataSource_Anthropic_ReturnsModels(InvocationContext context)
     {
         // Arrange
         var dataSource = new ModelDataSource(context);

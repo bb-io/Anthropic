@@ -7,9 +7,10 @@ using Amazon.Runtime.Documents;
 using Apps.Anthropic.Constants;
 using Apps.Anthropic.Models.Request;
 using Apps.Anthropic.Models.Response;
-using Blackbird.Applications.Sdk.Common.Exceptions;
-using Blackbird.Applications.Sdk.Common.Connections;
+using Apps.Anthropic.Utils;
 using Blackbird.Applications.Sdk.Common.Authentication;
+using Blackbird.Applications.Sdk.Common.Connections;
+using Blackbird.Applications.Sdk.Common.Exceptions;
 using Blackbird.Applications.Sdk.Utils.Extensions.Sdk;
 using Message = Amazon.BedrockRuntime.Model.Message;
 
@@ -65,11 +66,76 @@ public class AmazonBedrockSdkClient : IAnthropicClient
 
     public async Task<ResponseMessage> ExecuteChat(MessageRequest request)
     {
-        var messages = request?.Messages?.Select(m => new Message
+        var messages = new List<Message>();
+
+        foreach (var m in request.Messages)
         {
-            Role = m.Role == "user" ? ConversationRole.User : ConversationRole.Assistant,
-            Content = [new ContentBlock { Text = m.Content }]
-        }).ToList();
+            if (m.Role == "user" && request.FileData != null)
+            {
+                var contentBlocks = new List<ContentBlock>();
+
+                string format = request.FileData.FileExtension.TrimStart('.').ToLowerInvariant();
+                string name = Path.GetFileNameWithoutExtension(request.FileData.FileName);
+                var fileStream = new MemoryStream(request.FileData.FileBytes);
+
+                if (format == "pdf")
+                {
+                    contentBlocks.Add(new ContentBlock
+                    {
+                        Document = new DocumentBlock
+                        {
+                            Format = "pdf",
+                            Name = name,
+                            Source = new DocumentSource { Bytes = fileStream }
+                        }
+                    });
+                }
+                else if (FileFormatHelper.IsImage(format))
+                {
+                    ImageFormat imageFormat = format switch
+                    {
+                        "png" => ImageFormat.Png,
+                        "gif" => ImageFormat.Gif,
+                        "webp" => ImageFormat.Webp,
+                        _ => ImageFormat.Jpeg
+                    };
+
+                    contentBlocks.Add(new ContentBlock
+                    {
+                        Image = new ImageBlock
+                        {
+                            Format = imageFormat,
+                            Source = new ImageSource { Bytes = fileStream }
+                        }
+                    });
+                }
+                else
+                {
+                    throw new PluginMisconfigurationException(
+                        $"The file format '{format}' is not supported. Only .pdf and image files are currently allowed"
+                    );
+                }
+
+                if (!string.IsNullOrEmpty(m.Content))
+                    contentBlocks.Add(new ContentBlock { Text = m.Content });
+
+                messages.Add(new Message
+                {
+                    Role = ConversationRole.User,
+                    Content = contentBlocks
+                });
+
+                request.FileData = null;
+            }
+            else
+            {
+                messages.Add(new Message
+                {
+                    Role = m.Role == "user" ? ConversationRole.User : ConversationRole.Assistant,
+                    Content = [new ContentBlock { Text = m.Content }]
+                });
+            }
+        }
 
         var system = !string.IsNullOrEmpty(request?.System)
             ? [new SystemContentBlock { Text = request.System }]

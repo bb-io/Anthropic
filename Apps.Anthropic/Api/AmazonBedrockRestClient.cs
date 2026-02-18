@@ -2,6 +2,7 @@
 using Apps.Anthropic.Models.Request;
 using Apps.Anthropic.Models.Response;
 using Apps.Anthropic.Models.Response.Bedrock;
+using Apps.Anthropic.Utils;
 using Blackbird.Applications.Sdk.Common.Authentication;
 using Blackbird.Applications.Sdk.Common.Connections;
 using Blackbird.Applications.Sdk.Common.Exceptions;
@@ -45,13 +46,69 @@ public class AmazonBedrockRestClient : RestClient, IAnthropicClient
         var runtimeUrl = $"{_runtimeUrl}/model/{message.Model}/converse";
         var restRequest = new RestRequest(runtimeUrl, Method.Post);
 
+        var formattedMessages = new List<object>();         
+        foreach (var m in message.Messages)
+        {
+            if (m.Role == "user" && message.FileData != null)
+            {
+                var contentList = new List<object>();
+
+                string base64Data = Convert.ToBase64String(message.FileData.FileBytes);
+                string format = message.FileData.FileExtension.TrimStart('.').ToLowerInvariant();
+                string name = Path.GetFileNameWithoutExtension(message.FileData.FileName);
+
+                if (format == "pdf")
+                {
+                    contentList.Add(new
+                    {
+                        document = new
+                        {
+                            name,
+                            format,
+                            source = new { bytes = base64Data }
+                        }
+                    });
+                }
+                else if (FileFormatHelper.IsImage(format))
+                {
+                    if (format == "jpg") 
+                        format = "jpeg";
+
+                    contentList.Add(new
+                    {
+                        image = new
+                        {
+                            format,
+                            source = new { bytes = base64Data }
+                        }
+                    });
+                }
+                else
+                {
+                    throw new PluginMisconfigurationException(
+                        $"The file format '{format}' is not supported. Only .pdf and image files are currently allowed"
+                    );
+                }
+
+                if (!string.IsNullOrEmpty(m.Content))
+                    contentList.Add(new { text = m.Content });
+
+                formattedMessages.Add(new { role = m.Role, content = contentList });
+                message.FileData = null;
+            }
+            else
+            {
+                formattedMessages.Add(new
+                {
+                    role = m.Role,
+                    content = new[] { new { text = m.Content } }
+                });
+            }
+        }
+
         var payload = new
         {
-            messages = message.Messages?.Select(m => new
-            {
-                role = m.Role,
-                content = new[] { new { text = m.Content } }
-            }),
+            messages = formattedMessages,
             system = !string.IsNullOrEmpty(message.System)
                 ? new[] { new { text = message.System } }
                 : null,

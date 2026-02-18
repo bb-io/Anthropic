@@ -1,4 +1,5 @@
 ﻿using Apps.Anthropic.Api;
+using Apps.Anthropic.Models.Dto;
 using Apps.Anthropic.Models.Request;
 using Apps.Anthropic.Models.Response;
 using Blackbird.Applications.Sdk.Common.Files;
@@ -13,6 +14,10 @@ public class AiUtilities(InvocationContext invocationContext, IFileManagementCli
     {
         var messages = await GenerateChatMessages(input, glossaryRequest);
 
+        InputFileData? fileData = null;
+        if (input.File != null)
+            fileData = await ProcessInputFile(input.File);
+
         var body = new MessageRequest
         {
             System = input.SystemPrompt ?? string.Empty,
@@ -23,6 +28,7 @@ public class AiUtilities(InvocationContext invocationContext, IFileManagementCli
             Temperature = input.Temperature != null ? float.Parse(input.Temperature) : null,
             TopP = input.TopP != null ? float.Parse(input.TopP) : null,
             TopK = input.TopK,
+            FileData = fileData,
         };
 
         var client = ClientFactory.Create(invocationContext.AuthenticationCredentialsProviders);
@@ -61,6 +67,18 @@ public class AiUtilities(InvocationContext invocationContext, IFileManagementCli
         }
         
         return await GlossaryPromptHelper.GetGlossaryPromptPart(new GlossaryRequest { Glossary = glossary }, fileManagementClient);
+    }
+
+    private async Task<InputFileData> ProcessInputFile(FileReference file)
+    {
+        using var fileStream = await fileManagementClient.DownloadAsync(file); 
+        using var ms = new MemoryStream();
+        await fileStream.CopyToAsync(ms);
+
+        string fileName = file.Name ?? "unknown_file";
+        string extension = Path.GetExtension(fileName).ToLowerInvariant();
+
+        return new(ms.ToArray(), fileName, extension);
     }
     
     private async Task<List<Message>> GenerateChatMessages(CompletionRequest input, GlossaryRequest glossaryRequest)
