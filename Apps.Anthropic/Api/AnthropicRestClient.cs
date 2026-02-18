@@ -22,8 +22,8 @@ public class AnthropicRestClient : RestClient, IAnthropicClient
         { "request_too_large", "Request exceeds the maximum allowed number of bytes." },
         { "rate_limit_error", "Your account has hit a rate limit." },
         { "api_error", "An unexpected error occurred internally to Anthropic’s systems." },
-        { "overloaded_error", "Anthropic’s API is temporarily overloaded. Please retry after some time." }
-
+        { "overloaded_error", "Anthropic’s API is temporarily overloaded. Please retry after some time." },
+        { "invalid_request_error", "The provided request is invalid." }
     };
     protected JsonSerializerSettings JsonSettings =>
            new JsonSerializerSettings { MissingMemberHandling = MissingMemberHandling.Ignore };
@@ -74,10 +74,56 @@ public class AnthropicRestClient : RestClient, IAnthropicClient
 
     public async Task<ResponseMessage> ExecuteChat(MessageRequest message)
     {
-        message.MaxTokens = ModelTokenService.GetMaxTokensForModel(message.Model);
-
         var request = new RestRequest("/messages", Method.Post);
-        request.AddJsonBody(message);
+
+        var formattedMessages = new List<object>();
+
+        foreach (var msg in message.Messages)
+        {
+            if (msg.Role == "user" && message.FileData != null)
+            {
+                var contentList = new List<object>();
+
+                string base64Data = Convert.ToBase64String(message.FileData.FileBytes);
+                string ext = message.FileData.FileExtension;
+
+                if (ext == ".pdf")
+                {
+                    contentList.Add(new
+                    {
+                        type = "document",
+                        source = new
+                        {
+                            data = base64Data,
+                            media_type = "application/pdf",
+                            type = "base64",
+                        }
+                    });
+                }
+                if (!string.IsNullOrEmpty(msg.Content))
+                    contentList.Add(new { type = "text", text = msg.Content });
+
+                formattedMessages.Add(new { role = "user", content = contentList });
+
+                message.FileData = null;
+            }
+            else
+                formattedMessages.Add(new { role = msg.Role, content = msg.Content });
+        }
+
+        var payload = new
+        {
+            model = message.Model,
+            max_tokens = ModelTokenService.GetMaxTokensForModel(message.Model),
+            system = message.System,
+            messages = formattedMessages,
+            stop_sequences = message.StopSequences,
+            temperature = message.Temperature,
+            top_p = message.TopP,
+            top_k = message.TopK
+        };
+
+        request.AddJsonBody(payload);
 
         var response = await ExecuteWithErrorHandling<CompletionResponse>(request);
         return new ResponseMessage
