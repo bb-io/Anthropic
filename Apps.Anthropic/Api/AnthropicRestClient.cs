@@ -100,6 +100,13 @@ public class AnthropicRestClient : RestClient, IAnthropicClient
                         }
                     });
                 }
+                else
+                {
+                    throw new PluginMisconfigurationException(
+                        $"The file format '{ext}' is not supported. Only .pdf is currently allowed"
+                    );
+                }
+
                 if (!string.IsNullOrEmpty(msg.Content))
                     contentList.Add(new { type = "text", text = msg.Content });
 

@@ -65,11 +65,57 @@ public class AmazonBedrockSdkClient : IAnthropicClient
 
     public async Task<ResponseMessage> ExecuteChat(MessageRequest request)
     {
-        var messages = request?.Messages?.Select(m => new Message
+        var messages = new List<Message>();
+
+        foreach (var m in request.Messages)
         {
-            Role = m.Role == "user" ? ConversationRole.User : ConversationRole.Assistant,
-            Content = [new ContentBlock { Text = m.Content }]
-        }).ToList();
+            if (m.Role == "user" && request.FileData != null)
+            {
+                var contentBlocks = new List<ContentBlock>();
+
+                string format = request.FileData.FileExtension.TrimStart('.').ToLowerInvariant();
+                string name = Path.GetFileNameWithoutExtension(request.FileData.FileName);
+                var fileStream = new MemoryStream(request.FileData.FileBytes);
+
+                if (format == "pdf")
+                {
+                    contentBlocks.Add(new ContentBlock
+                    {
+                        Document = new DocumentBlock
+                        {
+                            Format = "pdf",
+                            Name = name,
+                            Source = new DocumentSource { Bytes = fileStream }
+                        }
+                    });
+                }
+                else
+                {
+                    throw new PluginMisconfigurationException(
+                        $"The file format '{format}' is not supported. Only .pdf is currently allowed"
+                    );
+                }
+
+                if (!string.IsNullOrEmpty(m.Content))
+                    contentBlocks.Add(new ContentBlock { Text = m.Content });
+
+                messages.Add(new Message
+                {
+                    Role = ConversationRole.User,
+                    Content = contentBlocks
+                });
+
+                request.FileData = null;
+            }
+            else
+            {
+                messages.Add(new Message
+                {
+                    Role = m.Role == "user" ? ConversationRole.User : ConversationRole.Assistant,
+                    Content = [new ContentBlock { Text = m.Content }]
+                });
+            }
+        }
 
         var system = !string.IsNullOrEmpty(request?.System)
             ? [new SystemContentBlock { Text = request.System }]
