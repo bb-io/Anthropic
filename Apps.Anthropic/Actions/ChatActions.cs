@@ -14,7 +14,8 @@ public class ChatActions(InvocationContext invocationContext, IFileManagementCli
     : AnthropicInvocable(invocationContext, fileManagementClient)
 {
     [Action("Chat", Description = "Gives a response given a chat message")]
-    public async Task<ResponseMessage> CreateCompletion([ActionParameter] CompletionRequest input,
+    public async Task<ResponseMessage> CreateCompletion(
+        [ActionParameter] CompletionRequest input,
         [ActionParameter] GlossaryRequest glossaryInput)
     {
         var aiUtilities = new AiUtilities(invocationContext, fileManagementClient);

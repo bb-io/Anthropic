@@ -2,6 +2,7 @@
 using Apps.Anthropic.Models.Request;
 using Apps.Anthropic.Models.Response;
 using Apps.Anthropic.Models.Response.Bedrock;
+using Apps.Anthropic.Utils;
 using Blackbird.Applications.Sdk.Common.Authentication;
 using Blackbird.Applications.Sdk.Common.Connections;
 using Blackbird.Applications.Sdk.Common.Exceptions;
@@ -68,10 +69,24 @@ public class AmazonBedrockRestClient : RestClient, IAnthropicClient
                         }
                     });
                 }
+                else if (FileFormatHelper.IsImage(format))
+                {
+                    if (format == "jpg") 
+                        format = "jpeg";
+
+                    contentList.Add(new
+                    {
+                        image = new
+                        {
+                            format,
+                            source = new { bytes = base64Data }
+                        }
+                    });
+                }
                 else
                 {
                     throw new PluginMisconfigurationException(
-                        $"The file format '{format}' is not supported. Only .pdf is currently allowed"
+                        $"The file format '{format}' is not supported. Only .pdf and image files are currently allowed"
                     );
                 }
 
