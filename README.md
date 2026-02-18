@@ -70,6 +70,7 @@ For more in-depth information about action consult the [Anthropic API reference]
 - **Process XLIFF** processes the XLIFF file and returns updated XLIFF with the translated content. By default it will translate source and place the translation in the target field. But you can modify behavior by providing your custom `prompt`. Deprecated: use the 'Translate' action instead.
 - **Post-edit XLIFF file** action is used to post-edit the XLIFF file. Deprecated: use the 'Edit' action instead.
 - **Get Quality Scores for XLIFF file** action is used to get quality scores for the XLIFF file by adding `extradata` attribute to the translation unit of the file. Default criteria are `fluency`, `grammar`, `terminology`, `style`, and `punctuation`, but you can add your own by filling `prompt` optional input. Deprecated: use the 'Review' action instead.
+- **Get MQM report from XLIFF** Perform an LQA Analysis on a translated file. The result will be in the MQM framework form.
 
 ### Batch actions
 

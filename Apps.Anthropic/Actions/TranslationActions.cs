@@ -43,13 +43,18 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
             content.SourceLanguage = await _aiUtilities.IdentifySourceLanguageAsync(input.Model, content.Source().GetPlaintext());
         }
 
-        var segments = content.GetSegments().ToList();
+        var units = content.GetUnits().ToList();
+        var segments = units.SelectMany(x => x.Segments).ToList();
+        
         result.TotalSegmentsCount = segments.Count;
         segments = segments.Where(x => !x.IsIgnorbale && x.IsInitial).ToList();
-        
-        async Task<IEnumerable<TranslationEntity>> TranslateBatch(IEnumerable<Segment> batch)
+        async Task<IEnumerable<TranslationEntity>> TranslateBatch(IEnumerable<(Unit Unit, Segment Segment)> batch)
         {
-            var batchForJson = batch.Select((x, i) => new { id = i, source_text = x.GetSource() }).ToList();
+            var batchForJson = batch
+                .Select(x => x.Segment)
+                .Select((x, i) => new { id = i, source_text = x.GetSource()})
+                .ToList();
+            
             var batchJson = JsonConvert.SerializeObject(batchForJson);
             var completionRequest = new CompletionRequest
             {
@@ -97,21 +102,25 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
             return translationEntities;
         }
         
-        var processedBatches = await segments.Batch(input.BucketSize ?? XliffConstants.DefaultBucketSize).Process(TranslateBatch);
+        var processedBatches = await units.Batch(input.BucketSize ?? XliffConstants.DefaultBucketSize).Process(TranslateBatch);
         var updatedCount = 0;
-        foreach (var (segment, translation) in processedBatches)
+        foreach (var (unit, results) in processedBatches)
         {
-            var shouldTranslateFromState = segment.State == null || segment.State == SegmentState.Initial;
-            if (!shouldTranslateFromState || string.IsNullOrEmpty(translation.TranslatedText))
+            foreach (var (segment, translation) in results)
             {
-                continue;
-            }
-
-            if (segment.GetTarget() != translation.TranslatedText)
-            {
-                updatedCount++;
-                segment.SetTarget(translation.TranslatedText);
-                segment.State = SegmentState.Translated;
+                
+                var shouldTranslateFromState = segment.State == null || segment.State == SegmentState.Initial;
+                if (!shouldTranslateFromState || string.IsNullOrEmpty(translation.TranslatedText))
+                {
+                    continue;
+                }
+                
+                if (segment.GetTarget() != translation.TranslatedText)
+                {
+                    updatedCount++;
+                    segment.SetTarget(translation.TranslatedText);
+                    segment.State = SegmentState.Translated;
+                }
             }
         }
 

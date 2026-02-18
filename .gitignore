@@ -369,3 +369,4 @@ FodyWeavers.xsd
 /OpenAITests/appsettings.json
 /Tests.Anthropic/appsettings.json
 /Tests.Anthropic/Output
+/Tests.Anthropic/appsettings.json
