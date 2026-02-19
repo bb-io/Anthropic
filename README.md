@@ -62,15 +62,22 @@ future reference e.g. 'My connection'.
 
 For more in-depth information about action consult the [Anthropic API reference](https://docs.anthropic.com/claude/docs).
 
-### XLIFF actions
+### Translation
 
-- **Translate** Translate file content retrieved from a CMS or file storage. The output can be used in compatible actions.
-- **Edit** Edit a translation. This action assumes you have previously translated content in Blackbird through any translation action.
-- **Review** Review translation. This action assumes you have previously translated content in Blackbird through any translation action.
-- **Process XLIFF** processes the XLIFF file and returns updated XLIFF with the translated content. By default it will translate source and place the translation in the target field. But you can modify behavior by providing your custom `prompt`. Deprecated: use the 'Translate' action instead.
-- **Post-edit XLIFF file** action is used to post-edit the XLIFF file. Deprecated: use the 'Edit' action instead.
-- **Get Quality Scores for XLIFF file** action is used to get quality scores for the XLIFF file by adding `extradata` attribute to the translation unit of the file. Default criteria are `fluency`, `grammar`, `terminology`, `style`, and `punctuation`, but you can add your own by filling `prompt` optional input. Deprecated: use the 'Review' action instead.
-- **Get MQM report from XLIFF** Perform an LQA Analysis on a translated file. The result will be in the MQM framework form.
+- **Translate** translate file content retrieved from a CMS or file storage. The output can be used in compatible Blackbird interoperable actions.
+- **Translate text** given a text and a locale, tries to create a localized version of the text.
+
+### Editing
+
+- **Edit** Edit a translation. This action assumes you have previously translated content in Blackbird through any translation action. Only looks at translated segments and will change the segment state to reviewed.
+- **Edit Text** given a source segment and translated target segment, responds with an edited version of the target segment taking into account typical mistakes.
+
+### Review
+
+- **Review** reviews a translation. This action assumes you have previously translated content in Blackbird through any translation action. Adds a quality score to each unit in the file.
+- **Review text** reviews a single text and returns a quality score.
+
+> Note: files are interoperable, under the hood Blackbird may convert to and from bilingual files with metadata but all our Actions are able to accept a lot of different file formats.
 
 ### Batch actions
 
@@ -85,6 +92,16 @@ For more in-depth information about action consult the [Anthropic API reference]
 ## Token usage
 
 For all actions you can configure the 'Max tokens' optional input. This value limits the number of tokens generated in the response. If left empty, the default value will be the **maximum** number of tokens allowed by the model. For example, Claude Sonnet 4 has a maximum of 64,000 output tokens - leaving this field empty means 64,000 will be used as the value. To limit the tokens generated in the response, set this value to a lower number.
+
+### Temperatures
+
+Anthropic allows you to set the temperature value for and Action you perform in Blackbird. You can customize this value (between 0.0 and 1.0) but we've also added handy labels that are available in the Blackbird UI:
+
+- 0.1 Governed: Maximum predictability.
+- 0.3 Balanced: A controlled blend of accuracy and flexibility.
+- 0.5 Expressive: Accuracy is preserved, structure is looser (default).
+- 0.6 Exploratory: Encourages alternative phrasings and ideas while remaining context-aware.
+- 0.8 Experimental: Prioritizes creativity over predictability.
 
 ### Model Comparison
 
