@@ -21,8 +21,7 @@ Go to AWS Bedrock Console -> Model access -> Manage model access and check the b
 
 ## Connecting
 
-Navigate to apps and search for Anthropic. If you cannot find Anthropic then click _Add App_ in the top right corner, 
-select Anthropic and add the app to your Blackbird environment. Click _Add Connection_ and name your connection for 
+Navigate to Apps and search for Anthropic. Select Anthropic. Click _Add Connection_ and name your connection for 
 future reference e.g. 'My connection'.
 
 ### Anthropic API token
