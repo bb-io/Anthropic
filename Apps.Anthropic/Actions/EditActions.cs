@@ -102,7 +102,12 @@ public class EditActions(InvocationContext invocationContext, IFileManagementCli
             }
 
             result.Usage += response.Usage;
-            return translationEntities;
+
+            return batchForJson.Select(idPair =>
+            {
+                var updatedTranslation = translationEntities.FirstOrDefault(x => x.TranslationId == idPair.id.ToString());
+                return updatedTranslation ?? new TranslationEntity { TranslationId = idPair.id.ToString(), TranslatedText = idPair.target_text };
+            });
         }
         
         var processedBatches = await units.Batch(input.BucketSize ?? XliffConstants.DefaultBucketSize).Process(EditBatch);
