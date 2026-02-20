@@ -116,7 +116,7 @@ public class AmazonBedrockRestClient : RestClient, IAnthropicClient
             {
                 maxTokens = message.MaxTokens,
                 temperature = message.Temperature ?? 0.5f,
-                topP = message.TopP ?? 1f
+              //  topP = message.TopP ?? 1f
             }
         };
         restRequest.AddJsonBody(payload);
