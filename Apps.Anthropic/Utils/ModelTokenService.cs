@@ -10,6 +10,7 @@ public static class ModelTokenService
         ["claude-opus-4-0"] = 32000,
         ["claude-sonnet-4-20250514"] = 64000,
         ["claude-sonnet-4-0"] = 64000,
+        ["claude-sonnet-4-6"] = 64000,
         ["claude-3-7-sonnet-20250219"] = 64000,
         ["claude-3-7-sonnet-latest"] = 64000,
         ["claude-3-5-haiku-20241022"] = 8192,
