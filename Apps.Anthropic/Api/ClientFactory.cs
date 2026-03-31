@@ -1,5 +1,6 @@
 ﻿using Apps.Anthropic.Api.Anthropic;
 using Apps.Anthropic.Api.Bedrock;
+using Apps.Anthropic.Api.Interfaces;
 using Apps.Anthropic.Constants;
 using Blackbird.Applications.Sdk.Common.Authentication;
 using Blackbird.Applications.Sdk.Utils.Extensions.Sdk;

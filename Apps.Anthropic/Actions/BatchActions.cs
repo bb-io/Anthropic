@@ -1,7 +1,6 @@
-﻿using System.Text.RegularExpressions;
+﻿using Apps.Anthropic.Api.Interfaces;
 using Apps.Anthropic.Constants;
 using Apps.Anthropic.Invocable;
-using Apps.Anthropic.Models.Entities;
 using Apps.Anthropic.Models.Request;
 using Apps.Anthropic.Models.Response;
 using Apps.Anthropic.Utils;
@@ -10,31 +9,42 @@ using Blackbird.Applications.Sdk.Common.Actions;
 using Blackbird.Applications.Sdk.Common.Exceptions;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
-using Blackbird.Applications.Sdk.Utils.Extensions.Http;
 using Blackbird.Xliff.Utils;
 using Blackbird.Xliff.Utils.Models;
-using Newtonsoft.Json;
-using RestSharp;
-using Apps.Anthropic.Api.Anthropic;
+using System.Text.RegularExpressions;
 
 namespace Apps.Anthropic.Actions;
 
 [ActionList("Batch processing")]
-public class BatchActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient)
-    : AnthropicInvocable(invocationContext, fileManagementClient)
+public class BatchActions : AnthropicInvocable
 {
+    private readonly ISupportsBatching _batchClient;
+    private readonly IFileManagementClient _fileManagementClient;
+
+    public BatchActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient) 
+        : base(invocationContext, fileManagementClient)
+    {
+        if (Client is not ISupportsBatching batchClient)
+        {
+            throw new PluginMisconfigurationException(
+                "Currently, only the 'Anthropic API token' connection type supports batch actions");
+        }
+
+        _batchClient = batchClient;
+        _fileManagementClient = fileManagementClient;
+    }
+
     [Action("(Batch) Process XLIFF",
         Description =
             "Asynchronously process each translation unit in the XLIFF file according to the provided instructions (by default it just translates the source tags) and updates the target text for each unit.")]
     public async Task<BatchResponse> ProcessXliffFileAsync([ActionParameter] ProcessXliffFileRequest request)
     {
-        ThrowNonNativeConnection();
-
         if (!request.File.Name.EndsWith("xlf", StringComparison.OrdinalIgnoreCase) && !request.File.Name.EndsWith("xliff", StringComparison.OrdinalIgnoreCase) && !request.File.ContentType.Contains("application/x-xliff+xml") && !request.File.ContentType.Contains("application/xliff+xml"))
         {
             throw new PluginMisconfigurationException("File does not have a valid XLIFF extension, please provide a valid XLIFF file.");
         }
-        var xliffDocument = await FileManagerHelper.LoadXliffDocument(request.File, fileManagementClient);
+
+        var xliffDocument = await FileManagerHelper.LoadXliffDocument(request.File, _fileManagementClient);
         var instructions = request.Prompt ?? "Translate the text.";
         var requests = await CreateBatchRequestsAsync(
             xliffDocument,
@@ -44,7 +54,7 @@ public class BatchActions(InvocationContext invocationContext, IFileManagementCl
             (unit, glossaryText) =>
                 $"Source: {unit.Source};{(string.IsNullOrEmpty(glossaryText) ? "" : $" {glossaryText}")}"
         );
-        return await SendBatchRequestsAsync(requests);
+        return await _batchClient.SendBatchRequestsAsync(requests);
     }
 
     [Action("(Batch) Post-edit XLIFF",
@@ -52,14 +62,12 @@ public class BatchActions(InvocationContext invocationContext, IFileManagementCl
             "Asynchronously post-edit the target text of each translation unit in the XLIFF file according to the provided instructions and updates the target text for each unit.")]
     public async Task<BatchResponse> PostEditXliffFileAsync([ActionParameter] ProcessXliffFileRequest request)
     {
-        ThrowNonNativeConnection();
-
         if (!request.File.Name.EndsWith("xlf", StringComparison.OrdinalIgnoreCase) && !request.File.Name.EndsWith("xliff", StringComparison.OrdinalIgnoreCase) && !request.File.ContentType.Contains("application/x-xliff+xml") && !request.File.ContentType.Contains("application/xliff+xml"))
         {
             throw new PluginMisconfigurationException("File does not have a valid XLIFF extension, please provide a valid XLIFF file.");
         }
 
-        var xliffDocument = await FileManagerHelper.LoadXliffDocument(request.File, fileManagementClient);
+        var xliffDocument = await FileManagerHelper.LoadXliffDocument(request.File, _fileManagementClient);
         var instructions = request.Prompt
                            ??
                            "Ensure correctness, match to the glossary (if a glossary is provided), and enhance readability and accuracy";
@@ -71,7 +79,7 @@ public class BatchActions(InvocationContext invocationContext, IFileManagementCl
             (unit, glossaryText) =>
                 $"Source: {unit.Source}; Target: {unit.TargetLanguage}{(string.IsNullOrEmpty(glossaryText) ? "" : $" {glossaryText}")}"
         );
-        return await SendBatchRequestsAsync(requests);
+        return await _batchClient.SendBatchRequestsAsync(requests);
     }
 
     [Action("(Batch) Get Quality Scores for XLIFF",
@@ -79,33 +87,29 @@ public class BatchActions(InvocationContext invocationContext, IFileManagementCl
     public async Task<BatchResponse> GetQualityScoresForXliffFileAsync(
         [ActionParameter] GetXliffQualityScoreRequest request)
     {
-        ThrowNonNativeConnection();
-
         if (!request.File.Name.EndsWith("xlf", StringComparison.OrdinalIgnoreCase) && !request.File.Name.EndsWith("xliff", StringComparison.OrdinalIgnoreCase) && !request.File.ContentType.Contains("application/x-xliff+xml") && !request.File.ContentType.Contains("application/xliff+xml"))
         {
             throw new PluginMisconfigurationException("File does not have a valid XLIFF extension, please provide a valid XLIFF file.");
         }
 
-        var xliffDocument = await FileManagerHelper.LoadXliffDocument(request.File, fileManagementClient);
+        var xliffDocument = await FileManagerHelper.LoadXliffDocument(request.File, _fileManagementClient);
         var requests = await CreateBatchRequestsAsync(
             xliffDocument,
             request,
-            (sourceLang, targetLang) =>
-                SystemPromptConstants.EvaluateTranslationQualityWithLanguages(sourceLang, targetLang),
+            SystemPromptConstants.EvaluateTranslationQualityWithLanguages,
             (unit, glossaryText) =>
                 $"Source: {unit.Source}; Target: {unit.TargetLanguage}{(string.IsNullOrEmpty(glossaryText) ? "" : $" {glossaryText}")}"
         );
-        return await SendBatchRequestsAsync(requests);
+        return await _batchClient.SendBatchRequestsAsync(requests);
     }
     
     [Action("(Batch) Get XLIFF from the batch",
         Description = "Get the results of the batch process. This action is suitable only for processing and post-editing XLIFF file and should be called after the async process is ended.")]
     public async Task<GetBatchResultResponse> GetBatchResultsAsync([ActionParameter] GetBatchResultRequest request)
     {
-        ThrowNonNativeConnection();
-
-        var batchRequests = await GetBatchRequestsAsync(request.BatchId);
-        var xliffDocument = await FileManagerHelper.LoadXliffDocument(request.OriginalXliff, fileManagementClient);
+        await ValidateBatchStatus(request.BatchId, _batchClient);
+        var batchRequests = await _batchClient.GetBatchRequestsAsync(request.BatchId);
+        var xliffDocument = await FileManagerHelper.LoadXliffDocument(request.OriginalXliff, _fileManagementClient);
         var allTranslationUnits = xliffDocument.Files.SelectMany(f => f.TranslationUnits).ToList();
         var totalUsage = new UsageResponse();
         
@@ -166,7 +170,7 @@ public class BatchActions(InvocationContext invocationContext, IFileManagementCl
 
         return new()
         {
-            File = await fileManagementClient.UploadAsync(stream, request.OriginalXliff.ContentType,
+            File = await _fileManagementClient.UploadAsync(stream, request.OriginalXliff.ContentType,
                 request.OriginalXliff.Name),
             Usage = totalUsage
         };
@@ -177,15 +181,14 @@ public class BatchActions(InvocationContext invocationContext, IFileManagementCl
     public async Task<GetQualityScoreBatchResultResponse> GetQualityScoresResultsAsync(
         [ActionParameter] GetQualityScoreBatchResultRequest request)
     {
-        ThrowNonNativeConnection();
-
         if (!request.OriginalXliff.Name.EndsWith("xlf", StringComparison.OrdinalIgnoreCase) && !request.OriginalXliff.Name.EndsWith("xliff", StringComparison.OrdinalIgnoreCase) && !request.OriginalXliff.ContentType.Contains("application/x-xliff+xml") && !request.OriginalXliff.ContentType.Contains("application/xliff+xml"))
         {
             throw new PluginMisconfigurationException("File does not have a valid XLIFF extension, please provide a valid XLIFF file.");
         }
 
-        var batchRequests = await GetBatchRequestsAsync(request.BatchId);
-        var xliffDocument = await FileManagerHelper.LoadXliffDocument(request.OriginalXliff, fileManagementClient);
+        await ValidateBatchStatus(request.BatchId, _batchClient);
+        var batchRequests = await _batchClient.GetBatchRequestsAsync(request.BatchId);
+        var xliffDocument = await FileManagerHelper.LoadXliffDocument(request.OriginalXliff, _fileManagementClient);
         var allTranslationUnits = xliffDocument.Files.SelectMany(f => f.TranslationUnits).ToList();
         var totalScore = 0d;
         foreach (var batchRequest in batchRequests)
@@ -218,18 +221,26 @@ public class BatchActions(InvocationContext invocationContext, IFileManagementCl
 
         return new()
         {
-            File = await fileManagementClient.UploadAsync(xliffDocument.ConvertToXliff(), request.OriginalXliff.ContentType,
+            File = await _fileManagementClient.UploadAsync(xliffDocument.ConvertToXliff(), request.OriginalXliff.ContentType,
                 request.OriginalXliff.Name),
             AverageScore = totalScore / batchRequests.Count,
         };
     }
 
-    private void ThrowNonNativeConnection()
+    private static async Task ValidateBatchStatus(string batchId, ISupportsBatching batchClient)
     {
-        if (ConnectionType != ConnectionTypes.AnthropicNative)
+        var batchStatus = await batchClient.GetBatchStatusAsync(batchId);
+        if (batchStatus.ProcessingStatus != "ended")
         {
             throw new PluginMisconfigurationException(
-                "Batch actions are only supported for the 'Anthropic API token' connection type");
+                $"The batch process is not completed yet. Current status: {batchStatus.ProcessingStatus}");
+        }
+
+        if (batchStatus.RequestCounts.Succeeded == 0)
+        {
+            throw new PluginApplicationException(
+                @"There is no succeded translation units was translated. 
+                Please ask support to view and fix the potential issue.");
         }
     }
 
@@ -249,7 +260,7 @@ public class BatchActions(InvocationContext invocationContext, IFileManagementCl
             var glossaryText = "";
             if (request.Glossary != null)
             {
-                glossaryText = await GlossaryPromptHelper.GetGlossaryPromptPart(new() { Glossary = request.Glossary }, fileManagementClient);
+                glossaryText = await GlossaryPromptHelper.GetGlossaryPromptPart(new() { Glossary = request.Glossary }, _fileManagementClient);
             }
 
             var content = contentFactory(translationUnit, glossaryText);
@@ -278,47 +289,5 @@ public class BatchActions(InvocationContext invocationContext, IFileManagementCl
         }
 
         return requests;
-    }
-
-    private async Task<BatchResponse> SendBatchRequestsAsync(List<object> requests)
-    {
-        var client = new AnthropicRestClient(InvocationContext.AuthenticationCredentialsProviders);
-        var apiRequest = new RestRequest("/messages/batches", Method.Post)
-            .WithJsonBody(new { requests });
-        var batch = await client.ExecuteWithErrorHandling<BatchResponse>(apiRequest);
-        return batch;
-    }
-    
-    private async Task<List<BatchRequestDto>> GetBatchRequestsAsync(string batchId)
-    {
-        var getBatchRequest = new RestRequest($"/messages/batches/{batchId}");
-        var client = new AnthropicRestClient(InvocationContext.AuthenticationCredentialsProviders);
-        
-        var batch = await client.ExecuteWithErrorHandling<BatchResponse>(getBatchRequest);
-    
-        if (batch.ProcessingStatus != "ended")
-        {
-            throw new PluginMisconfigurationException(
-                $"The batch process is not completed yet. Current status: {batch.ProcessingStatus}");
-        }
-        
-        if(batch.RequestCounts.Succeeded == 0)
-        {
-            throw new PluginApplicationException(
-                $"There is no succeded translation units was translated. Please ask support to view and fix the potential issue.");
-        }
-
-        var fileContentResponse = await client.ExecuteWithErrorHandling(
-            new RestRequest($"/messages/batches/{batchId}/results"));
-
-        var batchRequests = new List<BatchRequestDto>();
-        using var reader = new StringReader(fileContentResponse.Content!);
-        while (await reader.ReadLineAsync() is { } line)
-        {
-            var batchRequest = JsonConvert.DeserializeObject<BatchRequestDto>(line)!;
-            batchRequests.Add(batchRequest);
-        }
-
-        return batchRequests;
     }
 }

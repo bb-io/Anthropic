@@ -4,6 +4,7 @@ using Amazon.Bedrock.Model;
 using Amazon.BedrockRuntime;
 using Amazon.BedrockRuntime.Model;
 using Amazon.Runtime.Documents;
+using Apps.Anthropic.Api.Interfaces;
 using Apps.Anthropic.Constants;
 using Apps.Anthropic.Models.Request;
 using Apps.Anthropic.Models.Response;

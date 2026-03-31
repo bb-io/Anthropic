@@ -1,4 +1,5 @@
-﻿using Apps.Anthropic.Constants;
+﻿using Apps.Anthropic.Api.Interfaces;
+using Apps.Anthropic.Constants;
 using Apps.Anthropic.Models.Request;
 using Apps.Anthropic.Models.Response;
 using Blackbird.Applications.Sdk.Common.Authentication;
