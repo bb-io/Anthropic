@@ -34,7 +34,7 @@ public class BatchActions(InvocationContext invocationContext, IFileManagementCl
         {
             throw new PluginMisconfigurationException("File does not have a valid XLIFF extension, please provide a valid XLIFF file.");
         }
-        var xliffDocument = await LoadAndParseXliffDocument(request.File);
+        var xliffDocument = await FileManagerHelper.LoadXliffDocument(request.File, fileManagementClient);
         var instructions = request.Prompt ?? "Translate the text.";
         var requests = await CreateBatchRequestsAsync(
             xliffDocument,
@@ -59,7 +59,7 @@ public class BatchActions(InvocationContext invocationContext, IFileManagementCl
             throw new PluginMisconfigurationException("File does not have a valid XLIFF extension, please provide a valid XLIFF file.");
         }
 
-        var xliffDocument = await LoadAndParseXliffDocument(request.File);
+        var xliffDocument = await FileManagerHelper.LoadXliffDocument(request.File, fileManagementClient);
         var instructions = request.Prompt
                            ??
                            "Ensure correctness, match to the glossary (if a glossary is provided), and enhance readability and accuracy";
@@ -86,7 +86,7 @@ public class BatchActions(InvocationContext invocationContext, IFileManagementCl
             throw new PluginMisconfigurationException("File does not have a valid XLIFF extension, please provide a valid XLIFF file.");
         }
 
-        var xliffDocument = await LoadAndParseXliffDocument(request.File);
+        var xliffDocument = await FileManagerHelper.LoadXliffDocument(request.File, fileManagementClient);
         var requests = await CreateBatchRequestsAsync(
             xliffDocument,
             request,
@@ -105,7 +105,7 @@ public class BatchActions(InvocationContext invocationContext, IFileManagementCl
         ThrowNonNativeConnection();
 
         var batchRequests = await GetBatchRequestsAsync(request.BatchId);
-        var xliffDocument = await LoadAndParseXliffDocument(request.OriginalXliff);
+        var xliffDocument = await FileManagerHelper.LoadXliffDocument(request.OriginalXliff, fileManagementClient);
         var allTranslationUnits = xliffDocument.Files.SelectMany(f => f.TranslationUnits).ToList();
         var totalUsage = new UsageResponse();
         
@@ -185,7 +185,7 @@ public class BatchActions(InvocationContext invocationContext, IFileManagementCl
         }
 
         var batchRequests = await GetBatchRequestsAsync(request.BatchId);
-        var xliffDocument = await LoadAndParseXliffDocument(request.OriginalXliff);
+        var xliffDocument = await FileManagerHelper.LoadXliffDocument(request.OriginalXliff, fileManagementClient);
         var allTranslationUnits = xliffDocument.Files.SelectMany(f => f.TranslationUnits).ToList();
         var totalScore = 0d;
         foreach (var batchRequest in batchRequests)
