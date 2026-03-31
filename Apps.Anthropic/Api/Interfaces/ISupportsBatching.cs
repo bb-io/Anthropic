@@ -8,4 +8,5 @@ public interface ISupportsBatching
     Task<BatchResponse> SendBatchRequestsAsync(List<object> requests);
     Task<List<BatchRequestDto>> GetBatchRequestsAsync(string batchId); 
     Task<BatchResponse> GetBatchStatusAsync(string batchId);
+    Task<List<BatchResponse>> ListBatches();
 }

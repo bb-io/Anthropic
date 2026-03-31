@@ -10,7 +10,7 @@ using RestSharp;
 namespace Apps.Anthropic.Polling;
 
 [PollingEventList]
-public class BatchPollingList(InvocationContext invocationContext) : AnthropicInvocable(invocationContext, null!)
+public class BatchPollingList(InvocationContext invocationContext) : AnthropicInvocable(invocationContext)
 {
     [PollingEvent("On batch ended", "Triggered when a batch status is set to ended")]
     public async Task<PollingEventResponse<BatchMemory, BatchResponse>> OnBatchFinished(

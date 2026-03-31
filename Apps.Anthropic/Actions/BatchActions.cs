@@ -21,8 +21,8 @@ public class BatchActions : AnthropicInvocable
     private readonly ISupportsBatching _batchClient;
     private readonly IFileManagementClient _fileManagementClient;
 
-    public BatchActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient) 
-        : base(invocationContext, fileManagementClient)
+    public BatchActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient)
+        : base(invocationContext)
     {
         if (Client is not ISupportsBatching batchClient)
         {

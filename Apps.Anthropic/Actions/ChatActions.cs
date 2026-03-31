@@ -11,14 +11,14 @@ namespace Apps.Anthropic.Actions;
 
 [ActionList("Chat")]
 public class ChatActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient)
-    : AnthropicInvocable(invocationContext, fileManagementClient)
+    : AnthropicInvocable(invocationContext)
 {
     [Action("Chat", Description = "Gives a response given a chat message")]
     public async Task<ResponseMessage> CreateCompletion(
         [ActionParameter] CompletionRequest input,
         [ActionParameter] GlossaryRequest glossaryInput)
     {
-        var aiUtilities = new AiUtilities(invocationContext, fileManagementClient);
+        var aiUtilities = new AiUtilities(InvocationContext, fileManagementClient);
         return await aiUtilities.SendMessageAsync(input, glossaryInput);
     }
 }

@@ -1,24 +1,29 @@
-﻿using Apps.Anthropic.Api.Anthropic;
-using Apps.Anthropic.Models.Response;
-using Blackbird.Applications.Sdk.Common;
+﻿using Apps.Anthropic.Invocable;
+using Apps.Anthropic.Api.Interfaces;
 using Blackbird.Applications.Sdk.Common.Dynamic;
+using Blackbird.Applications.Sdk.Common.Exceptions;
 using Blackbird.Applications.Sdk.Common.Invocation;
-using RestSharp;
 
 namespace Apps.Anthropic.DataSourceHandlers;
 
-public class BatchDataSource(InvocationContext invocationContext)
-    : BaseInvocable(invocationContext), IAsyncDataSourceItemHandler
+public class BatchDataSource : AnthropicInvocable, IAsyncDataSourceItemHandler
 {
-    public async Task<IEnumerable<DataSourceItem>> GetDataAsync(DataSourceContext context, CancellationToken cancellationToken)
+    private readonly ISupportsBatching _batchClient;
+
+    public BatchDataSource(InvocationContext invocationContext) : base(invocationContext)
     {
-        var client = new AnthropicRestClient(InvocationContext.AuthenticationCredentialsProviders);
-        var request = new RestRequest("/messages/batches");
-        
-        var batches = await client.ExecuteWithErrorHandling<DataResponse<BatchResponse>>(request);
-        return batches.Data
-            .Where(model => context.SearchString == null || model.Id.Contains(context.SearchString))
+        if (Client is not ISupportsBatching batchClient)
+            throw new PluginMisconfigurationException("This connection type does not support batches");
+
+        _batchClient = batchClient;
+    }
+
+    public async Task<IEnumerable<DataSourceItem>> GetDataAsync(DataSourceContext context, CancellationToken ct)
+    {
+        var batches = await _batchClient.ListBatches();
+        return batches
+            .Where(x => context.SearchString == null || x.Id.Contains(context.SearchString))
             .Where(x => x.ProcessingStatus != "ended")
-            .Select(model => new DataSourceItem( model.Id, model.Id));
+            .Select(x => new DataSourceItem(x.Id, x.Id));
     }
 }

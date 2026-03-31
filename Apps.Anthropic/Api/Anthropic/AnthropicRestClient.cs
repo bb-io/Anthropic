@@ -41,6 +41,13 @@ public class AnthropicRestClient(IEnumerable<AuthenticationCredentialsProvider> 
         return models.Data.Select(x => new ModelResponse(x.Id, x.DisplayName)).ToList();
     }
 
+    public async Task<List<BatchResponse>> ListBatches()
+    {
+        var request = new RestRequest("/messages/batches");
+        var batches = await ExecuteWithErrorHandling<DataResponse<BatchResponse>>(request);
+        return batches.Data;
+    }
+
     public async Task<BatchResponse> SendBatchRequestsAsync(List<object> requests)
     {
         var request = new RestRequest("/messages/batches", Method.Post).WithJsonBody(new { requests });

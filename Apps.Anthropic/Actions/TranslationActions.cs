@@ -19,7 +19,8 @@ using Newtonsoft.Json;
 namespace Apps.Anthropic.Actions;
 
 [ActionList("Translation")]
-public class TranslationActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient) : AnthropicInvocable(invocationContext, fileManagementClient)
+public class TranslationActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient) 
+    : AnthropicInvocable(invocationContext)
 {
     private readonly AiUtilities _aiUtilities = new(invocationContext, fileManagementClient);
     
