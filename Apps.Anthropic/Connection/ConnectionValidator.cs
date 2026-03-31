@@ -1,6 +1,7 @@
 ﻿using Apps.Anthropic.Api;
 using Blackbird.Applications.Sdk.Common.Connections;
 using Blackbird.Applications.Sdk.Common.Authentication;
+using Apps.Anthropic.Api.Interfaces;
 
 namespace Apps.Anthropic.Connection;
 

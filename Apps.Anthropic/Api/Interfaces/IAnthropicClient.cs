@@ -2,7 +2,7 @@
 using Apps.Anthropic.Models.Response;
 using Blackbird.Applications.Sdk.Common.Connections;
 
-namespace Apps.Anthropic.Api;
+namespace Apps.Anthropic.Api.Interfaces;
 
 public interface IAnthropicClient
 {

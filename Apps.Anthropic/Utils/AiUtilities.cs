@@ -1,4 +1,4 @@
-﻿using Apps.Anthropic.Api;
+﻿using Apps.Anthropic.Invocable;
 using Apps.Anthropic.Models.Dto;
 using Apps.Anthropic.Models.Request;
 using Apps.Anthropic.Models.Response;
@@ -8,7 +8,8 @@ using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
 
 namespace Apps.Anthropic.Utils;
 
-public class AiUtilities(InvocationContext invocationContext, IFileManagementClient fileManagementClient)
+public class AiUtilities(InvocationContext invocationContext, IFileManagementClient fileManagementClient) 
+    : AnthropicInvocable(invocationContext)
 {
     public async Task<ResponseMessage> SendMessageAsync(CompletionRequest input, GlossaryRequest glossaryRequest)
     {
@@ -31,8 +32,7 @@ public class AiUtilities(InvocationContext invocationContext, IFileManagementCli
             FileData = fileData,
         };
 
-        var client = ClientFactory.Create(invocationContext.AuthenticationCredentialsProviders);
-        return await client.ExecuteChat(body);
+        return await Client.ExecuteChat(body);
     }
     
     public async Task<string> IdentifySourceLanguageAsync(string model, string content)
@@ -54,8 +54,7 @@ public class AiUtilities(InvocationContext invocationContext, IFileManagementCli
             TopK = 1
         };
 
-        var client = ClientFactory.Create(invocationContext.AuthenticationCredentialsProviders);
-        var response = await client.ExecuteChat(requestBody);
+        var response = await Client.ExecuteChat(requestBody);
         return response.Text;
     }
     

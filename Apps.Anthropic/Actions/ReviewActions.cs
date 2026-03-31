@@ -16,7 +16,8 @@ using Blackbird.Filters.Extensions;
 namespace Apps.Anthropic.Actions;
 
 [ActionList("Review")]
-public class ReviewActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient) : AnthropicInvocable(invocationContext, fileManagementClient)
+public class ReviewActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient) 
+    : AnthropicInvocable(invocationContext)
 {
     private readonly AiUtilities _aiUtilities = new(invocationContext, fileManagementClient);
 

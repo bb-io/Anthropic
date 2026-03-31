@@ -14,6 +14,12 @@
       "connectionType": "Amazon Bedrock (API Key)",
       "apiKey": "",
       "region": ""
+    },
+    {
+      "connectionType": "MicrosoftFoundryApiKey",
+      "baseUrl": "",
+      "apiKey": "",
+      "deploymentName": ""
     }
   ],
   "TestFolder": "C:\\Users\\..."

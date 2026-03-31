@@ -40,6 +40,18 @@ public class ConnectionDefinition : IConnectionDefinition
                 new(CredNames.ApiKey) { DisplayName = "API token", Sensitive = true },
                 new(CredNames.Region) { DisplayName = "Region" }
             ]
+        },
+        new()
+        {
+            DisplayName = "Microsoft Foundry (API Key)",
+            Name = ConnectionTypes.MicrosoftFoundryApiKey,
+            AuthenticationType = ConnectionAuthenticationType.Undefined,
+            ConnectionProperties = 
+            [
+                new(CredNames.DeploymentName) { DisplayName = "Deployment name" },
+                new(CredNames.ApiKey) { DisplayName = "API token", Sensitive = true },
+                new(CredNames.BaseUrl) { DisplayName = "Endpoint URL" }
+            ]
         }
     };
 

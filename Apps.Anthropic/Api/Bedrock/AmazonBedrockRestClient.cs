@@ -1,4 +1,5 @@
-﻿using Apps.Anthropic.Constants;
+﻿using Apps.Anthropic.Api.Interfaces;
+using Apps.Anthropic.Constants;
 using Apps.Anthropic.Models.Request;
 using Apps.Anthropic.Models.Response;
 using Apps.Anthropic.Models.Response.Bedrock;
@@ -13,7 +14,7 @@ using RestSharp.Serializers.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace Apps.Anthropic.Api;
+namespace Apps.Anthropic.Api.Bedrock;
 
 public class AmazonBedrockRestClient : RestClient, IAnthropicClient
 {
