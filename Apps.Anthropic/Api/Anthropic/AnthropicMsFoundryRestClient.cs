@@ -1,4 +1,5 @@
 ﻿using Apps.Anthropic.Constants;
+using Apps.Anthropic.Models.Request;
 using Apps.Anthropic.Models.Response;
 using Blackbird.Applications.Sdk.Common.Authentication;
 using Blackbird.Applications.Sdk.Common.Connections;
@@ -12,6 +13,12 @@ public class AnthropicMsFoundryRestClient(IEnumerable<AuthenticationCredentialsP
     : BaseAnthropicClient(creds, new Uri($"{creds.Get(CredNames.BaseUrl).Value}/v1")), IAnthropicClient
 {
     private readonly IEnumerable<AuthenticationCredentialsProvider> _creds = creds;
+
+    public override async Task<ResponseMessage> ExecuteChat(MessageRequest message)
+    {
+        message.Model = _creds.Get(CredNames.DeploymentName).Value;
+        return await base.ExecuteChat(message);
+    }
 
     public async Task<List<ModelResponse>> ListModels()
     {
@@ -30,18 +37,23 @@ public class AnthropicMsFoundryRestClient(IEnumerable<AuthenticationCredentialsP
             };
         }
 
-        var request = new RestRequest("/models", Method.Get);
-        var response = await ExecuteAsync(request);
+        try
+        {
+            var pingMessage = new MessageRequest
+            {
+                Messages = [ new() { Role = "user", Content = "Ping! Reply with 'Pong'" } ],
+            };
 
-        if (response.StatusCode is System.Net.HttpStatusCode.Unauthorized)
+            await ExecuteChat(pingMessage);
+            return new() { IsValid = true };
+        }
+        catch (Exception ex)
         {
             return new()
             {
                 IsValid = false,
-                Message = response.ErrorMessage,
+                Message = ex.Message
             };
         }
-
-        return new() { IsValid = true };
     }
 }

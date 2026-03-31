@@ -52,7 +52,7 @@ public class BaseAnthropicClient : BlackBirdRestClient
         return new Exception(error?.Error?.Message ?? response.ErrorException.Message);
     }
 
-    public async Task<ResponseMessage> ExecuteChat(MessageRequest message)
+    public virtual async Task<ResponseMessage> ExecuteChat(MessageRequest message)
     {
         var formattedMessages = new List<object>();
 
