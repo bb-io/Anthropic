@@ -45,6 +45,13 @@ future reference e.g. 'My connection'.
 
 ![Anthropic API token](image/README/anthropic_apikey.png)
 
+### Microsoft Foundry
+
+1. Fill in your `API Key`, `Endpoint` and `Deployment name`.
+2. Click _Connect_.
+
+![Microsoft Foundry API Key](image/README/msfoundry_apikey.png)
+
 ### Amazon Bedrock (AWS Credentials)
 
 1. Fill in your `Access key`, `Secret key` and `Region`.
@@ -58,11 +65,6 @@ future reference e.g. 'My connection'.
 2. Click _Connect_.
 
 ![Amazon Bedrock API Key](image/README/bedrock_apikey.png)
-
-### Microsoft Foundry
-
-1. Fill in your `API Key`, `Endpoint` and `Deployment name`.
-2. Click _Connect_.
 
 ## Actions
 

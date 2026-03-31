@@ -9,8 +9,10 @@ using RestSharp;
 namespace Apps.Anthropic.Api.Anthropic;
 
 public class AnthropicMsFoundryRestClient(IEnumerable<AuthenticationCredentialsProvider> creds) 
-    : BaseAnthropicClient(creds, new Uri($"{creds.Get(CredNames.BaseUrl).Value}/anthropic/v1")), IAnthropicClient
+    : BaseAnthropicClient(creds, new Uri($"{creds.Get(CredNames.BaseUrl).Value}/v1")), IAnthropicClient
 {
+    private readonly IEnumerable<AuthenticationCredentialsProvider> _creds = creds;
+
     public async Task<List<ModelResponse>> ListModels()
     {
         throw new PluginMisconfigurationException(
@@ -19,6 +21,15 @@ public class AnthropicMsFoundryRestClient(IEnumerable<AuthenticationCredentialsP
 
     public async Task<ConnectionValidationResponse> ValidateConnection()
     {
+        if (!_creds.Get(CredNames.BaseUrl).Value.EndsWith("/anthropic"))
+        {
+            return new()
+            {
+                IsValid = false,
+                Message = "The endpoint URL must end with '/anthropic'",
+            };
+        }
+
         var request = new RestRequest("/models", Method.Get);
         var response = await ExecuteAsync(request);
 
