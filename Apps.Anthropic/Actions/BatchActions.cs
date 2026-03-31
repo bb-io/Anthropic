@@ -28,7 +28,7 @@ public class BatchActions(InvocationContext invocationContext, IFileManagementCl
             "Asynchronously process each translation unit in the XLIFF file according to the provided instructions (by default it just translates the source tags) and updates the target text for each unit.")]
     public async Task<BatchResponse> ProcessXliffFileAsync([ActionParameter] ProcessXliffFileRequest request)
     {
-        ThrowForAmazonConnection();
+        ThrowNonNativeConnection();
 
         if (!request.File.Name.EndsWith("xlf", StringComparison.OrdinalIgnoreCase) && !request.File.Name.EndsWith("xliff", StringComparison.OrdinalIgnoreCase) && !request.File.ContentType.Contains("application/x-xliff+xml") && !request.File.ContentType.Contains("application/xliff+xml"))
         {
@@ -52,7 +52,7 @@ public class BatchActions(InvocationContext invocationContext, IFileManagementCl
             "Asynchronously post-edit the target text of each translation unit in the XLIFF file according to the provided instructions and updates the target text for each unit.")]
     public async Task<BatchResponse> PostEditXliffFileAsync([ActionParameter] ProcessXliffFileRequest request)
     {
-        ThrowForAmazonConnection();
+        ThrowNonNativeConnection();
 
         if (!request.File.Name.EndsWith("xlf", StringComparison.OrdinalIgnoreCase) && !request.File.Name.EndsWith("xliff", StringComparison.OrdinalIgnoreCase) && !request.File.ContentType.Contains("application/x-xliff+xml") && !request.File.ContentType.Contains("application/xliff+xml"))
         {
@@ -79,7 +79,7 @@ public class BatchActions(InvocationContext invocationContext, IFileManagementCl
     public async Task<BatchResponse> GetQualityScoresForXliffFileAsync(
         [ActionParameter] GetXliffQualityScoreRequest request)
     {
-        ThrowForAmazonConnection();
+        ThrowNonNativeConnection();
 
         if (!request.File.Name.EndsWith("xlf", StringComparison.OrdinalIgnoreCase) && !request.File.Name.EndsWith("xliff", StringComparison.OrdinalIgnoreCase) && !request.File.ContentType.Contains("application/x-xliff+xml") && !request.File.ContentType.Contains("application/xliff+xml"))
         {
@@ -102,7 +102,7 @@ public class BatchActions(InvocationContext invocationContext, IFileManagementCl
         Description = "Get the results of the batch process. This action is suitable only for processing and post-editing XLIFF file and should be called after the async process is ended.")]
     public async Task<GetBatchResultResponse> GetBatchResultsAsync([ActionParameter] GetBatchResultRequest request)
     {
-        ThrowForAmazonConnection();
+        ThrowNonNativeConnection();
 
         var batchRequests = await GetBatchRequestsAsync(request.BatchId);
         var xliffDocument = await LoadAndParseXliffDocument(request.OriginalXliff);
@@ -177,7 +177,7 @@ public class BatchActions(InvocationContext invocationContext, IFileManagementCl
     public async Task<GetQualityScoreBatchResultResponse> GetQualityScoresResultsAsync(
         [ActionParameter] GetQualityScoreBatchResultRequest request)
     {
-        ThrowForAmazonConnection();
+        ThrowNonNativeConnection();
 
         if (!request.OriginalXliff.Name.EndsWith("xlf", StringComparison.OrdinalIgnoreCase) && !request.OriginalXliff.Name.EndsWith("xliff", StringComparison.OrdinalIgnoreCase) && !request.OriginalXliff.ContentType.Contains("application/x-xliff+xml") && !request.OriginalXliff.ContentType.Contains("application/xliff+xml"))
         {
@@ -224,10 +224,13 @@ public class BatchActions(InvocationContext invocationContext, IFileManagementCl
         };
     }
 
-    private void ThrowForAmazonConnection()
+    private void ThrowNonNativeConnection()
     {
         if (ConnectionType != ConnectionTypes.AnthropicNative)
-            throw new PluginMisconfigurationException("Batch actions are not supported for Amazon connection types");
+        {
+            throw new PluginMisconfigurationException(
+                "Batch actions are only supported for the 'Anthropic API token' connection type");
+        }
     }
 
     private async Task<List<object>> CreateBatchRequestsAsync<T>(
