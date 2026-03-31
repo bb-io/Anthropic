@@ -1,4 +1,6 @@
-﻿using Apps.Anthropic.Constants;
+﻿using Apps.Anthropic.Api.Anthropic;
+using Apps.Anthropic.Api.Bedrock;
+using Apps.Anthropic.Constants;
 using Blackbird.Applications.Sdk.Common.Authentication;
 using Blackbird.Applications.Sdk.Utils.Extensions.Sdk;
 
@@ -14,6 +16,7 @@ public static class ClientFactory
             ConnectionTypes.AnthropicNative => new AnthropicRestClient(creds),
             ConnectionTypes.BedrockCreds => new AmazonBedrockSdkClient(creds),
             ConnectionTypes.BedrockApiKey => new AmazonBedrockRestClient(creds),
+            ConnectionTypes.MicrosoftFoundryApiKey => new AnthropicMsFoundryRestClient(creds),
             _ => throw new Exception($"Unsupported connection type: {connectionType}")
         };
     }

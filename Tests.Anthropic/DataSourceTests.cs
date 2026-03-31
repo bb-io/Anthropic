@@ -2,6 +2,7 @@
 using Apps.Anthropic.Constants;
 using Apps.Anthropic.DataSourceHandlers;
 using Blackbird.Applications.Sdk.Common.Invocation;
+using Blackbird.Applications.Sdk.Common.Exceptions;
 
 namespace Tests.Anthropic;
 
@@ -48,5 +49,17 @@ public class DataSourceTests : TestBaseMultipleConnections
         // Assert
         PrintDataHandlerResult(data);
         Assert.IsNotNull(data);
+    }
+
+    [TestMethod, ContextDataSource(ConnectionTypes.MicrosoftFoundryApiKey)]
+    public async Task ModelDataSource_MsFoundry_ThrowsMisconfigException(InvocationContext context)
+    {
+        // Arrange
+        var dataSource = new ModelDataSource(context);
+
+        // Act & Assert
+        await Assert.ThrowsExactlyAsync<PluginMisconfigurationException>(() => 
+            dataSource.GetDataAsync(new(), default), 
+            "Listing models is not supported for this connection type.");
     }
 }

@@ -7,4 +7,6 @@ public static class CredNames
     public const string AccessKey = "accessKey";
     public const string SecretKey = "secretKey";
     public const string Region = "region";
+    public const string DeploymentName = "deploymentName";
+    public const string BaseUrl = "baseUrl";
 }

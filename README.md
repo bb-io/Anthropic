@@ -12,9 +12,23 @@ A next-generation AI assistant for your tasks, no matter the scale
 
 Before you can connect you need to make sure that:
 
-- **Anthropic API token connection type**: You have an [Anthropic account](https://console.anthropic.com) and have access to the API keys.
-- **Amazon Bedrock (AWS Credentials) connection type**: You have AWS `Access key` and `Secret key` and the `Region` code where the models were enabled. The IAM user must have these policies enabled: `bedrock:InvokeModel`, `bedrock:ListFoundationModels`.
-- **Amazon Bedrock (API Key) connection type**: You have a Bedrock `API token` generated in the AWS console under Bedrock -> Settings -> API keys, and you have the `Region` code.
+- **Anthropic API token connection type**: 
+You have an [Anthropic account](https://console.anthropic.com) and have access to the API keys.
+
+- **Microsoft Foundry connection type**:
+You have a Microsoft Azure account and a model resource. 
+Follow [this guide](https://docs.typingmind.com/manage-and-connect-ai-models/anthropic-models-via-azure#5f87f0dbf0d3488697168438bd45230a)
+to set up your Anthropic model. To obtaint credentials, go to Microsoft Foundry -> Playgrounds and click View code. 
+Select Key authentication and copy your `Endpoint` and `API key`. Copy your `Deployment name` from the generated code.
+
+![Microsoft Foundry Deployment name](image/README/msfoundry_deployment.png)
+
+- **Amazon Bedrock (AWS Credentials) connection type**: 
+You have AWS `Access key` and `Secret key` and the `Region` code where the models were enabled. 
+The IAM user must have these policies enabled: `bedrock:InvokeModel`, `bedrock:ListFoundationModels`.
+
+- **Amazon Bedrock (API Key) connection type**: 
+You have a Bedrock `API token` generated in the AWS console under Bedrock -> Settings -> API keys, and you have the `Region` code.
 
 **Note**: For Amazon Bedrock connection types, you also need to have access to the specific Anthropic models. 
 Go to AWS Bedrock Console -> Model access -> Manage model access and check the boxes for the Anthropic models.
@@ -44,6 +58,11 @@ future reference e.g. 'My connection'.
 2. Click _Connect_.
 
 ![Amazon Bedrock API Key](image/README/bedrock_apikey.png)
+
+### Microsoft Foundry
+
+1. Fill in your `API Key`, `Endpoint` and `Deployment name`.
+2. Click _Connect_.
 
 ## Actions
 

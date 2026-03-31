@@ -13,7 +13,7 @@ using RestSharp.Serializers.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace Apps.Anthropic.Api;
+namespace Apps.Anthropic.Api.Bedrock;
 
 public class AmazonBedrockRestClient : RestClient, IAnthropicClient
 {

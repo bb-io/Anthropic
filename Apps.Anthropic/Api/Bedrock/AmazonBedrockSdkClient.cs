@@ -14,7 +14,7 @@ using Blackbird.Applications.Sdk.Common.Exceptions;
 using Blackbird.Applications.Sdk.Utils.Extensions.Sdk;
 using Message = Amazon.BedrockRuntime.Model.Message;
 
-namespace Apps.Anthropic.Api;
+namespace Apps.Anthropic.Api.Bedrock;
 
 public class AmazonBedrockSdkClient : IAnthropicClient
 {
