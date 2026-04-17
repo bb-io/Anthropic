@@ -27,10 +27,7 @@ public class BatchActions : AnthropicInvocable
         : base(invocationContext)
     {
         if (Client is not ISupportsBatching batchClient)
-        {
-            throw new PluginMisconfigurationException(
-                "Currently, only the 'Anthropic API token' connection type supports batch actions");
-        }
+            throw new PluginMisconfigurationException("This connection type does not support batch actions");
 
         _batchClient = batchClient;
         _fileManagementClient = fileManagementClient;
