@@ -6,7 +6,7 @@ public class MessageRequest
 {
     public string System { get; set; }
 
-    public string Model { get; set; }
+    public string? Model { get; set; }
 
     public List<Message> Messages { get; set; } = [];
 

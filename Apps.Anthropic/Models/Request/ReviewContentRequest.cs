@@ -1,5 +1,4 @@
-﻿using Apps.Anthropic.DataSourceHandlers;
-using Apps.Anthropic.DataSourceHandlers.EnumHandlers;
+﻿using Apps.Anthropic.DataSourceHandlers.EnumHandlers;
 using Blackbird.Applications.SDK.Blueprints.Handlers;
 using Blackbird.Applications.SDK.Blueprints.Interfaces.Review;
 using Blackbird.Applications.Sdk.Common;
@@ -23,10 +22,6 @@ public class ReviewContentRequest : IReviewFileInput
     
     [Display("Output file handling", Description = "Determine the format of the output file. The default Blackbird behavior is to convert to XLIFF for future steps."), StaticDataSource(typeof(ProcessFileFormatHandler))]
     public string? OutputFileHandling { get; set; }
-
-    [Display("Model", Description = "This parameter controls which version of Claude answers your request")]
-    [DataSource(typeof(ModelDataSource))]
-    public string Model { get; set; } = string.Empty;
 
     [Display("Additional instructions", Description = "Specify quality assessment criteria. For example: 'Focus on technical terminology accuracy' or 'Prioritize cultural adaptation'")]
     public string? AdditionalInstructions { get; set; }

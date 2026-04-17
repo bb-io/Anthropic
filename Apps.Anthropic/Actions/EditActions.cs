@@ -1,15 +1,17 @@
-﻿using Apps.Anthropic.Invocable;
+﻿using Apps.Anthropic.Constants;
+using Apps.Anthropic.Extensions;
+using Apps.Anthropic.Invocable;
+using Apps.Anthropic.Models.Entities;
+using Apps.Anthropic.Models.Identifiers;
 using Apps.Anthropic.Models.Request;
 using Apps.Anthropic.Models.Response;
 using Apps.Anthropic.Utils;
-using Apps.Anthropic.Models.Entities;
-using Apps.Anthropic.Constants;
-using Blackbird.Applications.SDK.Blueprints;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
-using Blackbird.Applications.Sdk.Common.Invocation;
-using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
 using Blackbird.Applications.Sdk.Common.Exceptions;
+using Blackbird.Applications.Sdk.Common.Invocation;
+using Blackbird.Applications.SDK.Blueprints;
+using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
 using Blackbird.Filters.Constants;
 using Blackbird.Filters.Enums;
 using Blackbird.Filters.Extensions;
@@ -26,8 +28,12 @@ public class EditActions(InvocationContext invocationContext, IFileManagementCli
     
     [BlueprintActionDefinition(BlueprintAction.EditFile)]
     [Action("Edit", Description = "Edit a translation. This action assumes you have previously translated content in Blackbird through any translation action.")]
-    public async Task<EditContentResponse> EditContent([ActionParameter] EditContentRequest input)
+    public async Task<EditContentResponse> EditContent(
+        [ActionParameter] ModelIdentifier modelIdentifier,
+        [ActionParameter] EditContentRequest input)
     {
+        modelIdentifier.Validate(InvocationContext.AuthenticationCredentialsProviders);
+
         var result = new EditContentResponse();
         
         var stream = await fileManagementClient.DownloadAsync(input.File);
@@ -42,7 +48,7 @@ public class EditActions(InvocationContext invocationContext, IFileManagementCli
         
         if (content.SourceLanguage == null)
         {
-            content.SourceLanguage = await _aiUtilities.IdentifySourceLanguageAsync(input.Model, content.Source().GetPlaintext());
+            content.SourceLanguage = await _aiUtilities.IdentifySourceLanguageAsync(modelIdentifier.Model, content.Source().GetPlaintext());
         }
         
         var units = content.GetUnits().ToList();
@@ -66,12 +72,11 @@ public class EditActions(InvocationContext invocationContext, IFileManagementCli
                 Temperature = input.Temperature,
                 TopP = input.TopP,
                 TopK = input.TopK,
-                Model = input.Model,
                 MaxTokensToSample = input.MaxTokensToSample,
                 StopSequences = input.StopSequences
             };
             
-            var response = await _aiUtilities.SendMessageAsync(completionRequest, new()
+            var response = await _aiUtilities.SendMessageAsync(modelIdentifier, completionRequest, new()
             {
                 Glossary = input.Glossary
             });
@@ -144,8 +149,12 @@ public class EditActions(InvocationContext invocationContext, IFileManagementCli
     
     [BlueprintActionDefinition(BlueprintAction.EditText)]
     [Action("Edit text", Description = "Review translated text and generate an edited version")]
-    public async Task<EditTextResponse> EditText([ActionParameter] EditTextRequest input)
+    public async Task<EditTextResponse> EditText(
+        [ActionParameter] ModelIdentifier modelIdentifier,
+        [ActionParameter] EditTextRequest input)
     {
+        modelIdentifier.Validate(InvocationContext.AuthenticationCredentialsProviders);
+
         var systemPrompt =
             $"You are receiving a source text{(input.SourceLanguage != null ? $" written in {input.SourceLanguage} " : "")}" +
             $"that was translated into target text{(input.TargetLanguage != null ? $" written in {input.TargetLanguage}" : "")}. " +
@@ -186,11 +195,10 @@ public class EditActions(InvocationContext invocationContext, IFileManagementCli
             Temperature = input.Temperature,
             TopP = input.TopP,
             TopK = input.TopK,
-            Model = input.Model,
             MaxTokensToSample = input.MaxTokensToSample
         };
 
-        var response = await _aiUtilities.SendMessageAsync(completionRequest, new()
+        var response = await _aiUtilities.SendMessageAsync(modelIdentifier, completionRequest, new()
         {
             Glossary = input.Glossary
         });

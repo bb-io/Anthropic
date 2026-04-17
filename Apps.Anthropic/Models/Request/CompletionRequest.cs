@@ -1,5 +1,4 @@
-﻿using Apps.Anthropic.DataSourceHandlers;
-using Apps.Anthropic.DataSourceHandlers.EnumHandlers;
+﻿using Apps.Anthropic.DataSourceHandlers.EnumHandlers;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Dynamic;
 using Blackbird.Applications.Sdk.Common.Files;
@@ -9,11 +8,6 @@ namespace Apps.Anthropic.Models.Request;
 
 public class CompletionRequest
 {
-    [Display("Model", Description = "This parameter controls which version of Claude answers your request")]
-    [DataSource(typeof(ModelDataSource))]
-    [JsonProperty("model")]
-    public string Model { get; set; }
-
     [Display("Prompt", Description = "The prompt that you want Claude to complete.")]
     [JsonProperty("prompt")]
     public string Prompt { get; set; }
@@ -45,17 +39,4 @@ public class CompletionRequest
 
     [Display("File")]
     public FileReference? File { get; set; }
-
-    public CompletionRequest()
-    { }
-
-    public CompletionRequest(ProcessXliffRequest xliffRequest)
-    {
-        Model = xliffRequest.Model;
-        MaxTokensToSample = xliffRequest.MaxTokensToSample;
-        StopSequences = xliffRequest.StopSequences;
-        Temperature = xliffRequest.Temperature;
-        TopP = xliffRequest.TopP;
-        TopK = xliffRequest.TopK;
-    }
 }

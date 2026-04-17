@@ -1,14 +1,16 @@
 ﻿using Apps.Anthropic.Constants;
+using Apps.Anthropic.Extensions;
 using Apps.Anthropic.Invocable;
 using Apps.Anthropic.Models.Entities;
+using Apps.Anthropic.Models.Identifiers;
 using Apps.Anthropic.Models.Request;
 using Apps.Anthropic.Models.Response;
 using Apps.Anthropic.Utils;
-using Blackbird.Applications.SDK.Blueprints;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
 using Blackbird.Applications.Sdk.Common.Exceptions;
 using Blackbird.Applications.Sdk.Common.Invocation;
+using Blackbird.Applications.SDK.Blueprints;
 using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
 using Blackbird.Filters.Constants;
 using Blackbird.Filters.Enums;
@@ -25,9 +27,14 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
     private readonly AiUtilities _aiUtilities = new(invocationContext, fileManagementClient);
     
     [BlueprintActionDefinition(BlueprintAction.TranslateFile)]
-    [Action("Translate", Description = "Translate file content retrieved from a CMS or file storage. The output can be used in compatible actions.")]
-    public async Task<TranslateContentResponse> Translate([ActionParameter] TranslateContentRequest input)
+    [Action("Translate", 
+        Description = "Translate file content retrieved from a CMS or file storage. The output can be used in compatible actions.")]
+    public async Task<TranslateContentResponse> Translate(
+        [ActionParameter] ModelIdentifier modelIdentifier,
+        [ActionParameter] TranslateContentRequest input)
     {
+        modelIdentifier.Validate(InvocationContext.AuthenticationCredentialsProviders);
+
         var result = new TranslateContentResponse();
             
         var stream = await fileManagementClient.DownloadAsync(input.File);
@@ -41,7 +48,9 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
         
         if (content.SourceLanguage == null)
         {
-            content.SourceLanguage = await _aiUtilities.IdentifySourceLanguageAsync(input.Model, content.Source().GetPlaintext());
+            content.SourceLanguage = await _aiUtilities.IdentifySourceLanguageAsync(
+                modelIdentifier.Model, 
+                content.Source().GetPlaintext());
         }
 
         var units = content.GetUnits().ToList();
@@ -64,12 +73,11 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
                 Temperature = input.Temperature,
                 TopP = input.TopP,
                 TopK = input.TopK,
-                Model = input.Model,
                 MaxTokensToSample = input.MaxTokensToSample,
                 StopSequences = input.StopSequences
             };
             
-            var response = await _aiUtilities.SendMessageAsync(completionRequest, new()
+            var response = await _aiUtilities.SendMessageAsync(modelIdentifier, completionRequest, new()
             {
                 Glossary = input.Glossary
             });
@@ -142,15 +150,19 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
 
     [BlueprintActionDefinition(BlueprintAction.TranslateText)]
     [Action("Translate text", Description = "Localize the text provided.")]
-    public async Task<TranslateTextResponse> TranslateText([ActionParameter] TranslateTextRequest input)
+    public async Task<TranslateTextResponse> TranslateText(
+        [ActionParameter] ModelIdentifier modelIdentifier,
+        [ActionParameter] TranslateTextRequest input)
     {
+        modelIdentifier.Validate(InvocationContext.AuthenticationCredentialsProviders);
+
         var systemPrompt = "You are a text localizer. Localize the provided text for the specified locale while " +
                           "preserving the original text structure. Respond with localized text. Do not give any other answer but the translation. No explanation or other headers.";
 
         var sourceLanguage = input.SourceLanguage;
         if (string.IsNullOrEmpty(sourceLanguage))
         {
-            sourceLanguage = await _aiUtilities.IdentifySourceLanguageAsync(input.Model, input.Text);
+            sourceLanguage = await _aiUtilities.IdentifySourceLanguageAsync(modelIdentifier.Model, input.Text);
         }
 
         var userPrompt = $@"
@@ -187,11 +199,10 @@ Target language: {input.TargetLanguage}
             Temperature = input.Temperature,
             TopP = input.TopP,
             TopK = input.TopK,
-            Model = input.Model,
             MaxTokensToSample = input.MaxTokensToSample
         };
 
-        var response = await _aiUtilities.SendMessageAsync(completionRequest, new()
+        var response = await _aiUtilities.SendMessageAsync(modelIdentifier, completionRequest, new()
         {
             Glossary = input.Glossary
         });

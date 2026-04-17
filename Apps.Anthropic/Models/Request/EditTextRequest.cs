@@ -1,4 +1,3 @@
-using Apps.Anthropic.DataSourceHandlers;
 using Apps.Anthropic.DataSourceHandlers.EnumHandlers;
 using Blackbird.Applications.SDK.Blueprints.Interfaces.Edit;
 using Blackbird.Applications.Sdk.Common;
@@ -26,11 +25,6 @@ public class EditTextRequest : IEditTextInput
 
     [Display("Target audience", Description = "Specify the target audience for the edited text")]
     public string? TargetAudience { get; set; }
-
-    [Display("Model", Description = "This parameter controls which version of Claude answers your request")]
-    [DataSource(typeof(ModelDataSource))]
-    [JsonProperty("model")]
-    public string Model { get; set; } = string.Empty;
 
     [Display("Additional instructions", Description = "Additional instructions for editing the text")]
     public string? AdditionalInstructions { get; set; }
