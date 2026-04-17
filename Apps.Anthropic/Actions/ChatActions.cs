@@ -1,4 +1,6 @@
-﻿using Apps.Anthropic.Invocable;
+﻿using Apps.Anthropic.Extensions;
+using Apps.Anthropic.Invocable;
+using Apps.Anthropic.Models.Identifiers;
 using Apps.Anthropic.Models.Request;
 using Apps.Anthropic.Models.Response;
 using Apps.Anthropic.Utils;
@@ -15,10 +17,13 @@ public class ChatActions(InvocationContext invocationContext, IFileManagementCli
 {
     [Action("Chat", Description = "Gives a response given a chat message")]
     public async Task<ResponseMessage> CreateCompletion(
+        [ActionParameter] ModelIdentifier modelIdentifier,
         [ActionParameter] CompletionRequest input,
         [ActionParameter] GlossaryRequest glossaryInput)
     {
+        modelIdentifier.Validate(InvocationContext.AuthenticationCredentialsProviders);
+
         var aiUtilities = new AiUtilities(InvocationContext, fileManagementClient);
-        return await aiUtilities.SendMessageAsync(input, glossaryInput);
+        return await aiUtilities.SendMessageAsync(modelIdentifier, input, glossaryInput);
     }
 }

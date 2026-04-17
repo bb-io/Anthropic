@@ -1,6 +1,7 @@
 using Tests.Anthropic.Base;
 using Apps.Anthropic.Actions;
 using Apps.Anthropic.Models.Request;
+using Apps.Anthropic.Models.Identifiers;
 using Blackbird.Applications.Sdk.Common.Files;
 using Blackbird.Applications.Sdk.Common.Invocation;
 
@@ -14,9 +15,11 @@ public class ReviewActionsTests : TestBaseMultipleConnections
     {
         // Arrange
         var reviewActions = new ReviewActions(context, FileManager);
+        var model = new ModelIdentifier { Model = "claude-3-5-sonnet-20241022" };
 
         // Act
         var result = await reviewActions.ReviewContent(
+            model,
             new ReviewContentRequest
             {
                 File = new FileReference
@@ -24,7 +27,6 @@ public class ReviewActionsTests : TestBaseMultipleConnections
                     Name = "contentful_review.xlf",
                     ContentType = "application/xliff+xml"
                 },
-                Model = "claude-3-5-sonnet-20241022",
                 SourceLanguage = "en",
                 TargetLanguage = "fr",
                 AdditionalInstructions = "Focus on technical terminology accuracy and cultural adaptation"
@@ -51,14 +53,15 @@ public class ReviewActionsTests : TestBaseMultipleConnections
     {
         // Arrange
         var reviewActions = new ReviewActions(context, FileManager);
+        var model = new ModelIdentifier { Model = "claude-3-5-sonnet-20241022" };
 
         // Act
         var result = await reviewActions.ReviewText(
+            model,
             new ReviewTextRequest
             {
                 SourceText = "Hello, how are you today? I hope you're having a wonderful day!",
                 TargetText = "Hola, ¿cómo estás hoy? ¡Espero que tengas un día maravilloso!",
-                Model = "claude-3-5-sonnet-20241022",
                 SourceLanguage = "en",
                 TargetLanguage = "es",
                 AdditionalInstructions = "Focus on naturalness and accuracy of the translation"

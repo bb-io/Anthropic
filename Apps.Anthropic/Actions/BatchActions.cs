@@ -1,6 +1,8 @@
 ﻿using Apps.Anthropic.Api.Interfaces;
 using Apps.Anthropic.Constants;
+using Apps.Anthropic.Extensions;
 using Apps.Anthropic.Invocable;
+using Apps.Anthropic.Models.Identifiers;
 using Apps.Anthropic.Models.Request;
 using Apps.Anthropic.Models.Response;
 using Apps.Anthropic.Utils;
@@ -25,10 +27,7 @@ public class BatchActions : AnthropicInvocable
         : base(invocationContext)
     {
         if (Client is not ISupportsBatching batchClient)
-        {
-            throw new PluginMisconfigurationException(
-                "Currently, only the 'Anthropic API token' connection type supports batch actions");
-        }
+            throw new PluginMisconfigurationException("This connection type does not support batch actions");
 
         _batchClient = batchClient;
         _fileManagementClient = fileManagementClient;
@@ -37,8 +36,12 @@ public class BatchActions : AnthropicInvocable
     [Action("(Batch) Process XLIFF",
         Description =
             "Asynchronously process each translation unit in the XLIFF file according to the provided instructions (by default it just translates the source tags) and updates the target text for each unit.")]
-    public async Task<BatchResponse> ProcessXliffFileAsync([ActionParameter] ProcessXliffFileRequest request)
+    public async Task<BatchResponse> ProcessXliffFileAsync(
+        [ActionParameter] ModelIdentifier modelIdentifier,
+        [ActionParameter] ProcessXliffFileRequest request)
     {
+        modelIdentifier.Validate(InvocationContext.AuthenticationCredentialsProviders);
+
         if (!request.File.Name.EndsWith("xlf", StringComparison.OrdinalIgnoreCase) && !request.File.Name.EndsWith("xliff", StringComparison.OrdinalIgnoreCase) && !request.File.ContentType.Contains("application/x-xliff+xml") && !request.File.ContentType.Contains("application/xliff+xml"))
         {
             throw new PluginMisconfigurationException("File does not have a valid XLIFF extension, please provide a valid XLIFF file.");
@@ -47,6 +50,7 @@ public class BatchActions : AnthropicInvocable
         var xliffDocument = await FileManagerHelper.LoadXliffDocument(request.File, _fileManagementClient);
         var instructions = request.Prompt ?? "Translate the text.";
         var requests = await CreateBatchRequestsAsync(
+            modelIdentifier,
             xliffDocument,
             request,
             (sourceLang, targetLang) =>
@@ -60,8 +64,12 @@ public class BatchActions : AnthropicInvocable
     [Action("(Batch) Post-edit XLIFF",
         Description =
             "Asynchronously post-edit the target text of each translation unit in the XLIFF file according to the provided instructions and updates the target text for each unit.")]
-    public async Task<BatchResponse> PostEditXliffFileAsync([ActionParameter] ProcessXliffFileRequest request)
+    public async Task<BatchResponse> PostEditXliffFileAsync(
+        [ActionParameter] ModelIdentifier modelIdentifier,
+        [ActionParameter] ProcessXliffFileRequest request)
     {
+        modelIdentifier.Validate(InvocationContext.AuthenticationCredentialsProviders);
+
         if (!request.File.Name.EndsWith("xlf", StringComparison.OrdinalIgnoreCase) && !request.File.Name.EndsWith("xliff", StringComparison.OrdinalIgnoreCase) && !request.File.ContentType.Contains("application/x-xliff+xml") && !request.File.ContentType.Contains("application/xliff+xml"))
         {
             throw new PluginMisconfigurationException("File does not have a valid XLIFF extension, please provide a valid XLIFF file.");
@@ -72,6 +80,7 @@ public class BatchActions : AnthropicInvocable
                            ??
                            "Ensure correctness, match to the glossary (if a glossary is provided), and enhance readability and accuracy";
         var requests = await CreateBatchRequestsAsync(
+            modelIdentifier,
             xliffDocument,
             request,
             (sourceLang, targetLang) =>
@@ -85,8 +94,11 @@ public class BatchActions : AnthropicInvocable
     [Action("(Batch) Get Quality Scores for XLIFF",
         Description = "Asynchronously get quality scores for each translation unit in the XLIFF file.")]
     public async Task<BatchResponse> GetQualityScoresForXliffFileAsync(
+        [ActionParameter] ModelIdentifier modelIdentifier,
         [ActionParameter] GetXliffQualityScoreRequest request)
     {
+        modelIdentifier.Validate(InvocationContext.AuthenticationCredentialsProviders);
+
         if (!request.File.Name.EndsWith("xlf", StringComparison.OrdinalIgnoreCase) && !request.File.Name.EndsWith("xliff", StringComparison.OrdinalIgnoreCase) && !request.File.ContentType.Contains("application/x-xliff+xml") && !request.File.ContentType.Contains("application/xliff+xml"))
         {
             throw new PluginMisconfigurationException("File does not have a valid XLIFF extension, please provide a valid XLIFF file.");
@@ -94,6 +106,7 @@ public class BatchActions : AnthropicInvocable
 
         var xliffDocument = await FileManagerHelper.LoadXliffDocument(request.File, _fileManagementClient);
         var requests = await CreateBatchRequestsAsync(
+            modelIdentifier,
             xliffDocument,
             request,
             SystemPromptConstants.EvaluateTranslationQualityWithLanguages,
@@ -245,6 +258,7 @@ public class BatchActions : AnthropicInvocable
     }
 
     private async Task<List<object>> CreateBatchRequestsAsync<T>(
+        ModelIdentifier modelIdentifier,
         XliffDocument xliffDocument,
         T request,
         Func<string, string, string> systemPromptFactory,
@@ -269,8 +283,8 @@ public class BatchActions : AnthropicInvocable
                 custom_id = translationUnit.Id,
                 @params = new
                 {
-                    model = request.Model,
-                    max_tokens = request.MaxTokens ?? ModelTokenService.GetMaxTokensForModel(request.Model),
+                    model = modelIdentifier.Model,
+                    max_tokens = request.MaxTokens ?? ModelTokenService.GetMaxTokensForModel(modelIdentifier.Model),
                     messages = new List<object>
                     {
                         new

@@ -18,7 +18,7 @@ public static class ModelTokenService
         ["claude-3-haiku-20240307"] = 4096
     };
 
-    public static int GetMaxTokensForModel(string modelName)
+    public static int GetMaxTokensForModel(string? modelName)
     {
         if (string.IsNullOrEmpty(modelName))
         {

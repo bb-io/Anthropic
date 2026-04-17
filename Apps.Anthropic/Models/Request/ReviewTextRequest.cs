@@ -1,4 +1,3 @@
-using Apps.Anthropic.DataSourceHandlers;
 using Apps.Anthropic.DataSourceHandlers.EnumHandlers;
 using Blackbird.Applications.SDK.Blueprints.Interfaces.Review;
 using Blackbird.Applications.Sdk.Common;
@@ -23,11 +22,6 @@ public class ReviewTextRequest : IReviewTextInput
     [Display("Target language")]
     [DataSource(typeof(LocaleDataSourceHandler))]
     public string TargetLanguage { get; set; } = string.Empty;
-
-    [Display("Model", Description = "This parameter controls which version of Claude answers your request")]
-    [DataSource(typeof(ModelDataSource))]
-    [JsonProperty("model")]
-    public string Model { get; set; } = string.Empty;
 
     [Display("Additional instructions", Description = "The additional instructions that you want to apply to the review.\nFor example, 'Focus on technical terminology accuracy.'")]
     public string? AdditionalInstructions { get; set; }

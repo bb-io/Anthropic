@@ -1,5 +1,6 @@
 ﻿using Apps.Anthropic.Invocable;
 using Apps.Anthropic.Models.Dto;
+using Apps.Anthropic.Models.Identifiers;
 using Apps.Anthropic.Models.Request;
 using Apps.Anthropic.Models.Response;
 using Blackbird.Applications.Sdk.Common.Files;
@@ -11,7 +12,10 @@ namespace Apps.Anthropic.Utils;
 public class AiUtilities(InvocationContext invocationContext, IFileManagementClient fileManagementClient) 
     : AnthropicInvocable(invocationContext)
 {
-    public async Task<ResponseMessage> SendMessageAsync(CompletionRequest input, GlossaryRequest glossaryRequest)
+    public async Task<ResponseMessage> SendMessageAsync(
+        ModelIdentifier modelIdentifier, 
+        CompletionRequest input, 
+        GlossaryRequest glossaryRequest)
     {
         var messages = await GenerateChatMessages(input, glossaryRequest);
 
@@ -22,7 +26,7 @@ public class AiUtilities(InvocationContext invocationContext, IFileManagementCli
         var body = new MessageRequest
         {
             System = input.SystemPrompt ?? string.Empty,
-            Model = input.Model,
+            Model = modelIdentifier.Model,
             Messages = messages,
             MaxTokens = input.MaxTokensToSample,
             StopSequences = input.StopSequences != null ? input.StopSequences : new List<string>(),
@@ -35,7 +39,7 @@ public class AiUtilities(InvocationContext invocationContext, IFileManagementCli
         return await Client.ExecuteChat(body);
     }
     
-    public async Task<string> IdentifySourceLanguageAsync(string model, string content)
+    public async Task<string> IdentifySourceLanguageAsync(string? model, string content)
     {
         var systemPrompt =
             "You are a linguist. Identify the language of the following text. " +

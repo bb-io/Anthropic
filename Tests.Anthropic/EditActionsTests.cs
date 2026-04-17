@@ -3,6 +3,7 @@ using Apps.Anthropic.Actions;
 using Apps.Anthropic.Models.Request;
 using Blackbird.Applications.Sdk.Common.Files;
 using Blackbird.Applications.Sdk.Common.Invocation;
+using Apps.Anthropic.Models.Identifiers;
 
 namespace Tests.Anthropic;
 
@@ -14,9 +15,11 @@ public class EditActionsTests : TestBaseMultipleConnections
     {
         // Arrange
         var editActions = new EditActions(context, FileManager);
+        var model = new ModelIdentifier { Model = "claude-sonnet-4-5-20250929" };
 
         // Act
         var result = await editActions.EditContent(
+            model,
             new EditContentRequest
             {
                 File = new FileReference
@@ -27,7 +30,6 @@ public class EditActionsTests : TestBaseMultipleConnections
                 {
                     Name = "Localization Term Base (MT).tbx",
                 },
-                Model = "claude-sonnet-4-5-20250929",
                 SourceLanguage = "en",
                 TargetLanguage = "it",
                 AdditionalInstructions = "Use \"Lei\" to address the reader. Make sure terms are translated consistently.  "
@@ -49,9 +51,11 @@ public class EditActionsTests : TestBaseMultipleConnections
     {
         // Arrange
         var editActions = new EditActions(context, FileManager);
+        var model = new ModelIdentifier { Model = "claude-sonnet-4-20250514" };
 
         // Act
         var result = await editActions.EditText(
+            model,
             new EditTextRequest
             {
                 SourceText = "Hello, how are you today? I hope you're having a wonderful day!",
@@ -59,7 +63,6 @@ public class EditActionsTests : TestBaseMultipleConnections
                 SourceLanguage = "en",
                 TargetLanguage = "es",
                 TargetAudience = "Professional business context",
-                Model = "claude-sonnet-4-20250514",
                 AdditionalInstructions = "Ensure the tone is formal and professional"
             });
 

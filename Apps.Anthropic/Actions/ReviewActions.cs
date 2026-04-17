@@ -1,17 +1,19 @@
-﻿using Apps.Anthropic.Invocable;
+﻿using Apps.Anthropic.Extensions;
+using Apps.Anthropic.Invocable;
+using Apps.Anthropic.Models.Identifiers;
 using Apps.Anthropic.Models.Request;
 using Apps.Anthropic.Models.Response;
 using Apps.Anthropic.Utils;
-using Blackbird.Applications.SDK.Blueprints;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
 using Blackbird.Applications.Sdk.Common.Invocation;
+using Blackbird.Applications.SDK.Blueprints;
 using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
+using Blackbird.Filters.Constants;
+using Blackbird.Filters.Extensions;
 using Blackbird.Filters.Transformations;
 using Newtonsoft.Json;
 using System.Xml.Linq;
-using Blackbird.Filters.Constants;
-using Blackbird.Filters.Extensions;
 
 namespace Apps.Anthropic.Actions;
 
@@ -23,8 +25,12 @@ public class ReviewActions(InvocationContext invocationContext, IFileManagementC
 
     [BlueprintActionDefinition(BlueprintAction.ReviewFile)]
     [Action("Review", Description = "Review translation. This action assumes you have previously translated content in Blackbird through any translation action.")]
-    public async Task<ReviewContentResponse> ReviewContent([ActionParameter] ReviewContentRequest input)
+    public async Task<ReviewContentResponse> ReviewContent(
+        [ActionParameter] ModelIdentifier modelIdentifier,
+        [ActionParameter] ReviewContentRequest input)
     {
+        modelIdentifier.Validate(InvocationContext.AuthenticationCredentialsProviders);
+
         var result = new ReviewContentResponse();
 
         var stream = await fileManagementClient.DownloadAsync(input.File);
@@ -62,7 +68,6 @@ public class ReviewActions(InvocationContext invocationContext, IFileManagementC
 
             var completionRequest = new CompletionRequest
             {
-                Model = input.Model,
                 Prompt = userPrompt,
                 SystemPrompt = systemPrompt,
                 MaxTokensToSample = input.MaxTokensToSample,
@@ -72,7 +77,7 @@ public class ReviewActions(InvocationContext invocationContext, IFileManagementC
                 StopSequences = input.StopSequences
             };
 
-            var response = await _aiUtilities.SendMessageAsync(completionRequest, new() { Glossary = input.Glossary });
+            var response = await _aiUtilities.SendMessageAsync(modelIdentifier, completionRequest, new() { Glossary = input.Glossary });
             result.Usage += response.Usage;
 
             var deserializationResult = ResponseDeserializationHelper.DeserializeReviewResponse(response.Text);
@@ -117,8 +122,12 @@ public class ReviewActions(InvocationContext invocationContext, IFileManagementC
 
     [BlueprintActionDefinition(BlueprintAction.ReviewText)]
     [Action("Review text", Description = "Review the quality of translated text.")]
-    public async Task<ReviewTextResponse> ReviewText([ActionParameter] ReviewTextRequest input)
+    public async Task<ReviewTextResponse> ReviewText(
+        [ActionParameter] ModelIdentifier modelIdentifier,
+        [ActionParameter] ReviewTextRequest input)
     {
+        modelIdentifier.Validate(InvocationContext.AuthenticationCredentialsProviders);
+
         var reviewData = new List<object>
         {
             new
@@ -136,7 +145,6 @@ public class ReviewActions(InvocationContext invocationContext, IFileManagementC
 
         var completionRequest = new CompletionRequest
         {
-            Model = input.Model,
             Prompt = userPrompt,
             SystemPrompt = systemPrompt,
             MaxTokensToSample = input.MaxTokensToSample,
@@ -145,7 +153,7 @@ public class ReviewActions(InvocationContext invocationContext, IFileManagementC
             TopK = input.TopK
         };
 
-        var response = await _aiUtilities.SendMessageAsync(completionRequest, new() { Glossary = input.Glossary });
+        var response = await _aiUtilities.SendMessageAsync(modelIdentifier, completionRequest, new() { Glossary = input.Glossary });
         var deserializationResult = ResponseDeserializationHelper.DeserializeReviewResponse(response.Text);
 
         float qualityScore = 0.0f;

@@ -1,6 +1,7 @@
 using Tests.Anthropic.Base;
 using Apps.Anthropic.Actions;
 using Apps.Anthropic.Models.Request;
+using Apps.Anthropic.Models.Identifiers;
 using Blackbird.Applications.Sdk.Common.Files;
 using Blackbird.Applications.Sdk.Common.Invocation;
 
@@ -14,9 +15,11 @@ public class TranslationActionsTests : TestBaseMultipleConnections
     {
         // Arrange
         var translationActions = new TranslationActions(context, FileManager);
+        var model = new ModelIdentifier { Model = "claude-opus-4-5-20251101" };
 
         // Act
         var result = await translationActions.Translate(
+            model,
             new TranslateContentRequest
             {
                 File = new FileReference
@@ -24,7 +27,6 @@ public class TranslationActionsTests : TestBaseMultipleConnections
                     Name = "contentful.html",
                     ContentType = "application/xliff+xml"
                 },
-                Model = "claude-opus-4-5-20251101",
                 TargetLanguage = "fr",
                 AdditionalInstructions = "Translate accurately while maintaining the original meaning"
             });
@@ -46,13 +48,14 @@ public class TranslationActionsTests : TestBaseMultipleConnections
         // Arrange
         var translationActions = new TranslationActions(context, FileManager);
         var original = "Brat mir einer einen Storch.";
+        var model = new ModelIdentifier { Model = "claude-opus-4-5-20251101" };
 
         // Act
         var result = await translationActions.TranslateText(
+            model,
             new TranslateTextRequest
             {
                 Text = original,
-                Model = "claude-haiku-4-5-20251001",
                 TargetLanguage = "en-US",
             });
 
