@@ -17,7 +17,7 @@ public class AnthropicMsFoundryRestClient(IEnumerable<AuthenticationCredentialsP
 
     public override async Task<ResponseMessage> ExecuteChat(MessageRequest message)
     {
-        message.Model = message.Model ?? _creds.Get(CredNames.DeploymentName).Value;
+        message.Model = _creds.Get(CredNames.DeploymentName).Value;
         return await base.ExecuteChat(message);
     }
 

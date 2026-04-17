@@ -6,7 +6,8 @@ namespace Apps.Anthropic.Models.Identifiers;
 
 public class ModelIdentifier
 {
-    [Display("Model", Description = "This parameter controls which version of Claude answers your request")]
+    [Display("Model", 
+        Description = "Optional for the 'MS Foundry' connection type. Required to set for all other connection types")]
     [DataSource(typeof(ModelDataSource))]
-    public string? Model { get; set; } = string.Empty;
+    public string? Model { get; set; }
 }
