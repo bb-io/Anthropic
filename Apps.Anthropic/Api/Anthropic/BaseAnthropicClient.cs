@@ -112,7 +112,7 @@ public class BaseAnthropicClient : BlackBirdRestClient
         var payload = new
         {
             model = message.Model,
-            max_tokens = ModelTokenService.GetMaxTokensForModel(message.Model),
+            max_tokens = message.MaxTokens,
             system = message.System,
             messages = formattedMessages,
             stop_sequences = message.StopSequences,

@@ -6,22 +6,19 @@ using Blackbird.Applications.Sdk.Common.Authentication;
 using Blackbird.Applications.Sdk.Common.Connections;
 using Blackbird.Applications.Sdk.Common.Exceptions;
 using Blackbird.Applications.Sdk.Utils.Extensions.Sdk;
-using RestSharp;
 
 namespace Apps.Anthropic.Api.Anthropic;
 
 public class AnthropicMsFoundryRestClient(IEnumerable<AuthenticationCredentialsProvider> creds) 
     : BaseAnthropicClient(creds, new Uri($"{creds.Get(CredNames.BaseUrl).Value}/v1")), IAnthropicClient
 {
-    private readonly IEnumerable<AuthenticationCredentialsProvider> _creds = creds;
-
     public override async Task<ResponseMessage> ExecuteChat(MessageRequest message)
     {
-        message.Model = _creds.Get(CredNames.DeploymentName).Value;
+        message.Model = creds.Get(CredNames.DeploymentName).Value;
         return await base.ExecuteChat(message);
     }
 
-    public async Task<List<ModelResponse>> ListModels()
+    public Task<List<ModelResponse>> ListModels()
     {
         throw new PluginMisconfigurationException(
             "Listing models is not supported for this connection type. Please specify the model ID in the connection");
@@ -29,7 +26,7 @@ public class AnthropicMsFoundryRestClient(IEnumerable<AuthenticationCredentialsP
 
     public async Task<ConnectionValidationResponse> ValidateConnection()
     {
-        if (!_creds.Get(CredNames.BaseUrl).Value.EndsWith("/anthropic"))
+        if (!creds.Get(CredNames.BaseUrl).Value.EndsWith("/anthropic"))
         {
             return new()
             {

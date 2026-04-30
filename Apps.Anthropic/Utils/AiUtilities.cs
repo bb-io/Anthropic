@@ -28,7 +28,7 @@ public class AiUtilities(InvocationContext invocationContext, IFileManagementCli
             System = input.SystemPrompt ?? string.Empty,
             Model = modelIdentifier.Model,
             Messages = messages,
-            MaxTokens = input.MaxTokensToSample,
+            MaxTokens = input.MaxTokensToSample ?? ModelTokenService.GetMaxTokensForModel(modelIdentifier.Model),
             StopSequences = input.StopSequences != null ? input.StopSequences : new List<string>(),
             Temperature = input.Temperature != null ? float.Parse(input.Temperature) : null,
             TopP = input.TopP != null ? float.Parse(input.TopP) : null,

@@ -32,15 +32,16 @@ public class ChatActionsTests : TestBaseMultipleConnections
         Assert.IsNotNull(result.Text);
     }
 
-    [TestMethod, ContextDataSource(ConnectionTypes.BedrockApiKey)]
+    [TestMethod, ContextDataSource(ConnectionTypes.MicrosoftFoundryApiKey)]
     public async Task CreateCompletion_Bedrock_ReturnsValidChatResponse(InvocationContext context)
     {
 		// Arrange
 		var actions = new ChatActions(context, FileManager);
-        var modelId = new ModelIdentifier { Model = "anthropic.claude-3-sonnet-20240229-v1:0" };
+        var modelId = new ModelIdentifier {  };
         var completionRequest = new CompletionRequest 
         {
             Prompt = "Hello, please state your model and your creator",
+            MaxTokensToSample = 128000
         };
         var glossary = new GlossaryRequest { };
 
