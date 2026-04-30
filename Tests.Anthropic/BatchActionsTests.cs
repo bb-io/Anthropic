@@ -1,6 +1,8 @@
 ﻿using Tests.Anthropic.Base;
 using Apps.Anthropic.Actions;
 using Apps.Anthropic.Constants;
+using Apps.Anthropic.Models.Identifiers;
+using Apps.Anthropic.Models.Request;
 using Blackbird.Applications.Sdk.Common.Invocation;
 
 namespace Tests.Anthropic;
@@ -15,15 +17,17 @@ public class BatchActionsTests : TestBaseMultipleConnections
         var actions = new BatchActions(context, FileManager);
 
         // Act
-        var batch = await actions.ProcessXliffFileAsync(new()
-        {
-            Model = "claude-3-5-sonnet-20240620",
-            File = new()
+        var batch = await actions.ProcessXliffFileAsync(
+            new ModelIdentifier { Model = "claude-3-5-sonnet-20240620" },
+            new ProcessXliffFileRequest
             {
-                Name = "simple.xliff",
-                ContentType = "text/xml"
-            }
-        });
+
+                File = new()
+                {
+                    Name = "simple.xliff",
+                    ContentType = "text/xml"
+                }
+            });
 
         // Assert
         PrintResult(batch);
