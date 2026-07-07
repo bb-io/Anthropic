@@ -21,4 +21,15 @@ public static class TransformationExtensions
             ? throw new PluginMisconfigurationException(contentSourceLoadResult.Error) 
             : contentSourceLoadResult.Value;
     }
+
+    public static string ExtractText(this Transformation transformation)
+    {
+        var target = transformation.LoadTarget();
+        var text = target.GetPlaintext();
+        if (!string.IsNullOrWhiteSpace(text))
+            return text;
+
+        var source = transformation.LoadSource();
+        return source.GetPlaintext();
+    }
 }

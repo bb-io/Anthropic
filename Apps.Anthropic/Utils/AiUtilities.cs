@@ -100,13 +100,7 @@ public class AiUtilities(InvocationContext invocationContext, IFileManagementCli
         await using var fileStream = await fileManagementClient.DownloadAsync(file);
         var content = fileStream.LoadTransformation(file.Name);
 
-        var target = content.LoadTarget();
-        var text = target.GetPlaintext();
-        if (!string.IsNullOrWhiteSpace(text))
-            return text;
-
-        var source = content.LoadSource();
-        return source.GetPlaintext();
+        return content.ExtractText();
     }
     
     private async Task<List<Message>> GenerateChatMessages(CompletionRequest input, GlossaryRequest glossaryRequest)
