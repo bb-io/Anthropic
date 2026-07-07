@@ -37,8 +37,9 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
 
         var result = new TranslateContentResponse();
             
-        var stream = await fileManagementClient.DownloadAsync(input.File);
-        var content = await ErrorHandler.ExecuteWithErrorHandlingAsync(() => Transformation.Parse(stream, input.File.Name));
+        await using var inputFileStream = await fileManagementClient.DownloadAsync(input.File);
+        
+        var content = inputFileStream.LoadTransformation(input.File.Name);
         content.SourceLanguage ??= input.SourceLanguage;
         content.TargetLanguage ??= input.TargetLanguage;    
         if (content.TargetLanguage == null)
@@ -48,9 +49,8 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
         
         if (content.SourceLanguage == null)
         {
-            content.SourceLanguage = await _aiUtilities.IdentifySourceLanguageAsync(
-                modelIdentifier.Model, 
-                content.Source().GetPlaintext());
+            var source = content.LoadSource();
+            content.SourceLanguage = await _aiUtilities.IdentifySourceLanguageAsync(modelIdentifier.Model, source.GetPlaintext());
         }
 
         var units = content.GetUnits().ToList();
@@ -137,12 +137,18 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
 
         if (input.OutputFileHandling == "original")
         {
-            var targetContent = content.Target();
-            result.File = await fileManagementClient.UploadAsync(targetContent.Serialize().ToStream(), targetContent.OriginalMediaType, targetContent.OriginalName);
+            var targetContent = content.LoadTarget();
+            result.File = await fileManagementClient.UploadAsync(
+                targetContent.ToStream(),
+                targetContent.OriginalMediaType, 
+                targetContent.OriginalName);
         } 
         else
         {
-            result.File = await fileManagementClient.UploadAsync(content.Serialize().ToStream(), MediaTypes.Xliff, content.XliffFileName);
+            result.File = await fileManagementClient.UploadAsync(
+                content.Serialize().ToStream(), 
+                MediaTypes.Xliff2, 
+                content.BilingualFileName);
         }       
 
         return result;

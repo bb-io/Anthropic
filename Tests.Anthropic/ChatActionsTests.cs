@@ -19,8 +19,8 @@ public class ChatActionsTests : TestBaseMultipleConnections
         var modelId = new ModelIdentifier { Model = "claude-sonnet-4-6" };
         var completionRequest = new CompletionRequest
         {
-            Prompt = "Please read this PDF file and describe what you see in it",
-            File = new FileReference { Name = "test.pdf" },
+            Prompt = "Please read this file and describe what you see in it",
+            File = new FileReference { Name = "test.pptx" },
         };
         var glossary = new GlossaryRequest { };
 

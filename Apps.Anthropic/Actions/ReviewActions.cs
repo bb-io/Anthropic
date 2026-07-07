@@ -11,7 +11,6 @@ using Blackbird.Applications.SDK.Blueprints;
 using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
 using Blackbird.Filters.Constants;
 using Blackbird.Filters.Extensions;
-using Blackbird.Filters.Transformations;
 using Newtonsoft.Json;
 using System.Xml.Linq;
 
@@ -33,12 +32,10 @@ public class ReviewActions(InvocationContext invocationContext, IFileManagementC
 
         var result = new ReviewContentResponse();
 
-        var stream = await fileManagementClient.DownloadAsync(input.File);
-        var content =
-            await ErrorHandler.ExecuteWithErrorHandlingAsync(() => Transformation.Parse(stream, input.File.Name));
+        await using var inputFileStream = await fileManagementClient.DownloadAsync(input.File);
+        var content = inputFileStream.LoadTransformation(input.File.Name);
         content.SourceLanguage ??= input.SourceLanguage;
         content.TargetLanguage ??= input.TargetLanguage;
-
         
         var units = content.GetUnits().ToList();
         var segments = units.SelectMany(x => x.Segments)
@@ -107,14 +104,18 @@ public class ReviewActions(InvocationContext invocationContext, IFileManagementC
 
         if (input.OutputFileHandling == "original")
         {
-            var targetContent = content.Target();
-            result.File = await fileManagementClient.UploadAsync(targetContent.Serialize().ToStream(),
-                targetContent.OriginalMediaType, targetContent.OriginalName);
+            var targetContent = content.LoadTarget();
+            result.File = await fileManagementClient.UploadAsync(
+                targetContent.ToStream(), 
+                targetContent.OriginalMediaType, 
+                targetContent.OriginalName);
         }
         else
         {
-            result.File = await fileManagementClient.UploadAsync(content.Serialize().ToStream(), MediaTypes.Xliff,
-                content.XliffFileName);
+            result.File = await fileManagementClient.UploadAsync(
+                content.Serialize().ToStream(), 
+                MediaTypes.Xliff2,
+                content.BilingualFileName);
         }
 
         return result;

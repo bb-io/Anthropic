@@ -1,4 +1,5 @@
-﻿using Apps.Anthropic.Invocable;
+﻿using Apps.Anthropic.Extensions;
+using Apps.Anthropic.Invocable;
 using Apps.Anthropic.Models.Dto;
 using Apps.Anthropic.Models.Identifiers;
 using Apps.Anthropic.Models.Request;
@@ -6,6 +7,7 @@ using Apps.Anthropic.Models.Response;
 using Blackbird.Applications.Sdk.Common.Files;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
+using Blackbird.Applications.Sdk.Utils.Extensions.Files;
 
 namespace Apps.Anthropic.Utils;
 
@@ -21,8 +23,18 @@ public class AiUtilities(InvocationContext invocationContext, IFileManagementCli
 
         InputFileData? fileData = null;
         if (input.File != null)
-            fileData = await ProcessInputFile(input.File);
-
+        {
+            var ext = Path.GetExtension(input.File.Name).ToLowerInvariant();
+            if (FileFormatHelper.IsSupportedNatively(ext))
+                fileData = await ProcessInputFile(input.File);
+            else
+            {
+                var text = await ExtractFileText(input.File);
+                if (!string.IsNullOrWhiteSpace(text))
+                    messages.Add(new Message { Role = "user", Content = $"File content:\r\n{text}" });
+            }
+        }
+        
         var body = new MessageRequest
         {
             System = input.SystemPrompt ?? string.Empty,
@@ -74,14 +86,27 @@ public class AiUtilities(InvocationContext invocationContext, IFileManagementCli
 
     private async Task<InputFileData> ProcessInputFile(FileReference file)
     {
-        using var fileStream = await fileManagementClient.DownloadAsync(file); 
-        using var ms = new MemoryStream();
-        await fileStream.CopyToAsync(ms);
+        await using var fileStream = await fileManagementClient.DownloadAsync(file);
+        var fileBytes = await fileStream.GetByteData();
 
         string fileName = file.Name ?? "unknown_file";
         string extension = Path.GetExtension(fileName).ToLowerInvariant();
 
-        return new(ms.ToArray(), fileName, extension);
+        return new(fileBytes, fileName, extension);
+    }
+    
+    private async Task<string> ExtractFileText(FileReference file)
+    {
+        await using var fileStream = await fileManagementClient.DownloadAsync(file);
+        var content = fileStream.LoadTransformation(file.Name);
+
+        var target = content.LoadTarget();
+        var text = target.GetPlaintext();
+        if (!string.IsNullOrWhiteSpace(text))
+            return text;
+
+        var source = content.LoadSource();
+        return source.GetPlaintext();
     }
     
     private async Task<List<Message>> GenerateChatMessages(CompletionRequest input, GlossaryRequest glossaryRequest)

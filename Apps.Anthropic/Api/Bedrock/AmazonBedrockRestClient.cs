@@ -58,7 +58,7 @@ public class AmazonBedrockRestClient : RestClient, IAnthropicClient
                 string format = message.FileData.FileExtension.TrimStart('.').ToLowerInvariant();
                 string name = Path.GetFileNameWithoutExtension(message.FileData.FileName);
 
-                if (format == "pdf")
+                if (FileFormatHelper.IsPdf(format))
                 {
                     contentList.Add(new
                     {
@@ -85,11 +85,7 @@ public class AmazonBedrockRestClient : RestClient, IAnthropicClient
                     });
                 }
                 else
-                {
-                    throw new PluginMisconfigurationException(
-                        $"The file format '{format}' is not supported. Only .pdf and image files are currently allowed"
-                    );
-                }
+                    throw new PluginMisconfigurationException($"The file format '{format}' is not supported");
 
                 if (!string.IsNullOrEmpty(m.Content))
                     contentList.Add(new { text = m.Content });

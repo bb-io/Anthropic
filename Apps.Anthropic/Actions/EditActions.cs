@@ -36,19 +36,22 @@ public class EditActions(InvocationContext invocationContext, IFileManagementCli
 
         var result = new EditContentResponse();
         
-        var stream = await fileManagementClient.DownloadAsync(input.File);
-        var content = await ErrorHandler.ExecuteWithErrorHandlingAsync(() => Transformation.Parse(stream, input.File.Name));
+        await using var inputFileStream = await fileManagementClient.DownloadAsync(input.File);
+        
+        var content = inputFileStream.LoadTransformation(input.File.Name);
         content.SourceLanguage ??= input.SourceLanguage;
         content.TargetLanguage ??= input.TargetLanguage;    
         
         if (content.TargetLanguage == null)
         {
-            throw new PluginMisconfigurationException("The target language is not defined yet. Please assign the target language in this action.");
+            throw new PluginMisconfigurationException(
+                "The target language is not defined yet. Please assign the target language in this action.");
         }
         
         if (content.SourceLanguage == null)
         {
-            content.SourceLanguage = await _aiUtilities.IdentifySourceLanguageAsync(modelIdentifier.Model, content.Source().GetPlaintext());
+            var sourcePlainText = content.LoadSource().GetPlaintext();
+            content.SourceLanguage = await _aiUtilities.IdentifySourceLanguageAsync(modelIdentifier.Model, sourcePlainText);
         }
         
         var units = content.GetUnits().ToList();
@@ -136,12 +139,12 @@ public class EditActions(InvocationContext invocationContext, IFileManagementCli
 
         if (input.OutputFileHandling == "original")
         {
-            var targetContent = content.Target();
-            result.File = await fileManagementClient.UploadAsync(targetContent.Serialize().ToStream(), targetContent.OriginalMediaType, targetContent.OriginalName);
+            var targetContent = content.LoadTarget();
+            result.File = await fileManagementClient.UploadAsync(targetContent.ToStream(), targetContent.OriginalMediaType, targetContent.OriginalName);
         } 
         else
         {
-            result.File = await fileManagementClient.UploadAsync(content.Serialize().ToStream(), MediaTypes.Xliff, content.XliffFileName);
+            result.File = await fileManagementClient.UploadAsync(content.Serialize().ToStream(), MediaTypes.Xliff2, content.BilingualFileName);
         }      
 
         return result;
