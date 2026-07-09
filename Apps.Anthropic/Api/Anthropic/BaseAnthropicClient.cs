@@ -65,7 +65,7 @@ public class BaseAnthropicClient : BlackBirdRestClient
                 string base64Data = Convert.ToBase64String(message.FileData.FileBytes);
                 string ext = message.FileData.FileExtension;
 
-                if (ext == ".pdf")
+                if (FileFormatHelper.IsPdf(ext))
                 {
                     contentList.Add(new
                     {
@@ -92,11 +92,7 @@ public class BaseAnthropicClient : BlackBirdRestClient
                     });
                 }
                 else
-                {
-                    throw new PluginMisconfigurationException(
-                        $"The file format '{ext}' is not supported. Only .pdf and image files are currently allowed"
-                    );
-                }
+                    throw new PluginMisconfigurationException($"The file format '{ext}' is not supported");
 
                 if (!string.IsNullOrEmpty(msg.Content))
                     contentList.Add(new { type = "text", text = msg.Content });

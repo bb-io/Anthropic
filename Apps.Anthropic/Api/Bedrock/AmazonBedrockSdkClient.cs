@@ -79,7 +79,7 @@ public class AmazonBedrockSdkClient : IAnthropicClient
                 string name = Path.GetFileNameWithoutExtension(request.FileData.FileName);
                 var fileStream = new MemoryStream(request.FileData.FileBytes);
 
-                if (format == "pdf")
+                if (FileFormatHelper.IsPdf(format))
                 {
                     contentBlocks.Add(new ContentBlock
                     {
@@ -111,11 +111,7 @@ public class AmazonBedrockSdkClient : IAnthropicClient
                     });
                 }
                 else
-                {
-                    throw new PluginMisconfigurationException(
-                        $"The file format '{format}' is not supported. Only .pdf and image files are currently allowed"
-                    );
-                }
+                    throw new PluginMisconfigurationException($"The file format '{format}' is not supported");
 
                 if (!string.IsNullOrEmpty(m.Content))
                     contentBlocks.Add(new ContentBlock { Text = m.Content });
