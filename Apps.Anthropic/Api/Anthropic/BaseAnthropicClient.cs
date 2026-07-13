@@ -1,4 +1,5 @@
 ﻿using Apps.Anthropic.Constants;
+using Apps.Anthropic.Extensions;
 using Apps.Anthropic.Models.Request;
 using Apps.Anthropic.Models.Response;
 using Apps.Anthropic.Utils;
@@ -114,7 +115,7 @@ public class BaseAnthropicClient : BlackBirdRestClient
             ["stop_sequences"] = message.StopSequences
         };
 
-        if (ModelCapabilityService.SupportsSamplingParameters(message.Model))
+        if (ModelCatalog.SupportsSamplingParameters(message.Model))
         {
             if (message.Temperature.HasValue)
             {
@@ -137,7 +138,7 @@ public class BaseAnthropicClient : BlackBirdRestClient
         var response = await ExecuteWithErrorHandling<CompletionResponse>(request);
         return new ResponseMessage
         {
-            Text = string.Concat(response.Content.Where(x => x.Type == "text").Select(x => x.Text)),
+            Text = response.Content.ExtractText(),
             Usage = response.Usage
         };
     }

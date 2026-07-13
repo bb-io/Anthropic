@@ -15,7 +15,7 @@ public class EditActionsTests : TestBaseMultipleConnections
     {
         // Arrange
         var editActions = new EditActions(context, FileManager);
-        var model = new ModelIdentifier { Model = "claude-opus-4-1-20250805" };
+        var model = new ModelIdentifier { Model = "claude-sonnet-5" };
 
         // Act
         var result = await editActions.EditContent(
@@ -51,7 +51,7 @@ public class EditActionsTests : TestBaseMultipleConnections
     {
         // Arrange
         var editActions = new EditActions(context, FileManager);
-        var model = new ModelIdentifier { Model = "claude-opus-4-1-20250805" };
+        var model = new ModelIdentifier { Model = "claude-sonnet-5" };
 
         // Act
         var result = await editActions.EditText(

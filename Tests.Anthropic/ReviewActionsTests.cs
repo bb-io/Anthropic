@@ -15,7 +15,7 @@ public class ReviewActionsTests : TestBaseMultipleConnections
     {
         // Arrange
         var reviewActions = new ReviewActions(context, FileManager);
-        var model = new ModelIdentifier { Model = "claude-opus-4-1-20250805" };
+        var model = new ModelIdentifier { Model = "claude-sonnet-5" };
 
         // Act
         var result = await reviewActions.ReviewContent(
@@ -53,7 +53,7 @@ public class ReviewActionsTests : TestBaseMultipleConnections
     {
         // Arrange
         var reviewActions = new ReviewActions(context, FileManager);
-        var model = new ModelIdentifier { Model = "claude-opus-4-1-20250805" };
+        var model = new ModelIdentifier { Model = "claude-sonnet-5" };
 
         // Act
         var result = await reviewActions.ReviewText(

@@ -136,7 +136,7 @@ public class BatchActions : AnthropicInvocable
             }
 
             totalUsage += batchRequest.Result.Message.Usage;
-            var newTargetContent = string.Concat(batchRequest.Result.Message.Content.Where(x => x.Type == "text").Select(x => x.Text));
+            var newTargetContent = batchRequest.Result.Message.Content.ExtractText();
             if (request.AddMissingTrailingTags.HasValue && request.AddMissingTrailingTags == true)
             {
                 var sourceContent = translationUnit.Source.Content ?? string.Empty;
@@ -213,7 +213,7 @@ public class BatchActions : AnthropicInvocable
                     $"Translation unit with id {batchRequest.CustomId} not found in the XLIFF file.");
             }
 
-            var currentContent = string.Concat(batchRequest.Result.Message.Content.Where(x => x.Type == "text").Select(x => x.Text));
+            var currentContent = batchRequest.Result.Message.Content.ExtractText();
             if (double.TryParse(currentContent, out var score))
             {
                 totalScore += score;
@@ -284,7 +284,7 @@ public class BatchActions : AnthropicInvocable
                 @params = new
                 {
                     model = modelIdentifier.Model,
-                    max_tokens = request.MaxTokens ?? ModelTokenService.GetMaxTokensForModel(modelIdentifier.Model),
+                    max_tokens = request.MaxTokens ?? ModelCatalog.GetMaxOutputTokens(modelIdentifier.Model),
                     messages = new List<object>
                     {
                         new

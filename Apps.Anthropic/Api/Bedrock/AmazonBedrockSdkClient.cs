@@ -6,6 +6,7 @@ using Amazon.BedrockRuntime.Model;
 using Amazon.Runtime.Documents;
 using Apps.Anthropic.Api.Interfaces;
 using Apps.Anthropic.Constants;
+using Apps.Anthropic.Extensions;
 using Apps.Anthropic.Models.Request;
 using Apps.Anthropic.Models.Response;
 using Apps.Anthropic.Utils;
@@ -158,7 +159,7 @@ public class AmazonBedrockSdkClient : IAnthropicClient
 
         return new ResponseMessage
         {
-            Text = string.Concat(response.Output.Message.Content.Where(x => x.Text != null).Select(x => x.Text)),
+            Text = response.Output.Message.Content.ExtractText(),
             Usage = new UsageResponse
             {
                 InputTokens = response.Usage.InputTokens ?? 0,

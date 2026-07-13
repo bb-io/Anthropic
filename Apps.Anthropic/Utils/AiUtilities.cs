@@ -4,12 +4,10 @@ using Apps.Anthropic.Models.Dto;
 using Apps.Anthropic.Models.Identifiers;
 using Apps.Anthropic.Models.Request;
 using Apps.Anthropic.Models.Response;
-using Blackbird.Applications.Sdk.Common.Exceptions;
 using Blackbird.Applications.Sdk.Common.Files;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
 using Blackbird.Applications.Sdk.Utils.Extensions.Files;
-using System.Globalization;
 
 namespace Apps.Anthropic.Utils;
 
@@ -42,10 +40,10 @@ public class AiUtilities(InvocationContext invocationContext, IFileManagementCli
             System = input.SystemPrompt ?? string.Empty,
             Model = modelIdentifier.Model,
             Messages = messages,
-            MaxTokens = input.MaxTokensToSample ?? ModelTokenService.GetMaxTokensForModel(modelIdentifier.Model),
+            MaxTokens = input.MaxTokensToSample ?? ModelCatalog.GetMaxOutputTokens(modelIdentifier.Model),
             StopSequences = input.StopSequences != null ? input.StopSequences : new List<string>(),
-            Temperature = ParseOptionalFloat(input.Temperature, "temperature"),
-            TopP = ParseOptionalFloat(input.TopP, "top_p"),
+            Temperature = input.Temperature.ToOptionalFloat("temperature"),
+            TopP = input.TopP.ToOptionalFloat("top_p"),
             TopK = input.TopK,
             FileData = fileData,
         };
@@ -117,20 +115,5 @@ public class AiUtilities(InvocationContext invocationContext, IFileManagementCli
 
         messages.Add(new Message { Role = "user", Content = prompt });
         return messages;
-    }
-
-    private static float? ParseOptionalFloat(string? value, string fieldName)
-    {
-        if (string.IsNullOrWhiteSpace(value))
-        {
-            return null;
-        }
-
-        if (float.TryParse(value.Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out var parsedValue))
-        {
-            return parsedValue;
-        }
-
-        throw new PluginMisconfigurationException($"The '{fieldName}' value must be a valid number.");
     }
 }
