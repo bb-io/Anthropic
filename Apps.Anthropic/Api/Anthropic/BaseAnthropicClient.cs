@@ -105,17 +105,21 @@ public class BaseAnthropicClient : BlackBirdRestClient
                 formattedMessages.Add(new { role = msg.Role, content = msg.Content });
         }
 
-        var payload = new
+        var payload = new Dictionary<string, object?>
         {
-            model = message.Model,
-            max_tokens = message.MaxTokens,
-            system = message.System,
-            messages = formattedMessages,
-            stop_sequences = message.StopSequences,
-            temperature = message.Temperature,
-            top_p = message.TopP,
-            top_k = message.TopK
+            ["model"] = message.Model,
+            ["max_tokens"] = message.MaxTokens,
+            ["system"] = message.System,
+            ["messages"] = formattedMessages,
+            ["stop_sequences"] = message.StopSequences
         };
+
+        if (ModelCapabilityService.SupportsSamplingParameters(message.Model))
+        {
+            payload["temperature"] = message.Temperature;
+            payload["top_p"] = message.TopP;
+            payload["top_k"] = message.TopK;
+        }
 
         var request = new RestRequest("/messages", Method.Post).WithJsonBody(payload, JsonOptions.JsonSettings);
 

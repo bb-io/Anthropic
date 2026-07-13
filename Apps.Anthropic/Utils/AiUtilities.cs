@@ -66,8 +66,7 @@ public class AiUtilities(InvocationContext invocationContext, IFileManagementCli
             System = systemPrompt,
             Model = model,
             Messages = [new() { Role = "user", Content = userPrompt }],
-            MaxTokens = 100,
-            TopK = 1
+            MaxTokens = 100
         };
 
         var response = await Client.ExecuteChat(requestBody);
