@@ -4,8 +4,7 @@ namespace Apps.Anthropic.Utils;
 
 public static class PromptBuilder
 {
-    private const string JsonOutputExample = @"```json
-{
+    private const string JsonOutputExample = @"{
     ""translations"": [
         {
             ""translation_id"": ""123"",
@@ -16,11 +15,9 @@ public static class PromptBuilder
             ""translated_text"": ""Another translated text""
         }
     ]
-}
-```";
+}";
 
-    private const string ReviewJsonOutputExample = @"```json
-{
+    private const string ReviewJsonOutputExample = @"{
     ""translations"": [
         {
             ""translation_id"": ""123"",
@@ -31,8 +28,7 @@ public static class PromptBuilder
             ""quality_score"": 0.72
         }
     ]
-}
-```";
+}";
 
     public static string BuildTranslateUserPrompt(string? additionalInstructions, Transformation transformation,
         string json)

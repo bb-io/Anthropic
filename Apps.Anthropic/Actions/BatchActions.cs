@@ -136,7 +136,7 @@ public class BatchActions : AnthropicInvocable
             }
 
             totalUsage += batchRequest.Result.Message.Usage;
-            var newTargetContent = batchRequest.Result.Message.Content.First().Text;
+            var newTargetContent = string.Concat(batchRequest.Result.Message.Content.Where(x => x.Type == "text").Select(x => x.Text));
             if (request.AddMissingTrailingTags.HasValue && request.AddMissingTrailingTags == true)
             {
                 var sourceContent = translationUnit.Source.Content ?? string.Empty;
@@ -213,7 +213,7 @@ public class BatchActions : AnthropicInvocable
                     $"Translation unit with id {batchRequest.CustomId} not found in the XLIFF file.");
             }
 
-            var currentContent = batchRequest.Result.Message.Content.First().Text;
+            var currentContent = string.Concat(batchRequest.Result.Message.Content.Where(x => x.Type == "text").Select(x => x.Text));
             if (double.TryParse(currentContent, out var score))
             {
                 totalScore += score;

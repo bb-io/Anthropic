@@ -116,9 +116,20 @@ public class BaseAnthropicClient : BlackBirdRestClient
 
         if (ModelCapabilityService.SupportsSamplingParameters(message.Model))
         {
-            payload["temperature"] = message.Temperature;
-            payload["top_p"] = message.TopP;
-            payload["top_k"] = message.TopK;
+            if (message.Temperature.HasValue)
+            {
+                payload["temperature"] = message.Temperature.Value;
+            }
+
+            if (message.TopP.HasValue)
+            {
+                payload["top_p"] = message.TopP.Value;
+            }
+
+            if (message.TopK.HasValue)
+            {
+                payload["top_k"] = message.TopK.Value;
+            }
         }
 
         var request = new RestRequest("/messages", Method.Post).WithJsonBody(payload, JsonOptions.JsonSettings);
@@ -126,7 +137,7 @@ public class BaseAnthropicClient : BlackBirdRestClient
         var response = await ExecuteWithErrorHandling<CompletionResponse>(request);
         return new ResponseMessage
         {
-            Text = response.Content.FirstOrDefault()?.Text ?? "",
+            Text = string.Concat(response.Content.Where(x => x.Type == "text").Select(x => x.Text)),
             Usage = response.Usage
         };
     }

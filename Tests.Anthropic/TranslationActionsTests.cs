@@ -15,7 +15,7 @@ public class TranslationActionsTests : TestBaseMultipleConnections
     {
         // Arrange
         var translationActions = new TranslationActions(context, FileManager);
-        var model = new ModelIdentifier { Model = "claude-opus-4-5-20251101" };
+        var model = new ModelIdentifier { Model = "claude-opus-4-1-20250805" };
 
         // Act
         var result = await translationActions.Translate(
@@ -48,7 +48,7 @@ public class TranslationActionsTests : TestBaseMultipleConnections
         // Arrange
         var translationActions = new TranslationActions(context, FileManager);
         var original = "Brat mir einer einen Storch.";
-        var model = new ModelIdentifier { Model = "claude-opus-4-5-20251101" };
+        var model = new ModelIdentifier { Model = "claude-sonnet-5" };
 
         // Act
         var result = await translationActions.TranslateText(

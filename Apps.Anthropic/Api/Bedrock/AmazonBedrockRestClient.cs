@@ -121,7 +121,7 @@ public class AmazonBedrockRestClient : RestClient, IAnthropicClient
         var response = await ExecuteWithErrorHandling<ConverseBedrockResponse>(restRequest);
         return new ResponseMessage
         {
-            Text = response.Output.Message.Content[0].Text ?? "",
+            Text = string.Concat(response.Output.Message.Content.Where(x => x.Text != null).Select(x => x.Text)),
             Usage = new UsageResponse
             {
                 OutputTokens = response.Usage.OutputTokens,

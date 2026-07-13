@@ -15,7 +15,7 @@ public class EditActionsTests : TestBaseMultipleConnections
     {
         // Arrange
         var editActions = new EditActions(context, FileManager);
-        var model = new ModelIdentifier { Model = "claude-sonnet-4-5-20250929" };
+        var model = new ModelIdentifier { Model = "claude-opus-4-1-20250805" };
 
         // Act
         var result = await editActions.EditContent(
@@ -24,15 +24,15 @@ public class EditActionsTests : TestBaseMultipleConnections
             {
                 File = new FileReference
                 {
-                    Name = "Boost the output and quality of your existing localization tools-en-it-TRA.mxliff",
+                    Name = "contentful12.xliff",
                 },
-                Glossary= new FileReference
-                {
-                    Name = "Localization Term Base (MT).tbx",
-                },
+                //Glossary= new FileReference
+                //{
+                //    Name = "Localization Term Base (MT).tbx",
+                //},
                 SourceLanguage = "en",
-                TargetLanguage = "it",
-                AdditionalInstructions = "Use \"Lei\" to address the reader. Make sure terms are translated consistently.  "
+                TargetLanguage = "nl",
+                //AdditionalInstructions = "Use \"Lei\" to address the reader. Make sure terms are translated consistently.  "
             });
 
         // Assert
@@ -51,7 +51,7 @@ public class EditActionsTests : TestBaseMultipleConnections
     {
         // Arrange
         var editActions = new EditActions(context, FileManager);
-        var model = new ModelIdentifier { Model = "claude-sonnet-4-20250514" };
+        var model = new ModelIdentifier { Model = "claude-opus-4-1-20250805" };
 
         // Act
         var result = await editActions.EditText(
