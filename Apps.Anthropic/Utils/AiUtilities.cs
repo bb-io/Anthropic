@@ -40,10 +40,10 @@ public class AiUtilities(InvocationContext invocationContext, IFileManagementCli
             System = input.SystemPrompt ?? string.Empty,
             Model = modelIdentifier.Model,
             Messages = messages,
-            MaxTokens = input.MaxTokensToSample ?? ModelTokenService.GetMaxTokensForModel(modelIdentifier.Model),
+            MaxTokens = input.MaxTokensToSample ?? ModelCatalog.GetMaxOutputTokens(modelIdentifier.Model),
             StopSequences = input.StopSequences != null ? input.StopSequences : new List<string>(),
-            Temperature = input.Temperature != null ? float.Parse(input.Temperature) : null,
-            TopP = input.TopP != null ? float.Parse(input.TopP) : null,
+            Temperature = input.Temperature.ToOptionalFloat("temperature"),
+            TopP = input.TopP.ToOptionalFloat("top_p"),
             TopK = input.TopK,
             FileData = fileData,
         };
@@ -66,8 +66,7 @@ public class AiUtilities(InvocationContext invocationContext, IFileManagementCli
             System = systemPrompt,
             Model = model,
             Messages = [new() { Role = "user", Content = userPrompt }],
-            MaxTokens = 100,
-            TopK = 1
+            MaxTokens = 100
         };
 
         var response = await Client.ExecuteChat(requestBody);

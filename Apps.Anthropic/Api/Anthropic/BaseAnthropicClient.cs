@@ -1,4 +1,5 @@
 ﻿using Apps.Anthropic.Constants;
+using Apps.Anthropic.Extensions;
 using Apps.Anthropic.Models.Request;
 using Apps.Anthropic.Models.Response;
 using Apps.Anthropic.Utils;
@@ -105,24 +106,39 @@ public class BaseAnthropicClient : BlackBirdRestClient
                 formattedMessages.Add(new { role = msg.Role, content = msg.Content });
         }
 
-        var payload = new
+        var payload = new Dictionary<string, object?>
         {
-            model = message.Model,
-            max_tokens = message.MaxTokens,
-            system = message.System,
-            messages = formattedMessages,
-            stop_sequences = message.StopSequences,
-            temperature = message.Temperature,
-            top_p = message.TopP,
-            top_k = message.TopK
+            ["model"] = message.Model,
+            ["max_tokens"] = message.MaxTokens,
+            ["system"] = message.System,
+            ["messages"] = formattedMessages,
+            ["stop_sequences"] = message.StopSequences
         };
+
+        if (ModelCatalog.SupportsSamplingParameters(message.Model))
+        {
+            if (message.Temperature.HasValue)
+            {
+                payload["temperature"] = message.Temperature.Value;
+            }
+
+            if (message.TopP.HasValue)
+            {
+                payload["top_p"] = message.TopP.Value;
+            }
+
+            if (message.TopK.HasValue)
+            {
+                payload["top_k"] = message.TopK.Value;
+            }
+        }
 
         var request = new RestRequest("/messages", Method.Post).WithJsonBody(payload, JsonOptions.JsonSettings);
 
         var response = await ExecuteWithErrorHandling<CompletionResponse>(request);
         return new ResponseMessage
         {
-            Text = response.Content.FirstOrDefault()?.Text ?? "",
+            Text = response.Content.ExtractText(),
             Usage = response.Usage
         };
     }

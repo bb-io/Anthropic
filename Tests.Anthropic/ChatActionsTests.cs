@@ -20,7 +20,7 @@ public class ChatActionsTests : TestBaseMultipleConnections
         var completionRequest = new CompletionRequest
         {
             Prompt = "Please read this file and describe what you see in it",
-            File = new FileReference { Name = "test.pptx" },
+            File = new FileReference { Name = "test.pdf" },
         };
         var glossary = new GlossaryRequest { };
 

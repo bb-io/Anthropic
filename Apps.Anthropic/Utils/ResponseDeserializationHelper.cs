@@ -8,6 +8,8 @@ public static class ResponseDeserializationHelper
 {
     public static DeserializeTranslationEntitiesResult DeserializeResponse(string content)
     {
+        content = StripMarkdownCodeFences(content);
+
         try
         {
             var deserializedResponse = JsonConvert.DeserializeObject<TranslationEntities>(content);
@@ -29,6 +31,8 @@ public static class ResponseDeserializationHelper
     
     public static DeserializeReviewEntitiesResult DeserializeReviewResponse(string content)
     {
+        content = StripMarkdownCodeFences(content);
+
         try
         {
             var deserializedResponse = JsonConvert.DeserializeObject<ReviewEntities>(content)!;
@@ -46,6 +50,13 @@ public static class ResponseDeserializationHelper
             var truncatedContent = content.Substring(0, Math.Min(content.Length, 200)) + "...";
             return new(new(), false, $"Failed to deserialize review response: {ex.Message}. Response: {truncatedContent}");
         }
+    }
+
+    private static string StripMarkdownCodeFences(string content)
+    {
+        var trimmed = content.Trim();
+        var match = Regex.Match(trimmed, @"^```(?:json)?\s*\r?\n(.*?)\r?\n?```$", RegexOptions.Singleline);
+        return match.Success ? match.Groups[1].Value : trimmed;
     }
 
     private static List<TranslationEntity> ExtractValidTranslationsFromIncompleteJsonWithErrorHandling(string incompleteJson)

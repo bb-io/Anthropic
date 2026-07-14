@@ -49,7 +49,7 @@ public class MessageDto
     public UsageResponse Usage { get; set; } = default!;
 }
 
-public class ContentItemDto
+public class ContentItemDto : ITextContentBlock
 {
     [JsonProperty("type")]
     public string Type { get; set; } = default!;
