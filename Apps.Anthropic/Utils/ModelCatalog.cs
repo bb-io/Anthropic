@@ -13,6 +13,8 @@ public static class ModelCatalog
         ["claude-opus-4-1"] = new(32000, true),
         ["claude-opus-4-20250514"] = new(32000, true),
         ["claude-opus-4-0"] = new(32000, true),
+        ["claude-opus-4-7"] = new(128000, false),
+        ["claude-opus-4-8"] = new(128000, false),
         ["claude-sonnet-4-20250514"] = new(64000, true),
         ["claude-sonnet-4-0"] = new(64000, true),
         ["claude-sonnet-4-6"] = new(64000, true),
@@ -22,6 +24,8 @@ public static class ModelCatalog
         ["claude-3-5-haiku-20241022"] = new(8192, true),
         ["claude-3-5-haiku-latest"] = new(8192, true),
         ["claude-3-haiku-20240307"] = new(4096, true),
+        ["claude-fable-5"] = new(128000, false),
+        ["claude-mythos-5"] = new(128000, false),
     };
 
     public static ModelCapabilities GetCapabilities(string? modelName)
@@ -36,12 +40,13 @@ public static class ModelCatalog
             return capabilities;
         }
 
-        // Unlisted model IDs (e.g. dated snapshots not yet added above): the Sonnet 5 family
-        // rejects non-default sampling parameters regardless of the exact suffix, so fall back
-        // to a substring match for that instead of silently allowing them.
-        var supportsSamplingParameters = !modelName.Contains("claude-sonnet-5", StringComparison.OrdinalIgnoreCase);
+        // Unlisted model IDs (e.g. dated snapshots of an already-known model): inherit
+        // capabilities from the known model whose ID is a prefix of this one, instead of
+        // hardcoding a check for one specific model family.
+        var matchedKey = Models.Keys.FirstOrDefault(prefix =>
+            modelName.StartsWith(prefix, StringComparison.OrdinalIgnoreCase));
 
-        return new ModelCapabilities(ModelCapabilities.Default.MaxOutputTokens, supportsSamplingParameters);
+        return matchedKey != null ? Models[matchedKey] : ModelCapabilities.Default;
     }
 
     public static int GetMaxOutputTokens(string? modelName) => GetCapabilities(modelName).MaxOutputTokens;

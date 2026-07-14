@@ -15,7 +15,7 @@ public class TranslationActionsTests : TestBaseMultipleConnections
     {
         // Arrange
         var translationActions = new TranslationActions(context, FileManager);
-        var model = new ModelIdentifier { Model = "claude-opus-4-1-20250805" };
+        var model = new ModelIdentifier { Model = "claude-fable-5" };
 
         // Act
         var result = await translationActions.Translate(
@@ -24,8 +24,8 @@ public class TranslationActionsTests : TestBaseMultipleConnections
             {
                 File = new FileReference
                 {
-                    Name = "contentful.html",
-                    ContentType = "application/xliff+xml"
+                    Name = "simple_with_html.xliff",
+                    //ContentType = "application/xliff+xml"
                 },
                 TargetLanguage = "fr",
                 AdditionalInstructions = "Translate accurately while maintaining the original meaning"
