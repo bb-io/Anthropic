@@ -114,6 +114,31 @@ public class BaseAnthropicClient : BlackBirdRestClient
             ["messages"] = formattedMessages,
             ["stop_sequences"] = message.StopSequences
         };
+        
+        if (!string.IsNullOrEmpty(message.SkillId))
+        {
+            payload["container"] = new
+            {
+                skills = new[]
+                {
+                    new
+                    {
+                        type = message.SkillId.StartsWith("skill_") ? "custom" : "anthropic",
+                        skill_id = message.SkillId,
+                        version = "latest"
+                    }
+                }
+            };
+
+            payload["tools"] = new[] 
+            {
+                new
+                {
+                    type = "code_execution_20250825", 
+                    name = "code_execution"
+                }
+            };
+        }
 
         if (ModelCatalog.SupportsSamplingParameters(message.Model))
         {
@@ -135,6 +160,9 @@ public class BaseAnthropicClient : BlackBirdRestClient
 
         var request = new RestRequest("/messages", Method.Post).WithJsonBody(payload, JsonOptions.JsonSettings);
 
+        if (!string.IsNullOrEmpty(message.SkillId))
+            request.AddHeader("anthropic-beta", "code-execution-2025-08-25,skills-2025-10-02");
+        
         var response = await ExecuteWithErrorHandling<CompletionResponse>(request);
         return new ResponseMessage
         {

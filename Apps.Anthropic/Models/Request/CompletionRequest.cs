@@ -1,4 +1,5 @@
-﻿using Apps.Anthropic.DataSourceHandlers.EnumHandlers;
+﻿using Apps.Anthropic.DataSourceHandlers;
+using Apps.Anthropic.DataSourceHandlers.EnumHandlers;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Dynamic;
 using Blackbird.Applications.Sdk.Common.Files;
@@ -39,4 +40,7 @@ public class CompletionRequest
 
     [Display("File")]
     public FileReference? File { get; set; }
+    
+    [Display("Skill ID"), DataSource(typeof(SkillDataSource))]
+    public string? SkillId { get; set; }
 }

@@ -14,6 +14,7 @@ using RestSharp;
 using RestSharp.Serializers.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Apps.Anthropic.Models.Dto;
 
 namespace Apps.Anthropic.Api.Bedrock;
 
@@ -142,6 +143,11 @@ public class AmazonBedrockRestClient : RestClient, IAnthropicClient
 
         var response = await ExecuteWithErrorHandling<ListModelsBedrockRestResponse>(request);
         return response.Models.Select(x => new ModelResponse(x.Id, x.Name)).ToList();
+    }
+
+    public Task<List<SkillDto>> ListSkills()
+    {
+        throw new PluginMisconfigurationException("Currently, skills are not supported for this connection type");
     }
 
     public async Task<ConnectionValidationResponse> ValidateConnection()

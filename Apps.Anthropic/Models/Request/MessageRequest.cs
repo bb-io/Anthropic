@@ -21,4 +21,6 @@ public class MessageRequest
     public int? TopK { get; set; }
 
     public InputFileData? FileData { get; set; }
+
+    public string? SkillId { get; set; }
 }

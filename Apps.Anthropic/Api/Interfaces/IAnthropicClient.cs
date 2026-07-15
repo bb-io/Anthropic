@@ -1,4 +1,6 @@
-﻿using Apps.Anthropic.Models.Request;
+﻿using Apps.Anthropic.Models.Dto;
+using Apps.Anthropic.Models.Entities;
+using Apps.Anthropic.Models.Request;
 using Apps.Anthropic.Models.Response;
 using Blackbird.Applications.Sdk.Common.Connections;
 
@@ -9,4 +11,5 @@ public interface IAnthropicClient
     Task<ConnectionValidationResponse> ValidateConnection();
     Task<ResponseMessage> ExecuteChat(MessageRequest message);
     Task<List<ModelResponse>> ListModels();
+    Task<List<SkillDto>> ListSkills();
 }

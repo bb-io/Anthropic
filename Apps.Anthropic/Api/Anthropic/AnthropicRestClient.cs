@@ -1,5 +1,7 @@
 ﻿using Apps.Anthropic.Api.Interfaces;
+using Apps.Anthropic.Models.Dto;
 using Apps.Anthropic.Models.Entities;
+using Apps.Anthropic.Models.Entities.Skill;
 using Apps.Anthropic.Models.Response;
 using Blackbird.Applications.Sdk.Common.Authentication;
 using Blackbird.Applications.Sdk.Common.Connections;
@@ -39,6 +41,14 @@ public class AnthropicRestClient(IEnumerable<AuthenticationCredentialsProvider> 
         var request = new RestRequest("/models");
         var models = await ExecuteWithErrorHandling<DataResponse<ModelResponse>>(request);
         return models.Data.Select(x => new ModelResponse(x.Id, x.DisplayName)).ToList();
+    }
+
+    public async Task<List<SkillDto>> ListSkills()
+    {
+        var request = new RestRequest("/skills")
+            .AddHeader("anthropic-beta", "skills-2025-10-02");
+        var response = await ExecuteWithErrorHandling<DataResponse<AnthropicSkillEntity>>(request);
+        return response.Data.Select(x => new SkillDto(x.Id, x.DisplayTitle)).ToList();
     }
 
     public async Task<List<BatchResponse>> ListBatches()
