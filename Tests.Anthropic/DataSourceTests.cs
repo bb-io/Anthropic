@@ -62,4 +62,18 @@ public class DataSourceTests : TestBaseMultipleConnections
             dataSource.GetDataAsync(new(), default), 
             "Listing models is not supported for this connection type.");
     }
+    
+    [TestMethod, ContextDataSource(ConnectionTypes.AnthropicNative)]
+    public async Task SkillDataSource_ReturnsSkills(InvocationContext context)
+    {
+        // Arrange
+        var dataSource = new SkillDataSource(context);
+
+        // Act
+        var data = await dataSource.GetDataAsync(new(), CancellationToken.None);
+
+        // Assert
+        PrintDataHandlerResult(data);
+        Assert.IsNotNull(data);
+    }
 }
