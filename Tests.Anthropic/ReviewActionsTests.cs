@@ -2,6 +2,7 @@ using Tests.Anthropic.Base;
 using Apps.Anthropic.Actions;
 using Apps.Anthropic.Models.Request;
 using Apps.Anthropic.Models.Identifiers;
+using Apps.Anthropic.Models.Request.Optional;
 using Blackbird.Applications.Sdk.Common.Files;
 using Blackbird.Applications.Sdk.Common.Invocation;
 
@@ -16,6 +17,7 @@ public class ReviewActionsTests : TestBaseMultipleConnections
         // Arrange
         var reviewActions = new ReviewActions(context, FileManager);
         var model = new ModelIdentifier { Model = "claude-sonnet-5" };
+        var skillRequest = new OptionalSkillRequest { SkillId = "" };
 
         // Act
         var result = await reviewActions.ReviewContent(
@@ -30,7 +32,8 @@ public class ReviewActionsTests : TestBaseMultipleConnections
                 SourceLanguage = "en",
                 TargetLanguage = "nl",
                 //AdditionalInstructions = "Focus on technical terminology accuracy and cultural adaptation"
-            });
+            },
+            skillRequest);
 
         // Assert
         TestContext.WriteLine($"Total segments processed: {result.TotalSegmentsProcessed}");
@@ -54,6 +57,7 @@ public class ReviewActionsTests : TestBaseMultipleConnections
         // Arrange
         var reviewActions = new ReviewActions(context, FileManager);
         var model = new ModelIdentifier { Model = "claude-sonnet-5" };
+        var skillRequest = new OptionalSkillRequest { SkillId = "" };
 
         // Act
         var result = await reviewActions.ReviewText(
@@ -65,7 +69,8 @@ public class ReviewActionsTests : TestBaseMultipleConnections
                 SourceLanguage = "en",
                 TargetLanguage = "es",
                 AdditionalInstructions = "Focus on naturalness and accuracy of the translation"
-            });
+            },
+            skillRequest);
 
         // Assert
         PrintResult(result);

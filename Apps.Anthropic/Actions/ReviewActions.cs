@@ -13,6 +13,7 @@ using Blackbird.Filters.Constants;
 using Blackbird.Filters.Extensions;
 using Newtonsoft.Json;
 using System.Xml.Linq;
+using Apps.Anthropic.Models.Request.Optional;
 
 namespace Apps.Anthropic.Actions;
 
@@ -26,7 +27,8 @@ public class ReviewActions(InvocationContext invocationContext, IFileManagementC
     [Action("Review", Description = "Review translation. This action assumes you have previously translated content in Blackbird through any translation action.")]
     public async Task<ReviewContentResponse> ReviewContent(
         [ActionParameter] ModelIdentifier modelIdentifier,
-        [ActionParameter] ReviewContentRequest input)
+        [ActionParameter] ReviewContentRequest input,
+        [ActionParameter] OptionalSkillRequest skillInput)
     {
         modelIdentifier.Validate(InvocationContext.AuthenticationCredentialsProviders);
 
@@ -71,7 +73,8 @@ public class ReviewActions(InvocationContext invocationContext, IFileManagementC
                 Temperature = input.Temperature,
                 TopP = input.TopP,
                 TopK = input.TopK,
-                StopSequences = input.StopSequences
+                StopSequences = input.StopSequences,
+                SkillId = skillInput.SkillId
             };
 
             var response = await _aiUtilities.SendMessageAsync(modelIdentifier, completionRequest, new() { Glossary = input.Glossary });
@@ -125,7 +128,8 @@ public class ReviewActions(InvocationContext invocationContext, IFileManagementC
     [Action("Review text", Description = "Review the quality of translated text.")]
     public async Task<ReviewTextResponse> ReviewText(
         [ActionParameter] ModelIdentifier modelIdentifier,
-        [ActionParameter] ReviewTextRequest input)
+        [ActionParameter] ReviewTextRequest input,
+        [ActionParameter] OptionalSkillRequest skillInput)
     {
         modelIdentifier.Validate(InvocationContext.AuthenticationCredentialsProviders);
 
@@ -151,7 +155,8 @@ public class ReviewActions(InvocationContext invocationContext, IFileManagementC
             MaxTokensToSample = input.MaxTokensToSample,
             Temperature = input.Temperature,
             TopP = input.TopP,
-            TopK = input.TopK
+            TopK = input.TopK,
+            SkillId = skillInput.SkillId
         };
 
         var response = await _aiUtilities.SendMessageAsync(modelIdentifier, completionRequest, new() { Glossary = input.Glossary });

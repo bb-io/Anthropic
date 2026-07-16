@@ -4,6 +4,7 @@ using Apps.Anthropic.Invocable;
 using Apps.Anthropic.Models.Entities;
 using Apps.Anthropic.Models.Identifiers;
 using Apps.Anthropic.Models.Request;
+using Apps.Anthropic.Models.Request.Optional;
 using Apps.Anthropic.Models.Response;
 using Apps.Anthropic.Utils;
 using Blackbird.Applications.Sdk.Common;
@@ -31,7 +32,8 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
         Description = "Translate file content retrieved from a CMS or file storage. The output can be used in compatible actions.")]
     public async Task<TranslateContentResponse> Translate(
         [ActionParameter] ModelIdentifier modelIdentifier,
-        [ActionParameter] TranslateContentRequest input)
+        [ActionParameter] TranslateContentRequest input,
+        [ActionParameter] OptionalSkillRequest skillInput)
     {
         modelIdentifier.Validate(InvocationContext.AuthenticationCredentialsProviders);
 
@@ -74,7 +76,8 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
                 TopP = input.TopP,
                 TopK = input.TopK,
                 MaxTokensToSample = input.MaxTokensToSample,
-                StopSequences = input.StopSequences
+                StopSequences = input.StopSequences,
+                SkillId = skillInput.SkillId
             };
             
             var response = await _aiUtilities.SendMessageAsync(modelIdentifier, completionRequest, new()
@@ -158,7 +161,8 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
     [Action("Translate text", Description = "Localize the text provided.")]
     public async Task<TranslateTextResponse> TranslateText(
         [ActionParameter] ModelIdentifier modelIdentifier,
-        [ActionParameter] TranslateTextRequest input)
+        [ActionParameter] TranslateTextRequest input,
+        [ActionParameter] OptionalSkillRequest skillInput)
     {
         modelIdentifier.Validate(InvocationContext.AuthenticationCredentialsProviders);
 
@@ -205,7 +209,8 @@ Target language: {input.TargetLanguage}
             Temperature = input.Temperature,
             TopP = input.TopP,
             TopK = input.TopK,
-            MaxTokensToSample = input.MaxTokensToSample
+            MaxTokensToSample = input.MaxTokensToSample,
+            SkillId = skillInput.SkillId
         };
 
         var response = await _aiUtilities.SendMessageAsync(modelIdentifier, completionRequest, new()

@@ -2,6 +2,7 @@ using Tests.Anthropic.Base;
 using Apps.Anthropic.Actions;
 using Apps.Anthropic.Models.Request;
 using Apps.Anthropic.Models.Identifiers;
+using Apps.Anthropic.Models.Request.Optional;
 using Blackbird.Applications.Sdk.Common.Files;
 using Blackbird.Applications.Sdk.Common.Invocation;
 
@@ -16,6 +17,7 @@ public class TranslationActionsTests : TestBaseMultipleConnections
         // Arrange
         var translationActions = new TranslationActions(context, FileManager);
         var model = new ModelIdentifier { Model = "claude-fable-5" };
+        var skillRequest = new OptionalSkillRequest { SkillId = "" };
 
         // Act
         var result = await translationActions.Translate(
@@ -29,7 +31,8 @@ public class TranslationActionsTests : TestBaseMultipleConnections
                 },
                 TargetLanguage = "fr",
                 AdditionalInstructions = "Translate accurately while maintaining the original meaning"
-            });
+            },
+            skillRequest);
 
         // Assert
         TestContext.WriteLine($"Total segments: {result.TotalSegmentsCount}");
@@ -49,6 +52,7 @@ public class TranslationActionsTests : TestBaseMultipleConnections
         var translationActions = new TranslationActions(context, FileManager);
         var original = "Brat mir einer einen Storch.";
         var model = new ModelIdentifier { Model = "claude-sonnet-5" };
+        var skillRequest = new OptionalSkillRequest { SkillId = "" };
 
         // Act
         var result = await translationActions.TranslateText(
@@ -57,7 +61,8 @@ public class TranslationActionsTests : TestBaseMultipleConnections
             {
                 Text = original,
                 TargetLanguage = "en-US",
-            });
+            },
+            skillRequest);
 
         // Assert
         TestContext.WriteLine($"Original text: {original}");
