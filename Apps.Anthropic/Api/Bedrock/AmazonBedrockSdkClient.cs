@@ -7,7 +7,6 @@ using Amazon.Runtime.Documents;
 using Apps.Anthropic.Api.Interfaces;
 using Apps.Anthropic.Constants;
 using Apps.Anthropic.Extensions;
-using Apps.Anthropic.Models.Dto;
 using Apps.Anthropic.Models.Request;
 using Apps.Anthropic.Models.Response;
 using Apps.Anthropic.Utils;
@@ -65,11 +64,6 @@ public class AmazonBedrockSdkClient : IAnthropicClient
             )
         );
         return models.ModelSummaries.Select(x => new ModelResponse(x.ModelId, x.ModelName)).ToList();
-    }
-
-    public Task<List<SkillDto>> ListSkills()
-    {
-        throw new PluginMisconfigurationException("Currently, skills are not supported for this connection type");
     }
 
     public async Task<ResponseMessage> ExecuteChat(MessageRequest request)

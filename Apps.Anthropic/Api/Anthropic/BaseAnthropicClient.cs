@@ -1,4 +1,5 @@
-﻿using Apps.Anthropic.Constants;
+﻿using Apps.Anthropic.Api.Interfaces;
+using Apps.Anthropic.Constants;
 using Apps.Anthropic.Extensions;
 using Apps.Anthropic.Models.Request;
 using Apps.Anthropic.Models.Response;
@@ -115,7 +116,7 @@ public class BaseAnthropicClient : BlackBirdRestClient
             ["stop_sequences"] = message.StopSequences
         };
         
-        if (!string.IsNullOrEmpty(message.SkillId))
+        if (this is ISupportsSkills && !string.IsNullOrEmpty(message.SkillId))
         {
             payload["container"] = new
             {

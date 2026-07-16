@@ -1,6 +1,5 @@
 ﻿using Apps.Anthropic.Api.Interfaces;
 using Apps.Anthropic.Constants;
-using Apps.Anthropic.Models.Dto;
 using Apps.Anthropic.Models.Request;
 using Apps.Anthropic.Models.Response;
 using Blackbird.Applications.Sdk.Common.Authentication;
@@ -23,11 +22,6 @@ public class AnthropicMsFoundryRestClient(IEnumerable<AuthenticationCredentialsP
     {
         throw new PluginMisconfigurationException(
             "Listing models is not supported for this connection type. Please specify the model ID in the connection");
-    }
-
-    public Task<List<SkillDto>> ListSkills()
-    {
-        throw new PluginMisconfigurationException("Currently, skills are not supported for this connection type");
     }
 
     public async Task<ConnectionValidationResponse> ValidateConnection()
