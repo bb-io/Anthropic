@@ -68,6 +68,8 @@ future reference e.g. 'My connection'.
 
 ## Actions
 
+>**Note**: Only the 'Anthropic API token' connection type supports skills.
+
 ### Chat actions
 
 - **Chat** action has the following input values in order to configure the generated response:
@@ -97,11 +99,11 @@ For more in-depth information about action consult the [Anthropic API reference]
 - **Review** reviews a translation. This action assumes you have previously translated content in Blackbird through any translation action. Adds a quality score to each unit in the file.
 - **Review text** reviews a single text and returns a quality score.
 
-> Note: files are interoperable, under the hood Blackbird may convert to and from bilingual files with metadata but all our Actions are able to accept a lot of different file formats.
+>**Note**: Files are interoperable, under the hood Blackbird may convert to and from bilingual files with metadata but all our Actions are able to accept a lot of different file formats.
 
 ### Batch actions
 
-**Note**: Currently, batch actions are not supported for Amazon Bedrock connection types.
+>**Note**: Currently, batch actions are not supported for Amazon Bedrock connection types.
 
 - **(Batch) Process XLIFF file** asynchronously process each translation unit in the XLIFF file according to the provided instructions (by default it just translates the source tags) and updates the target text for each unit.
 - **(Batch) Post-edit XLIFF file** asynchronously post-edit the target text of each translation unit in the XLIFF file according to the provided instructions and updates the target text for each unit. 
