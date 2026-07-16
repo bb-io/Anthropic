@@ -4,6 +4,7 @@ using Apps.Anthropic.Invocable;
 using Apps.Anthropic.Models.Entities;
 using Apps.Anthropic.Models.Identifiers;
 using Apps.Anthropic.Models.Request;
+using Apps.Anthropic.Models.Request.Optional;
 using Apps.Anthropic.Models.Response;
 using Apps.Anthropic.Utils;
 using Blackbird.Applications.Sdk.Common;
@@ -30,7 +31,8 @@ public class EditActions(InvocationContext invocationContext, IFileManagementCli
     [Action("Edit", Description = "Edit a translation. This action assumes you have previously translated content in Blackbird through any translation action.")]
     public async Task<EditContentResponse> EditContent(
         [ActionParameter] ModelIdentifier modelIdentifier,
-        [ActionParameter] EditContentRequest input)
+        [ActionParameter] EditContentRequest input,
+        [ActionParameter] OptionalSkillRequest skillInput)
     {
         modelIdentifier.Validate(InvocationContext.AuthenticationCredentialsProviders);
 
@@ -76,7 +78,8 @@ public class EditActions(InvocationContext invocationContext, IFileManagementCli
                 TopP = input.TopP,
                 TopK = input.TopK,
                 MaxTokensToSample = input.MaxTokensToSample,
-                StopSequences = input.StopSequences
+                StopSequences = input.StopSequences,
+                SkillId = skillInput.SkillId
             };
             
             var response = await _aiUtilities.SendMessageAsync(modelIdentifier, completionRequest, new()
@@ -154,7 +157,8 @@ public class EditActions(InvocationContext invocationContext, IFileManagementCli
     [Action("Edit text", Description = "Review translated text and generate an edited version")]
     public async Task<EditTextResponse> EditText(
         [ActionParameter] ModelIdentifier modelIdentifier,
-        [ActionParameter] EditTextRequest input)
+        [ActionParameter] EditTextRequest input,
+        [ActionParameter] OptionalSkillRequest skillInput)
     {
         modelIdentifier.Validate(InvocationContext.AuthenticationCredentialsProviders);
 
@@ -198,7 +202,8 @@ public class EditActions(InvocationContext invocationContext, IFileManagementCli
             Temperature = input.Temperature,
             TopP = input.TopP,
             TopK = input.TopK,
-            MaxTokensToSample = input.MaxTokensToSample
+            MaxTokensToSample = input.MaxTokensToSample,
+            SkillId = skillInput.SkillId
         };
 
         var response = await _aiUtilities.SendMessageAsync(modelIdentifier, completionRequest, new()

@@ -46,6 +46,7 @@ public class AiUtilities(InvocationContext invocationContext, IFileManagementCli
             TopP = input.TopP.ToOptionalFloat("top_p"),
             TopK = input.TopK,
             FileData = fileData,
+            SkillId = input.SkillId
         };
 
         return await Client.ExecuteChat(body);

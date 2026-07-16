@@ -4,6 +4,7 @@ using Apps.Anthropic.Models.Request;
 using Blackbird.Applications.Sdk.Common.Files;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Apps.Anthropic.Models.Identifiers;
+using Apps.Anthropic.Models.Request.Optional;
 
 namespace Tests.Anthropic;
 
@@ -16,6 +17,7 @@ public class EditActionsTests : TestBaseMultipleConnections
         // Arrange
         var editActions = new EditActions(context, FileManager);
         var model = new ModelIdentifier { Model = "claude-sonnet-5" };
+        var skillRequest = new OptionalSkillRequest { SkillId = "" };
 
         // Act
         var result = await editActions.EditContent(
@@ -33,7 +35,8 @@ public class EditActionsTests : TestBaseMultipleConnections
                 SourceLanguage = "en",
                 TargetLanguage = "nl",
                 //AdditionalInstructions = "Use \"Lei\" to address the reader. Make sure terms are translated consistently.  "
-            });
+            },
+            skillRequest);
 
         // Assert
         TestContext.WriteLine($"Total segments reviewed: {result.TotalSegmentsReviewed}");
@@ -52,6 +55,7 @@ public class EditActionsTests : TestBaseMultipleConnections
         // Arrange
         var editActions = new EditActions(context, FileManager);
         var model = new ModelIdentifier { Model = "claude-sonnet-5" };
+        var skillRequest = new OptionalSkillRequest { SkillId = "" };
 
         // Act
         var result = await editActions.EditText(
@@ -64,7 +68,8 @@ public class EditActionsTests : TestBaseMultipleConnections
                 TargetLanguage = "es",
                 TargetAudience = "Professional business context",
                 AdditionalInstructions = "Ensure the tone is formal and professional"
-            });
+            },
+            skillRequest);
 
         // Assert
         TestContext.WriteLine($"Edited text: {result.EditedText}");
