@@ -145,11 +145,6 @@ public class AmazonBedrockRestClient : RestClient, IAnthropicClient
         return response.Models.Select(x => new ModelResponse(x.Id, x.Name)).ToList();
     }
 
-    public Task<List<SkillDto>> ListSkills()
-    {
-        throw new PluginMisconfigurationException("Currently, skills are not supported for this connection type");
-    }
-
     public async Task<ConnectionValidationResponse> ValidateConnection()
     {
         var url = $"{_standardUrl}/foundation-models";
