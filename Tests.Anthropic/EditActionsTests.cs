@@ -24,17 +24,10 @@ public class EditActionsTests : TestBaseMultipleConnections
             model,
             new EditContentRequest
             {
-                File = new FileReference
-                {
-                    Name = "contentful12.xliff",
-                },
-                //Glossary= new FileReference
-                //{
-                //    Name = "Localization Term Base (MT).tbx",
-                //},
+                File = new FileReference { Name = "test-edit.xlf" },
                 SourceLanguage = "en",
                 TargetLanguage = "nl",
-                //AdditionalInstructions = "Use \"Lei\" to address the reader. Make sure terms are translated consistently.  "
+                ModifiedBy = "Arnold Schwarzenegger"
             },
             skillRequest);
 
