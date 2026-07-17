@@ -1,4 +1,5 @@
-﻿using Apps.Anthropic.Constants;
+﻿using System.Xml.Linq;
+using Apps.Anthropic.Constants;
 using Apps.Anthropic.Extensions;
 using Apps.Anthropic.Invocable;
 using Apps.Anthropic.Models.Entities;
@@ -57,6 +58,10 @@ public class EditActions(InvocationContext invocationContext, IFileManagementCli
         }
         
         var units = content.GetUnits().ToList();
+        
+        if (input.ProcessLockedSegments is null or false)
+            units = units.Where(x => x.Translate is null or true).ToList();
+        
         var segments = units.SelectMany(x => x.Segments).ToList();
         
         result.TotalSegmentsReviewed = segments.Count();
@@ -127,15 +132,28 @@ public class EditActions(InvocationContext invocationContext, IFileManagementCli
         
         foreach (var (unit, results) in processedBatches)
         {
+            bool modifiedSegment = false;
             foreach (var (segment, translation) in results)
             {
                 if (segment.GetTarget() != translation.TranslatedText)
                 {
                     updatedCount++;
                     segment.SetTarget(translation.TranslatedText);
+                    modifiedSegment = true;
                 }
                 segment.State = SegmentState.Reviewed;
             }
+
+            if (string.IsNullOrEmpty(input.ModifiedBy) || !modifiedSegment) 
+                continue;
+            
+            long unixTimestampMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            var existingModifiedAttr = unit.Other.OfType<XAttribute>().FirstOrDefault(x => x.Name.LocalName is "modified-at" or "modified-by");
+                
+            var attrNamespace = existingModifiedAttr?.Name.Namespace ?? XNamespace.None;
+            unit.Other.RemoveAll(x => x is XAttribute attr && attr.Name.LocalName is "modified-at" or "modified-by");
+            unit.Other.Add(new XAttribute(attrNamespace + "modified-at", unixTimestampMs.ToString()));
+            unit.Other.Add(new XAttribute(attrNamespace + "modified-by", input.ModifiedBy));
         }
 
         result.TotalSegmentsUpdated = updatedCount;

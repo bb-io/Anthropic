@@ -61,4 +61,10 @@ public class EditContentRequest : IEditFileInput
 
     [Display("Ignore deserialization errors", Description = "If enabled, the action will ignore deserialization errors and return the response as is.")]
     public bool? IgnoreDeserializationErrors { get; set; }
+
+    [Display("Modified by")]
+    public string? ModifiedBy { get; set; }
+
+    [Display("Process locked segments")]
+    public bool? ProcessLockedSegments { get; set; }
 }
