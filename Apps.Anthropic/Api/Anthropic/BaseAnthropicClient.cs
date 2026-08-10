@@ -1,5 +1,6 @@
 ﻿using Apps.Anthropic.Api.Interfaces;
 using Apps.Anthropic.Constants;
+using System.Net;
 using Apps.Anthropic.Extensions;
 using Apps.Anthropic.Models.Request;
 using Apps.Anthropic.Models.Response;
@@ -9,12 +10,16 @@ using Blackbird.Applications.Sdk.Common.Exceptions;
 using Blackbird.Applications.Sdk.Utils.Extensions.Http;
 using Blackbird.Applications.Sdk.Utils.RestSharp;
 using Newtonsoft.Json;
+using Polly;
 using RestSharp;
 
 namespace Apps.Anthropic.Api.Anthropic;
 
 public class BaseAnthropicClient : BlackBirdRestClient
 {
+    private static readonly ResiliencePipeline<RestResponse> RateLimitPipeline =
+        AnthropicPollyPolicies.CreateRateLimitPipeline();
+
     protected override JsonSerializerSettings JsonSettings => new() 
     { 
         MissingMemberHandling = MissingMemberHandling.Ignore
@@ -52,6 +57,26 @@ public class BaseAnthropicClient : BlackBirdRestClient
 
         // We should explicitly throw errors here to be notified of invalid request errors that we can fix
         return new Exception(error?.Error?.Message ?? response.ErrorException.Message);
+    }
+
+    public override async Task<RestResponse> ExecuteWithErrorHandling(RestRequest request)
+    {
+        RestResponse response;
+        try
+        {
+            response = await RateLimitPipeline.ExecuteAsync(
+                cancellationToken => new ValueTask<RestResponse>(ExecuteAsync(request, cancellationToken)));
+        }
+        catch (HttpRequestException exception) when (exception.StatusCode == HttpStatusCode.TooManyRequests)
+        {
+            throw new PluginApplicationException(
+                "Anthropic rate limit was exceeded after multiple retry attempts. Please try again later.",
+                exception);
+        }
+
+        return response.IsSuccessStatusCode
+            ? response
+            : throw ConfigureErrorException(response);
     }
 
     public virtual async Task<ResponseMessage> ExecuteChat(MessageRequest message)
