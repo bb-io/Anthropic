@@ -47,7 +47,7 @@ public static class AnthropicPollyPolicies
         if (TryGetHeaderValue(response, "retry-after-ms", out var retryAfterMilliseconds) &&
             TryParseNonNegativeNumber(retryAfterMilliseconds, out var milliseconds))
         {
-            delay = TimeSpan.FromMilliseconds(milliseconds);
+            delay = CreateServerDelay(milliseconds / 1000);
             return true;
         }
 
@@ -55,7 +55,7 @@ public static class AnthropicPollyPolicies
         {
             if (TryParseNonNegativeNumber(retryAfter, out var seconds))
             {
-                delay = TimeSpan.FromSeconds(seconds);
+                delay = CreateServerDelay(seconds);
                 return true;
             }
 
@@ -100,6 +100,13 @@ public static class AnthropicPollyPolicies
         return !string.IsNullOrWhiteSpace(value);
     }
 
+    private static TimeSpan CreateServerDelay(double seconds) =>
+        seconds > MaximumServerDelay.TotalSeconds
+            ? MaximumServerDelay + TimeSpan.FromTicks(1)
+            : TimeSpan.FromSeconds(seconds);
+
     private static bool TryParseNonNegativeNumber(string value, out double number) =>
-        double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out number) && number >= 0;
+        double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out number) &&
+        double.IsFinite(number) &&
+        number >= 0;
 }
