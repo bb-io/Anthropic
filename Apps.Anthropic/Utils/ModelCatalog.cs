@@ -35,7 +35,9 @@ public static class ModelCatalog
             return ModelCapabilities.Default;
         }
 
-        if (Models.TryGetValue(modelName, out var capabilities))
+        var normalizedModelName = NormalizeModelName(modelName);
+
+        if (Models.TryGetValue(normalizedModelName, out var capabilities))
         {
             return capabilities;
         }
@@ -44,9 +46,15 @@ public static class ModelCatalog
         // capabilities from the known model whose ID is a prefix of this one, instead of
         // hardcoding a check for one specific model family.
         var matchedKey = Models.Keys.FirstOrDefault(prefix =>
-            modelName.StartsWith(prefix, StringComparison.OrdinalIgnoreCase));
+            normalizedModelName.StartsWith(prefix, StringComparison.OrdinalIgnoreCase));
 
         return matchedKey != null ? Models[matchedKey] : ModelCapabilities.Default;
+    }
+
+    private static string NormalizeModelName(string modelName)
+    {
+        var claudeIndex = modelName.IndexOf("claude-", StringComparison.OrdinalIgnoreCase);
+        return claudeIndex >= 0 ? modelName[claudeIndex..] : modelName;
     }
 
     public static int GetMaxOutputTokens(string? modelName) => GetCapabilities(modelName).MaxOutputTokens;

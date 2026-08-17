@@ -142,7 +142,37 @@ public class AmazonBedrockRestClient : RestClient, IAnthropicClient
             .AddQueryParameter("byInferenceType", "ON_DEMAND");
 
         var response = await ExecuteWithErrorHandling<ListModelsBedrockRestResponse>(request);
-        return response.Models.Select(x => new ModelResponse(x.Id, x.Name)).ToList();
+        var foundationModels = response.Models.Select(x => new ModelResponse(x.Id, x.Name));
+        var inferenceProfiles = await ListInferenceProfiles();
+
+        return BedrockModelDiscovery.Merge(foundationModels, inferenceProfiles);
+    }
+
+    private async Task<List<BedrockInferenceProfile>> ListInferenceProfiles()
+    {
+        var profiles = new List<BedrockInferenceProfile>();
+        string? nextToken = null;
+
+        do
+        {
+            var request = new RestRequest($"{_standardUrl}/inference-profiles", Method.Get)
+                .AddQueryParameter("maxResults", 1000);
+
+            if (!string.IsNullOrEmpty(nextToken))
+            {
+                request.AddQueryParameter("nextToken", nextToken);
+            }
+
+            var response = await ExecuteWithErrorHandling<ListInferenceProfilesBedrockRestResponse>(request);
+            profiles.AddRange(response.Profiles.Select(profile => new BedrockInferenceProfile(
+                profile.Id,
+                profile.Name,
+                profile.Status,
+                profile.Models.Select(model => model.Arn).ToList())));
+            nextToken = response.NextToken;
+        } while (!string.IsNullOrEmpty(nextToken));
+
+        return profiles;
     }
 
     public async Task<ConnectionValidationResponse> ValidateConnection()

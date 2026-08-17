@@ -63,7 +63,35 @@ public class AmazonBedrockSdkClient : IAnthropicClient
                 }
             )
         );
-        return models.ModelSummaries.Select(x => new ModelResponse(x.ModelId, x.ModelName)).ToList();
+        var foundationModels = models.ModelSummaries.Select(x => new ModelResponse(x.ModelId, x.ModelName));
+        var inferenceProfiles = await ListInferenceProfiles();
+
+        return BedrockModelDiscovery.Merge(foundationModels, inferenceProfiles);
+    }
+
+    private async Task<List<BedrockInferenceProfile>> ListInferenceProfiles()
+    {
+        var profiles = new List<BedrockInferenceProfile>();
+        string? nextToken = null;
+
+        do
+        {
+            var response = await ExecuteWithErrorHandling(async () =>
+                await ManagementClient.ListInferenceProfilesAsync(new ListInferenceProfilesRequest
+                {
+                    MaxResults = 1000,
+                    NextToken = nextToken
+                }));
+
+            profiles.AddRange(response.InferenceProfileSummaries.Select(profile => new BedrockInferenceProfile(
+                profile.InferenceProfileId,
+                profile.InferenceProfileName,
+                profile.Status.Value,
+                profile.Models.Select(model => model.ModelArn).ToList())));
+            nextToken = response.NextToken;
+        } while (!string.IsNullOrEmpty(nextToken));
+
+        return profiles;
     }
 
     public async Task<ResponseMessage> ExecuteChat(MessageRequest request)
