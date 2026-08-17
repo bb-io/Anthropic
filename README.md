@@ -25,13 +25,17 @@ Select Key authentication and copy your `Endpoint` and `API key`. Copy your `Dep
 
 - **Amazon Bedrock (AWS Credentials) connection type**: 
 You have AWS `Access key` and `Secret key` and the `Region` code where the models were enabled. 
-The IAM user must have these policies enabled: `bedrock:InvokeModel`, `bedrock:ListFoundationModels`.
+The IAM user must have these permissions enabled: `bedrock:InvokeModel`, `bedrock:ListFoundationModels`,
+`bedrock:ListInferenceProfiles`, and `bedrock:GetInferenceProfile`. When using a cross-Region inference profile,
+`bedrock:InvokeModel` must also be allowed for the profile and its destination model resources.
 
 - **Amazon Bedrock (API Key) connection type**: 
 You have a Bedrock `API token` generated in the AWS console under Bedrock -> Settings -> API keys, and you have the `Region` code.
 
-**Note**: For Amazon Bedrock connection types, you also need to have access to the specific Anthropic models. 
-Go to AWS Bedrock Console -> Model access -> Manage model access and check the boxes for the Anthropic models.
+**Note**: Foundation models are automatically enabled in AWS commercial regions when first invoked. First-time
+Anthropic users may still need to submit their use case details, and AWS Marketplace-backed models require the
+appropriate Marketplace permissions. Model availability and inference profiles are region-specific and can be
+restricted through IAM policies and Service Control Policies.
 
 ## Connecting
 
@@ -73,7 +77,7 @@ future reference e.g. 'My connection'.
 ### Chat actions
 
 - **Chat** action has the following input values in order to configure the generated response:
-1. Model (All current and available models are listed in the dropdown)
+1. Model (Available direct models and active system-defined or application inference profiles are listed in the dropdown)
 2. Prompt
 3. Max tokens to sample
 4. Temperature
