@@ -20,6 +20,12 @@
       "baseUrl": "",
       "apiKey": "",
       "deploymentName": ""
+    },
+    {
+      "connectionType": "Google Vertex AI",
+      "projectId": "",
+      "location": "global",
+      "serviceAccountJson": ""
     }
   ],
   "TestFolder": "C:\\Users\\..."

@@ -9,4 +9,7 @@ public static class CredNames
     public const string Region = "region";
     public const string DeploymentName = "deploymentName";
     public const string BaseUrl = "baseUrl";
+    public const string ProjectId = "projectId";
+    public const string Location = "location";
+    public const string ServiceAccountJson = "serviceAccountJson";
 }

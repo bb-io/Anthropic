@@ -20,7 +20,8 @@ public static class ModelIdentifierExtensions
 
                 break;
 
-            case ConnectionTypes.AnthropicNative or ConnectionTypes.BedrockCreds or ConnectionTypes.BedrockApiKey:
+            case ConnectionTypes.AnthropicNative or ConnectionTypes.BedrockCreds or ConnectionTypes.BedrockApiKey
+                or ConnectionTypes.GoogleVertex:
                 if (string.IsNullOrEmpty(modelIdentifier.Model))
                     throw new PluginMisconfigurationException("Please specify the model in the input");
 

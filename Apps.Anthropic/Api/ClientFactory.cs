@@ -1,6 +1,7 @@
 ﻿using Apps.Anthropic.Api.Anthropic;
 using Apps.Anthropic.Api.Bedrock;
 using Apps.Anthropic.Api.Interfaces;
+using Apps.Anthropic.Api.Vertex;
 using Apps.Anthropic.Constants;
 using Blackbird.Applications.Sdk.Common.Authentication;
 using Blackbird.Applications.Sdk.Utils.Extensions.Sdk;
@@ -18,6 +19,7 @@ public static class ClientFactory
             ConnectionTypes.BedrockCreds => new AmazonBedrockSdkClient(creds),
             ConnectionTypes.BedrockApiKey => new AmazonBedrockRestClient(creds),
             ConnectionTypes.MicrosoftFoundryApiKey => new AnthropicMsFoundryRestClient(creds),
+            ConnectionTypes.GoogleVertex => new GoogleVertexRestClient(creds),
             _ => throw new Exception($"Unsupported connection type: {connectionType}")
         };
     }
