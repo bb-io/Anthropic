@@ -32,6 +32,12 @@ The IAM user must have these permissions enabled: `bedrock:InvokeModel`, `bedroc
 - **Amazon Bedrock (API Key) connection type**: 
 You have a Bedrock `API token` generated in the AWS console under Bedrock -> Settings -> API keys, and you have the `Region` code.
 
+- **Google Vertex AI connection type**:
+You have a Google Cloud project with billing and the Vertex AI API enabled, access to the required Claude models
+in Model Garden, and a service account with the `Vertex AI User` (`roles/aiplatform.user`) role. Download the
+service account key as JSON. You also need the Google Cloud location where the models are available. Use `global`
+for the global endpoint, `us` or `eu` for a multi-region endpoint, or a specific region such as `us-east5`.
+
 **Note**: Foundation models are automatically enabled in AWS commercial regions when first invoked. First-time
 Anthropic users may still need to submit their use case details, and AWS Marketplace-backed models require the
 appropriate Marketplace permissions. Model availability and inference profiles are region-specific and can be
@@ -70,6 +76,16 @@ future reference e.g. 'My connection'.
 
 ![Amazon Bedrock API Key](image/README/bedrock_apikey.png)
 
+### Google Vertex AI
+
+1. Fill in your Google Cloud `Project ID`.
+2. Set the `Location` where the Claude models are available.
+3. Paste the complete service account key JSON into `Service account JSON`.
+4. Click _Connect_.
+
+The model dropdown contains the supported Google Vertex AI model IDs. Model availability depends on the selected
+location and the models enabled for your Google Cloud project.
+
 ## Actions
 
 >**Note**: Only the 'Anthropic API token' connection type supports skills.
@@ -107,7 +123,7 @@ For more in-depth information about action consult the [Anthropic API reference]
 
 ### Batch actions
 
->**Note**: Currently, batch actions are not supported for Amazon Bedrock connection types.
+>**Note**: Currently, batch actions are not supported for Amazon Bedrock and Google Vertex AI connection types.
 
 - **(Batch) Process XLIFF file** asynchronously process each translation unit in the XLIFF file according to the provided instructions (by default it just translates the source tags) and updates the target text for each unit.
 - **(Batch) Post-edit XLIFF file** asynchronously post-edit the target text of each translation unit in the XLIFF file according to the provided instructions and updates the target text for each unit. 

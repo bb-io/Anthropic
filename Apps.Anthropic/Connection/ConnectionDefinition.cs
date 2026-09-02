@@ -52,6 +52,22 @@ public class ConnectionDefinition : IConnectionDefinition
                 new(CredNames.ApiKey) { DisplayName = "API token", Sensitive = true },
                 new(CredNames.BaseUrl) { DisplayName = "Endpoint URL" }
             ]
+        },
+        new()
+        {
+            DisplayName = "Google Vertex AI",
+            Name = ConnectionTypes.GoogleVertex,
+            AuthenticationType = ConnectionAuthenticationType.Undefined,
+            ConnectionProperties =
+            [
+                new(CredNames.ProjectId) { DisplayName = "Project ID" },
+                new(CredNames.Location) { DisplayName = "Location" },
+                new(CredNames.ServiceAccountJson)
+                {
+                    DisplayName = "Service account JSON",
+                    Sensitive = true
+                }
+            ]
         }
     };
 
