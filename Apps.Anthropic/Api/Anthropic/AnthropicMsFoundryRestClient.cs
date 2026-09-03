@@ -39,6 +39,7 @@ public class AnthropicMsFoundryRestClient(IEnumerable<AuthenticationCredentialsP
         {
             var pingMessage = new MessageRequest
             {
+                MaxTokens = 16,
                 Messages = [ new() { Role = "user", Content = "Ping! Reply with 'Pong'" } ],
             };
 
