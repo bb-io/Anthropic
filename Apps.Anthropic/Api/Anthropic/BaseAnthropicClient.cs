@@ -132,14 +132,7 @@ public class BaseAnthropicClient : BlackBirdRestClient
                 formattedMessages.Add(new { role = msg.Role, content = msg.Content });
         }
 
-        var payload = new Dictionary<string, object?>
-        {
-            ["model"] = message.Model,
-            ["max_tokens"] = message.MaxTokens,
-            ["system"] = message.System,
-            ["messages"] = formattedMessages,
-            ["stop_sequences"] = message.StopSequences
-        };
+        var payload = BuildPayload(message, formattedMessages);
         
         if (this is ISupportsSkills && !string.IsNullOrEmpty(message.SkillId))
         {
@@ -195,5 +188,27 @@ public class BaseAnthropicClient : BlackBirdRestClient
             Text = response.Content.ExtractText(),
             Usage = response.Usage
         };
+    }
+
+    internal static Dictionary<string, object?> BuildPayload(MessageRequest message, List<object> formattedMessages)
+    {
+        var payload = new Dictionary<string, object?>
+        {
+            ["model"] = message.Model,
+            ["max_tokens"] = message.MaxTokens,
+            ["messages"] = formattedMessages
+        };
+
+        if (!string.IsNullOrWhiteSpace(message.System))
+        {
+            payload["system"] = message.System;
+        }
+
+        if (message.StopSequences is { Count: > 0 })
+        {
+            payload["stop_sequences"] = message.StopSequences;
+        }
+
+        return payload;
     }
 }
