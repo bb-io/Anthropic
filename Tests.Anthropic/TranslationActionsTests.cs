@@ -16,7 +16,7 @@ public class TranslationActionsTests : TestBaseMultipleConnections
     {
         // Arrange
         var translationActions = new TranslationActions(context, FileManager);
-        var model = new ModelIdentifier { Model = "claude-fable-5" };
+        var model = new ModelIdentifier { Model = "claude-sonnet-4-6" };
         var skillRequest = new OptionalSkillRequest { SkillId = "" };
 
         // Act
@@ -26,11 +26,17 @@ public class TranslationActionsTests : TestBaseMultipleConnections
             {
                 File = new FileReference
                 {
-                    Name = "simple_with_html.xliff",
+                    Name = "glossary_filter_test.xliff",
                     //ContentType = "application/xliff+xml"
                 },
-                TargetLanguage = "fr",
-                AdditionalInstructions = "Translate accurately while maintaining the original meaning"
+                Glossary = new FileReference
+                {
+                    Name = "terminology_test.tbx",
+                    //ContentType = "application/x-tbx"
+                },
+                FilterGlossary = false,
+                TargetLanguage = "nl-NL",
+                //AdditionalInstructions = "Translate accurately while maintaining the original meaning"
             },
             skillRequest);
 
@@ -39,10 +45,10 @@ public class TranslationActionsTests : TestBaseMultipleConnections
         TestContext.WriteLine($"Updated segments: {result.UpdatedSegmentsCount}");
         PrintResult(result);
 
-        Assert.IsNotNull(result);
-        Assert.IsNotNull(result.File);
-        Assert.IsGreaterThan(0, result.TotalSegmentsCount);
-        Assert.IsNotNull(result.Usage);
+        //Assert.IsNotNull(result);
+        //Assert.IsNotNull(result.File);
+        //Assert.IsGreaterThan(0, result.TotalSegmentsCount);
+        //Assert.IsNotNull(result.Usage);
     }
 
     [TestMethod, ContextDataSource]

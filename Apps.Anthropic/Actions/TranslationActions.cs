@@ -62,6 +62,7 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
         segments = segments.Where(x => !x.IsIgnorbale && x.IsInitial).ToList();
         var glossaryContext = new Lazy<Task<GlossaryPromptContext?>>(
             () => GlossaryPromptHelper.CreateContextAsync(input.Glossary, fileManagementClient));
+        var prompts = new System.Collections.Concurrent.ConcurrentQueue<string>();
 
         async Task<IEnumerable<TranslationEntity>> TranslateBatch(IEnumerable<(Unit Unit, Segment Segment)> batch)
         {
@@ -91,6 +92,8 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
             {
                 completionRequest.Prompt += glossaryPromptPart;
             }
+
+            prompts.Enqueue(completionRequest.Prompt);
 
             var response = await _aiUtilities.SendMessageAsync(modelIdentifier, completionRequest, new());
             
@@ -146,6 +149,7 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
         }
 
         result.UpdatedSegmentsCount = updatedCount;
+        result.Prompts = prompts.ToList();
 
         if (input.OutputFileHandling == "original")
         {

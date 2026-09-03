@@ -87,6 +87,8 @@ public class ReviewActions(InvocationContext invocationContext, IFileManagementC
                 completionRequest.Prompt += glossaryPromptPart;
             }
 
+            result.Prompts.Add(completionRequest.Prompt);
+
             var response = await _aiUtilities.SendMessageAsync(modelIdentifier, completionRequest, new());
             result.Usage += response.Usage;
 

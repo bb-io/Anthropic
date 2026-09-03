@@ -9,6 +9,9 @@ public class TranslateContentResponse : ITranslateFileOutput
     public FileReference File { get; set; } = new();
 
     public UsageResponse Usage { get; set; } = new();
+
+    [Display("Prompts", Description = "User prompts sent to Anthropic, one per request.")]
+    public List<string> Prompts { get; set; } = [];
     
     [Display("Total segments count")]
     public double TotalSegmentsCount { get; set; }

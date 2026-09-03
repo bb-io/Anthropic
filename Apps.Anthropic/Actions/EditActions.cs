@@ -68,6 +68,7 @@ public class EditActions(InvocationContext invocationContext, IFileManagementCli
         segments = segments.Where(x => !x.IsIgnorbale && x.State == SegmentState.Translated).ToList();
         var glossaryContext = new Lazy<Task<GlossaryPromptContext?>>(
             () => GlossaryPromptHelper.CreateContextAsync(input.Glossary, fileManagementClient));
+        var prompts = new System.Collections.Concurrent.ConcurrentQueue<string>();
 
         async Task<IEnumerable<TranslationEntity>> EditBatch(IEnumerable<(Unit Unit, Segment Segment)> batch)
         {
@@ -98,6 +99,8 @@ public class EditActions(InvocationContext invocationContext, IFileManagementCli
             {
                 completionRequest.Prompt += glossaryPromptPart;
             }
+
+            prompts.Enqueue(completionRequest.Prompt);
 
             var response = await _aiUtilities.SendMessageAsync(modelIdentifier, completionRequest, new());
             
@@ -166,6 +169,7 @@ public class EditActions(InvocationContext invocationContext, IFileManagementCli
         }
 
         result.TotalSegmentsUpdated = updatedCount;
+        result.Prompts = prompts.ToList();
 
         if (input.OutputFileHandling == "original")
         {
