@@ -274,7 +274,9 @@ public class BatchActions : AnthropicInvocable
             var glossaryText = "";
             if (request.Glossary != null)
             {
-                glossaryText = await GlossaryPromptHelper.GetGlossaryPromptPart(new() { Glossary = request.Glossary }, _fileManagementClient);
+                glossaryText = await GlossaryPromptHelper.GetGlossaryPromptPart(
+                    new() { Glossary = request.Glossary },
+                    _fileManagementClient) ?? string.Empty;
             }
 
             var content = contentFactory(translationUnit, glossaryText);

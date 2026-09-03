@@ -74,14 +74,13 @@ public class AiUtilities(InvocationContext invocationContext, IFileManagementCli
         return response.Text;
     }
     
-    public async Task<string?> GetGlossaryPromptPart(FileReference? glossary, string text, bool includeReverse = false)
+    public async Task<string?> GetGlossaryPromptPart(
+        FileReference? glossary,
+        IEnumerable<string?> content,
+        bool filter = false)
     {
-        if (glossary == null)
-        {
-            return null;
-        }
-        
-        return await GlossaryPromptHelper.GetGlossaryPromptPart(new GlossaryRequest { Glossary = glossary }, fileManagementClient);
+        var context = await GlossaryPromptHelper.CreateContextAsync(glossary, fileManagementClient);
+        return context?.BuildPrompt(content, filter);
     }
 
     private async Task<InputFileData> ProcessInputFile(FileReference file)

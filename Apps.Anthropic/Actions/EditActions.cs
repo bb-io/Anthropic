@@ -66,9 +66,13 @@ public class EditActions(InvocationContext invocationContext, IFileManagementCli
         
         result.TotalSegmentsReviewed = segments.Count();
         segments = segments.Where(x => !x.IsIgnorbale && x.State == SegmentState.Translated).ToList();
+        var glossaryContext = new Lazy<Task<GlossaryPromptContext?>>(
+            () => GlossaryPromptHelper.CreateContextAsync(input.Glossary, fileManagementClient));
+
         async Task<IEnumerable<TranslationEntity>> EditBatch(IEnumerable<(Unit Unit, Segment Segment)> batch)
         {
-            var batchForJson = batch.Select(x => x.Segment).Select((x, i) => new { 
+            var batchList = batch.ToList();
+            var batchForJson = batchList.Select(x => x.Segment).Select((x, i) => new {
                 id = i, 
                 source_text = x.GetSource(), 
                 target_text = x.GetTarget() 
@@ -86,11 +90,16 @@ public class EditActions(InvocationContext invocationContext, IFileManagementCli
                 StopSequences = input.StopSequences,
                 SkillId = skillInput.SkillId
             };
-            
-            var response = await _aiUtilities.SendMessageAsync(modelIdentifier, completionRequest, new()
+
+            var glossaryPromptPart = (await glossaryContext.Value)?.BuildPrompt(
+                batchList.SelectMany(x => new[] { x.Segment.GetSource(), x.Segment.GetTarget() }),
+                input.FilterGlossary ?? true);
+            if (!string.IsNullOrEmpty(glossaryPromptPart))
             {
-                Glossary = input.Glossary
-            });
+                completionRequest.Prompt += glossaryPromptPart;
+            }
+
+            var response = await _aiUtilities.SendMessageAsync(modelIdentifier, completionRequest, new());
             
             List<TranslationEntity> translationEntities = new();
             
@@ -206,7 +215,10 @@ public class EditActions(InvocationContext invocationContext, IFileManagementCli
 
         if (input.Glossary != null)
         {
-            var glossaryPromptPart = await _aiUtilities.GetGlossaryPromptPart(input.Glossary, input.SourceText, true);
+            var glossaryPromptPart = await _aiUtilities.GetGlossaryPromptPart(
+                input.Glossary,
+                [input.SourceText, input.TargetText],
+                true);
             if (!string.IsNullOrEmpty(glossaryPromptPart))
             {
                 userPrompt += glossaryPromptPart;
@@ -224,10 +236,7 @@ public class EditActions(InvocationContext invocationContext, IFileManagementCli
             SkillId = skillInput.SkillId
         };
 
-        var response = await _aiUtilities.SendMessageAsync(modelIdentifier, completionRequest, new()
-        {
-            Glossary = input.Glossary
-        });
+        var response = await _aiUtilities.SendMessageAsync(modelIdentifier, completionRequest, new());
 
         return new EditTextResponse
         {
