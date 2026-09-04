@@ -60,9 +60,14 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
         
         result.TotalSegmentsCount = segments.Count;
         segments = segments.Where(x => !x.IsIgnorbale && x.IsInitial).ToList();
+        var glossaryContext = new Lazy<Task<GlossaryPromptContext?>>(
+            () => GlossaryPromptHelper.CreateContextAsync(input.Glossary, fileManagementClient));
+        var prompts = new System.Collections.Concurrent.ConcurrentQueue<string>();
+
         async Task<IEnumerable<TranslationEntity>> TranslateBatch(IEnumerable<(Unit Unit, Segment Segment)> batch)
         {
-            var batchForJson = batch
+            var batchList = batch.ToList();
+            var batchForJson = batchList
                 .Select(x => x.Segment)
                 .Select((x, i) => new { id = i, source_text = x.GetSource()})
                 .ToList();
@@ -79,11 +84,18 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
                 StopSequences = input.StopSequences,
                 SkillId = skillInput.SkillId
             };
-            
-            var response = await _aiUtilities.SendMessageAsync(modelIdentifier, completionRequest, new()
+
+            var glossaryPromptPart = (await glossaryContext.Value)?.BuildPrompt(
+                batchList.Select(x => x.Segment.GetSource()),
+                input.FilterGlossary ?? true);
+            if (!string.IsNullOrEmpty(glossaryPromptPart))
             {
-                Glossary = input.Glossary
-            });
+                completionRequest.Prompt += glossaryPromptPart;
+            }
+
+            prompts.Enqueue(completionRequest.Prompt);
+
+            var response = await _aiUtilities.SendMessageAsync(modelIdentifier, completionRequest, new());
             
             List<TranslationEntity> translationEntities = new();
             try
@@ -137,6 +149,7 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
         }
 
         result.UpdatedSegmentsCount = updatedCount;
+        result.Prompts = prompts.ToList();
 
         if (input.OutputFileHandling == "original")
         {
@@ -188,7 +201,7 @@ Target language: {input.TargetLanguage}
 
         if (input.Glossary != null)
         {
-            var glossaryPromptPart = await _aiUtilities.GetGlossaryPromptPart(input.Glossary, input.Text, true);
+            var glossaryPromptPart = await _aiUtilities.GetGlossaryPromptPart(input.Glossary, [input.Text], true);
             if (!string.IsNullOrEmpty(glossaryPromptPart))
             {
                 userPrompt +=
@@ -213,10 +226,7 @@ Target language: {input.TargetLanguage}
             SkillId = skillInput.SkillId
         };
 
-        var response = await _aiUtilities.SendMessageAsync(modelIdentifier, completionRequest, new()
-        {
-            Glossary = input.Glossary
-        });
+            var response = await _aiUtilities.SendMessageAsync(modelIdentifier, completionRequest, new());
 
         return new TranslateTextResponse
         {

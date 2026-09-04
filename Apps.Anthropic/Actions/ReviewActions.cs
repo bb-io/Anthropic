@@ -48,6 +48,8 @@ public class ReviewActions(InvocationContext invocationContext, IFileManagementC
         var totalScore = 0.0f;
         var finalizedSegments = 0;
         var underThresholdSegments = 0;
+        var glossaryContext = new Lazy<Task<GlossaryPromptContext?>>(
+            () => GlossaryPromptHelper.CreateContextAsync(input.Glossary, fileManagementClient));
 
         foreach (var segment in segments)
         {
@@ -77,7 +79,17 @@ public class ReviewActions(InvocationContext invocationContext, IFileManagementC
                 SkillId = skillInput.SkillId
             };
 
-            var response = await _aiUtilities.SendMessageAsync(modelIdentifier, completionRequest, new() { Glossary = input.Glossary });
+            var glossaryPromptPart = (await glossaryContext.Value)?.BuildPrompt(
+                [segment.GetSource()],
+                input.FilterGlossary ?? true);
+            if (!string.IsNullOrEmpty(glossaryPromptPart))
+            {
+                completionRequest.Prompt += glossaryPromptPart;
+            }
+
+            result.Prompts.Add(completionRequest.Prompt);
+
+            var response = await _aiUtilities.SendMessageAsync(modelIdentifier, completionRequest, new());
             result.Usage += response.Usage;
 
             var deserializationResult = ResponseDeserializationHelper.DeserializeReviewResponse(response.Text);
@@ -148,6 +160,13 @@ public class ReviewActions(InvocationContext invocationContext, IFileManagementC
         var userPrompt = PromptBuilder.BuildReviewUserPrompt(input.AdditionalInstructions, input.SourceLanguage, input.TargetLanguage, json);
         var systemPrompt = PromptBuilder.BuildReviewSystemPrompt();
 
+        var glossaryContext = await GlossaryPromptHelper.CreateContextAsync(input.Glossary, fileManagementClient);
+        var glossaryPromptPart = glossaryContext?.BuildPrompt([input.SourceText], true);
+        if (!string.IsNullOrEmpty(glossaryPromptPart))
+        {
+            userPrompt += glossaryPromptPart;
+        }
+
         var completionRequest = new CompletionRequest
         {
             Prompt = userPrompt,
@@ -159,7 +178,7 @@ public class ReviewActions(InvocationContext invocationContext, IFileManagementC
             SkillId = skillInput.SkillId
         };
 
-        var response = await _aiUtilities.SendMessageAsync(modelIdentifier, completionRequest, new() { Glossary = input.Glossary });
+        var response = await _aiUtilities.SendMessageAsync(modelIdentifier, completionRequest, new());
         var deserializationResult = ResponseDeserializationHelper.DeserializeReviewResponse(response.Text);
 
         float qualityScore = 0.0f;

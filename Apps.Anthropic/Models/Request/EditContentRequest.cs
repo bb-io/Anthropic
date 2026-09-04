@@ -55,6 +55,9 @@ public class EditContentRequest : IEditFileInput
     public int? TopK { get; set; }
     
     public FileReference? Glossary { get; set; }
+
+    [Display("Filter glossary", Description = "By default, only glossary entries containing terms found in the source text are included. Matching is exact and case-insensitive. Set to false to include the entire glossary.")]
+    public bool? FilterGlossary { get; set; }
     
     [Display("Bucket size", Description = "Specify the number of source texts to be translated at once. Default value: 50. (See our documentation for an explanation)")]
     public int? BucketSize { get; set; } = XliffConstants.DefaultBucketSize;
