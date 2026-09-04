@@ -45,6 +45,6 @@ public class ReviewContentRequest : IReviewFileInput
     
     public FileReference? Glossary { get; set; }
 
-    [Display("Filter glossary", Description = "By default, only glossary entries containing terms found in the source or target text are included. Matching is exact and case-insensitive. Set to false to include the entire glossary.")]
+    [Display("Filter glossary", Description = "By default, only glossary entries containing terms found in the source text are included. Matching is exact and case-insensitive. Set to false to include the entire glossary.")]
     public bool? FilterGlossary { get; set; }
 }

@@ -86,7 +86,7 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
             };
 
             var glossaryPromptPart = (await glossaryContext.Value)?.BuildPrompt(
-                batchList.SelectMany(x => new[] { x.Segment.GetSource(), x.Segment.GetTarget() }),
+                batchList.Select(x => x.Segment.GetSource()),
                 input.FilterGlossary ?? true);
             if (!string.IsNullOrEmpty(glossaryPromptPart))
             {

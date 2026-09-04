@@ -93,7 +93,7 @@ public class EditActions(InvocationContext invocationContext, IFileManagementCli
             };
 
             var glossaryPromptPart = (await glossaryContext.Value)?.BuildPrompt(
-                batchList.SelectMany(x => new[] { x.Segment.GetSource(), x.Segment.GetTarget() }),
+                batchList.Select(x => x.Segment.GetSource()),
                 input.FilterGlossary ?? true);
             if (!string.IsNullOrEmpty(glossaryPromptPart))
             {
@@ -221,7 +221,7 @@ public class EditActions(InvocationContext invocationContext, IFileManagementCli
         {
             var glossaryPromptPart = await _aiUtilities.GetGlossaryPromptPart(
                 input.Glossary,
-                [input.SourceText, input.TargetText],
+                [input.SourceText],
                 true);
             if (!string.IsNullOrEmpty(glossaryPromptPart))
             {

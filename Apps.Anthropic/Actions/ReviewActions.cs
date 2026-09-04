@@ -80,7 +80,7 @@ public class ReviewActions(InvocationContext invocationContext, IFileManagementC
             };
 
             var glossaryPromptPart = (await glossaryContext.Value)?.BuildPrompt(
-                [segment.GetSource(), segment.GetTarget()],
+                [segment.GetSource()],
                 input.FilterGlossary ?? true);
             if (!string.IsNullOrEmpty(glossaryPromptPart))
             {
@@ -161,7 +161,7 @@ public class ReviewActions(InvocationContext invocationContext, IFileManagementC
         var systemPrompt = PromptBuilder.BuildReviewSystemPrompt();
 
         var glossaryContext = await GlossaryPromptHelper.CreateContextAsync(input.Glossary, fileManagementClient);
-        var glossaryPromptPart = glossaryContext?.BuildPrompt([input.SourceText, input.TargetText], true);
+        var glossaryPromptPart = glossaryContext?.BuildPrompt([input.SourceText], true);
         if (!string.IsNullOrEmpty(glossaryPromptPart))
         {
             userPrompt += glossaryPromptPart;
