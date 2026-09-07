@@ -15,7 +15,13 @@ public class TranslateContentResponse : ITranslateFileOutput
     
     [Display("Total segments count")]
     public double TotalSegmentsCount { get; set; }
+
+    [Display("Total words count")]
+    public int TotalWordsCount { get; set; }
     
     [Display("Updated segments count")]
     public double UpdatedSegmentsCount { get; set; } 
+    
+    [Display("Updated words count")]
+    public int UpdatedWordsCount { get; set; }
 }

@@ -16,6 +16,12 @@ public class EditContentResponse : IEditFileOutput
     [Display("Total segments reviewed")]
     public int TotalSegmentsReviewed { get; set; }
     
+    [Display("Total words reviewed")]
+    public int TotalWordsReviewed { get; set; }
+    
     [Display("Total segments updated")]
     public int TotalSegmentsUpdated { get; set; }
+    
+    [Display("Total words updated")]
+    public int TotalWordsUpdated { get; set; }
 }

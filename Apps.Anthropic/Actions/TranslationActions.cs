@@ -59,6 +59,8 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
         var segments = units.SelectMany(x => x.Segments).ToList();
         
         result.TotalSegmentsCount = segments.Count;
+        result.TotalWordsCount = segments.Sum(segment => segment.Source.CountWords());
+        
         segments = segments.Where(x => !x.IsIgnorbale && x.IsInitial).ToList();
         var glossaryContext = new Lazy<Task<GlossaryPromptContext?>>(
             () => GlossaryPromptHelper.CreateContextAsync(input.Glossary, fileManagementClient));
@@ -127,7 +129,9 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
         }
         
         var processedBatches = await units.Batch(input.BucketSize ?? XliffConstants.DefaultBucketSize).Process(TranslateBatch);
-        var updatedCount = 0;
+        
+        int updatedSegmentsCount = 0;
+        int updatedWordsCount = 0;
         foreach (var (unit, results) in processedBatches)
         {
             foreach (var (segment, translation) in results)
@@ -141,14 +145,17 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
                 
                 if (segment.GetTarget() != translation.TranslatedText)
                 {
-                    updatedCount++;
+                    updatedSegmentsCount++;
                     segment.SetTarget(translation.TranslatedText);
                     segment.State = SegmentState.Translated;
+                    updatedWordsCount += segment.Source.CountWords();
                 }
             }
         }
 
-        result.UpdatedSegmentsCount = updatedCount;
+        result.UpdatedSegmentsCount = updatedSegmentsCount;
+        result.UpdatedWordsCount = updatedWordsCount;
+        
         result.Prompts = prompts.ToList();
 
         if (input.OutputFileHandling == "original")
