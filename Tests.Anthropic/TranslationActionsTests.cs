@@ -24,31 +24,15 @@ public class TranslationActionsTests : TestBaseMultipleConnections
             model,
             new TranslateContentRequest
             {
-                File = new FileReference
-                {
-                    Name = "glossary_filter_test.xliff",
-                    //ContentType = "application/xliff+xml"
-                },
-                Glossary = new FileReference
-                {
-                    Name = "terminology_test.tbx",
-                    //ContentType = "application/x-tbx"
-                },
+                File = new FileReference { Name = "simple.xliff", ContentType = "application/xliff+xml" },
                 FilterGlossary = false,
                 TargetLanguage = "nl-NL",
-                //AdditionalInstructions = "Translate accurately while maintaining the original meaning"
             },
             skillRequest);
 
         // Assert
-        TestContext.WriteLine($"Total segments: {result.TotalSegmentsCount}");
-        TestContext.WriteLine($"Updated segments: {result.UpdatedSegmentsCount}");
         PrintResult(result);
-
-        //Assert.IsNotNull(result);
-        //Assert.IsNotNull(result.File);
-        //Assert.IsGreaterThan(0, result.TotalSegmentsCount);
-        //Assert.IsNotNull(result.Usage);
+        Assert.IsNotNull(result.File);
     }
 
     [TestMethod, ContextDataSource]

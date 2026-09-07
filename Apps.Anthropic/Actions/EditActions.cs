@@ -64,7 +64,9 @@ public class EditActions(InvocationContext invocationContext, IFileManagementCli
         
         var segments = units.SelectMany(x => x.Segments).ToList();
         
-        result.TotalSegmentsReviewed = segments.Count();
+        result.TotalSegmentsReviewed = segments.Count;
+        result.TotalWordsReviewed = segments.Sum(segment => segment.Source.CountWords());
+        
         segments = segments.Where(x => !x.IsIgnorbale && x.State == SegmentState.Translated).ToList();
         var glossaryContext = new Lazy<Task<GlossaryPromptContext?>>(
             () => GlossaryPromptHelper.CreateContextAsync(input.Glossary, fileManagementClient));
@@ -140,7 +142,8 @@ public class EditActions(InvocationContext invocationContext, IFileManagementCli
         }
         
         var processedBatches = await units.Batch(input.BucketSize ?? XliffConstants.DefaultBucketSize).Process(EditBatch);
-        var updatedCount = 0;
+        int updatedSegmentsCount = 0;
+        int updatedWordsCount = 0;
         
         foreach (var (unit, results) in processedBatches)
         {
@@ -149,9 +152,10 @@ public class EditActions(InvocationContext invocationContext, IFileManagementCli
             {
                 if (segment.GetTarget() != translation.TranslatedText)
                 {
-                    updatedCount++;
+                    updatedSegmentsCount++;
                     segment.SetTarget(translation.TranslatedText);
                     modifiedSegment = true;
+                    updatedWordsCount += segment.Source.CountWords();
                 }
                 segment.State = SegmentState.Reviewed;
             }
@@ -168,7 +172,9 @@ public class EditActions(InvocationContext invocationContext, IFileManagementCli
             unit.Other.Add(new XAttribute(attrNamespace + "modified-by", input.ModifiedBy));
         }
 
-        result.TotalSegmentsUpdated = updatedCount;
+        result.TotalSegmentsUpdated = updatedSegmentsCount;
+        result.TotalWordsUpdated = updatedWordsCount;
+        
         result.Prompts = prompts.ToList();
 
         if (input.OutputFileHandling == "original")
