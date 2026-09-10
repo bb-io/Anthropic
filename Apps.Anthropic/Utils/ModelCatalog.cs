@@ -18,6 +18,7 @@ public static class ModelCatalog
         ["claude-opus-4-8"] = new(128000, false),
         ["claude-opus-4-6"] = new(128000, false),
         ["claude-opus-4-5@20251101"] = new(64000, true),
+        ["claude-opus-5"] = new(128000, false),
         ["claude-sonnet-4-20250514"] = new(64000, true),
         ["claude-sonnet-4@20250514"] = new(64000, true),
         ["claude-sonnet-4-0"] = new(64000, true),
