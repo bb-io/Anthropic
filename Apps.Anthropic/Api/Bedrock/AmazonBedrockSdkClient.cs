@@ -167,6 +167,7 @@ public class AmazonBedrockSdkClient : IAnthropicClient
             ? [new SystemContentBlock { Text = request.System }]
             : new List<SystemContentBlock>();
 
+        var inferenceParameters = BedrockInferenceParameters.From(request);
         var bedrockRequest = new ConverseRequest
         {
             ModelId = request?.Model,
@@ -174,14 +175,14 @@ public class AmazonBedrockSdkClient : IAnthropicClient
             System = system,
             InferenceConfig = new InferenceConfiguration
             {
-                MaxTokens = request?.MaxTokens,
-                Temperature = request?.Temperature,
-                TopP = request?.TopP
+                MaxTokens = inferenceParameters.MaxTokens,
+                Temperature = inferenceParameters.Temperature,
+                TopP = inferenceParameters.TopP
             }
         }; 
         
-        if (request.TopK.HasValue)
-            bedrockRequest.AdditionalModelRequestFields = new Document { { "top_k", request.TopK.Value } };
+        if (inferenceParameters.TopK.HasValue)
+            bedrockRequest.AdditionalModelRequestFields = new Document { { "top_k", inferenceParameters.TopK.Value } };
 
         var response = await ExecuteWithErrorHandling(async () => await ChatClient.ConverseAsync(bedrockRequest));
 

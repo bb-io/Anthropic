@@ -105,6 +105,7 @@ public class AmazonBedrockRestClient : RestClient, IAnthropicClient
             }
         }
 
+        var inferenceParameters = BedrockInferenceParameters.From(message);
         var payload = new
         {
             messages = formattedMessages,
@@ -113,10 +114,13 @@ public class AmazonBedrockRestClient : RestClient, IAnthropicClient
                 : null,
             inferenceConfig = new
             {
-                maxTokens = message.MaxTokens,
-                temperature = message.Temperature ?? 0.5f,
-              //  topP = message.TopP ?? 1f
-            }
+                maxTokens = inferenceParameters.MaxTokens,
+                temperature = inferenceParameters.Temperature,
+                topP = inferenceParameters.TopP
+            },
+            additionalModelRequestFields = inferenceParameters.TopK.HasValue
+                ? new Dictionary<string, object> { ["top_k"] = inferenceParameters.TopK.Value }
+                : null
         };
         restRequest.AddJsonBody(payload);
 
