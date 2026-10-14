@@ -1,5 +1,4 @@
-﻿using Apps.Anthropic.Constants;
-using Apps.Anthropic.DataSourceHandlers.EnumHandlers;
+﻿using Apps.Anthropic.DataSourceHandlers.EnumHandlers;
 using Blackbird.Applications.SDK.Blueprints.Handlers;
 using Blackbird.Applications.SDK.Blueprints.Interfaces.Edit;
 using Blackbird.Applications.Sdk.Common;
@@ -59,11 +58,11 @@ public class EditContentRequest : IEditFileInput
     [Display("Filter glossary", Description = "By default, only glossary entries containing terms found in the source text are included. Matching is exact and case-insensitive. Set to false to include the entire glossary.")]
     public bool? FilterGlossary { get; set; }
     
-    [Display("Bucket size", Description = "Specify the number of source texts to be translated at once. Default value: 50. (See our documentation for an explanation)")]
-    public int? BucketSize { get; set; } = XliffConstants.DefaultBucketSize;
+    [Display("Bucket size", Description = "Specify the maximum number of source texts to be edited at once. Default value: 250. Buckets are also sized to fit the model's output limit. (See our documentation for an explanation)")]
+    public int? BucketSize { get; set; }
 
-    [Display("Ignore deserialization errors", Description = "If enabled, the action will ignore deserialization errors and return the response as is.")]
-    public bool? IgnoreDeserializationErrors { get; set; }
+    [Display("Generate document summary", Description = "By default, a short summary of the document is generated and given to the model as context for files of 20 or more segments. This costs one extra request. Set to false to skip it.")]
+    public bool? GenerateDocumentSummary { get; set; }
 
     [Display("Modified by")]
     public string? ModifiedBy { get; set; }

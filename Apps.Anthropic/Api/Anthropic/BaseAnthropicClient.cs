@@ -186,7 +186,8 @@ public class BaseAnthropicClient : BlackBirdRestClient
         return new ResponseMessage
         {
             Text = response.Content.ExtractText(),
-            Usage = response.Usage
+            Usage = response.Usage,
+            StopReason = response.StopReason
         };
     }
 
