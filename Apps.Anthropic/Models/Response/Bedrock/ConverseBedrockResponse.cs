@@ -9,4 +9,7 @@ public class ConverseBedrockResponse
 
     [JsonProperty("usage")]
     public UsageBedrockResponse Usage { get; set; }
+
+    [JsonProperty("stopReason")]
+    public string? StopReason { get; set; }
 }

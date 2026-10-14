@@ -1,34 +1,30 @@
-﻿using Apps.Anthropic.Constants;
+﻿using Apps.Anthropic.Ai;
 using Apps.Anthropic.Extensions;
 using Apps.Anthropic.Invocable;
-using Apps.Anthropic.Models.Entities;
 using Apps.Anthropic.Models.Identifiers;
 using Apps.Anthropic.Models.Request;
 using Apps.Anthropic.Models.Request.Optional;
 using Apps.Anthropic.Models.Response;
-using Apps.Anthropic.Utils;
+using Blackbird.Ai.Files;
+using Blackbird.Ai.Files.Models;
+using Blackbird.Ai.Prompts;
+using Blackbird.Ai.Summary.Models;
+using Blackbird.Ai.Text;
+using Blackbird.Ai.Text.Models;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
-using Blackbird.Applications.Sdk.Common.Exceptions;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.SDK.Blueprints;
 using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
-using Blackbird.Filters.Constants;
-using Blackbird.Filters.Enums;
-using Blackbird.Filters.Extensions;
-using Blackbird.Filters.Transformations;
-using Newtonsoft.Json;
 
 namespace Apps.Anthropic.Actions;
 
 [ActionList("Translation")]
-public class TranslationActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient) 
-    : AnthropicInvocable(invocationContext)
+public class TranslationActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient)
+    : AnthropicAiInvocable(invocationContext, fileManagementClient)
 {
-    private readonly AiUtilities _aiUtilities = new(invocationContext, fileManagementClient);
-    
     [BlueprintActionDefinition(BlueprintAction.TranslateFile)]
-    [Action("Translate", 
+    [Action("Translate",
         Description = "Translate file content retrieved from a CMS or file storage. The output can be used in compatible actions.")]
     public async Task<TranslateContentResponse> Translate(
         [ActionParameter] ModelIdentifier modelIdentifier,
@@ -37,144 +33,40 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
     {
         modelIdentifier.Validate(InvocationContext.AuthenticationCredentialsProviders);
 
-        var result = new TranslateContentResponse();
-            
-        await using var inputFileStream = await fileManagementClient.DownloadAsync(input.File);
-        
-        var content = inputFileStream.LoadTransformation(input.File.Name);
-        content.SourceLanguage ??= input.SourceLanguage;
-        content.TargetLanguage ??= input.TargetLanguage;    
-        if (content.TargetLanguage == null)
+        var client = CreateLlmClient(modelIdentifier.Model, new AnthropicLlmSettings(
+            input.Temperature, input.TopP, input.TopK, input.MaxTokensToSample, input.StopSequences, skillInput.SkillId));
+        var processor = new ContentStreamProcessor(client, CreateEngineOptions(modelIdentifier.Model, input.BucketSize));
+
+        await using var file = await FileManagementClient.DownloadAsync(input.File);
+        await using var glossaryFile = await DownloadOptionalAsync(input.Glossary);
+
+        var result = await AiAdapters.Mapped(() => processor.TranslateAsync(new TranslateStreamOptions
         {
-            throw new PluginMisconfigurationException("The target language is not defined yet. Please assign the target language in this action.");
-        }
-        
-        if (content.SourceLanguage == null)
+            File = file,
+            FileName = input.File.Name,
+            MediaType = input.File.ContentType,
+            SourceLanguage = input.SourceLanguage,
+            TargetLanguage = input.TargetLanguage,
+            OutputFileHandling = input.OutputFileHandling,
+            GlossaryTbx = glossaryFile,
+            FilterGlossary = input.FilterGlossary ?? true,
+            AdditionalInstructions = input.AdditionalInstructions,
+            PromptStrategy = CustomSystemPromptStrategy.For(input.SystemPrompt, () => new TranslationPromptStrategy()),
+            Summary = SummaryOptions.FromToggle(input.GenerateDocumentSummary)
+        }));
+
+        var content = result.Content;
+
+        return new TranslateContentResponse
         {
-            var source = content.LoadSource();
-            content.SourceLanguage = await _aiUtilities.IdentifySourceLanguageAsync(modelIdentifier.Model, source.GetPlaintext());
-        }
-
-        var units = content.GetUnits().ToList();
-        var segments = units.SelectMany(x => x.Segments).ToList();
-        
-        result.TotalSegmentsCount = segments.Count;
-        result.TotalWordsCount = segments.Sum(segment => segment.Source.CountWords());
-        
-        segments = segments.Where(x => !x.IsIgnorbale && x.IsInitial).ToList();
-        var glossaryContext = new Lazy<Task<GlossaryPromptContext?>>(
-            () => GlossaryPromptHelper.CreateContextAsync(input.Glossary, fileManagementClient));
-        var prompts = new System.Collections.Concurrent.ConcurrentQueue<string>();
-
-        async Task<IEnumerable<TranslationEntity>> TranslateBatch(IEnumerable<(Unit Unit, Segment Segment)> batch)
-        {
-            var batchList = batch.ToList();
-            var batchForJson = batchList
-                .Select(x => x.Segment)
-                .Select((x, i) => new { id = i, source_text = x.GetSource()})
-                .ToList();
-            
-            var batchJson = JsonConvert.SerializeObject(batchForJson);
-            var completionRequest = new CompletionRequest
-            {
-                Prompt = PromptBuilder.BuildTranslateUserPrompt(input.AdditionalInstructions, content, batchJson),
-                SystemPrompt = input.SystemPrompt ?? PromptBuilder.BuildTranslateSystemPrompt(),
-                Temperature = input.Temperature,
-                TopP = input.TopP,
-                TopK = input.TopK,
-                MaxTokensToSample = input.MaxTokensToSample,
-                StopSequences = input.StopSequences,
-                SkillId = skillInput.SkillId
-            };
-
-            var glossaryPromptPart = (await glossaryContext.Value)?.BuildPrompt(
-                batchList.Select(x => x.Segment.GetSource()),
-                input.FilterGlossary ?? true);
-            if (!string.IsNullOrEmpty(glossaryPromptPart))
-            {
-                completionRequest.Prompt += glossaryPromptPart;
-            }
-
-            prompts.Enqueue(completionRequest.Prompt);
-
-            var response = await _aiUtilities.SendMessageAsync(modelIdentifier, completionRequest, new());
-            
-            List<TranslationEntity> translationEntities = new();
-            try
-            {
-                var deserializeResponse = ResponseDeserializationHelper.DeserializeResponse(response.Text);
-                if (deserializeResponse.Success)
-                {
-                    translationEntities = deserializeResponse.Translations;
-                }
-                else if(input.IgnoreDeserializationErrors == true)
-                {
-                    throw new PluginApplicationException("Anthropic returned an unexpected response that we cannot deserialize: " + response.Text);
-                }
-            } 
-            catch (Exception e) when (!e.Message.Contains("Anthropic returned an unexpected response"))
-            {
-                if (e.Message.Contains("Unterminated string. Expected delimiter:")) 
-                {
-                    throw new PluginApplicationException("Anthropic returned an unexpected response. Try adjusting the model or a lower bucket size or add retries to this action. Original error: " + e.Message);
-                }
-                else
-                {
-                    throw new PluginApplicationException(e.Message);
-                }
-            }
-
-            result.Usage += response.Usage;
-            return translationEntities;
-        }
-        
-        var processedBatches = await units.Batch(input.BucketSize ?? XliffConstants.DefaultBucketSize).Process(TranslateBatch);
-        
-        int updatedSegmentsCount = 0;
-        int updatedWordsCount = 0;
-        foreach (var (unit, results) in processedBatches)
-        {
-            foreach (var (segment, translation) in results)
-            {
-                
-                var shouldTranslateFromState = segment.State == null || segment.State == SegmentState.Initial;
-                if (!shouldTranslateFromState || string.IsNullOrEmpty(translation.TranslatedText))
-                {
-                    continue;
-                }
-                
-                if (segment.GetTarget() != translation.TranslatedText)
-                {
-                    updatedSegmentsCount++;
-                    segment.SetTarget(translation.TranslatedText);
-                    segment.State = SegmentState.Translated;
-                    updatedWordsCount += segment.Source.CountWords();
-                }
-            }
-        }
-
-        result.UpdatedSegmentsCount = updatedSegmentsCount;
-        result.UpdatedWordsCount = updatedWordsCount;
-        
-        result.Prompts = prompts.ToList();
-
-        if (input.OutputFileHandling == "original")
-        {
-            var targetContent = content.LoadTarget();
-            result.File = await fileManagementClient.UploadAsync(
-                targetContent.ToStream(),
-                targetContent.OriginalMediaType, 
-                targetContent.OriginalName);
-        } 
-        else
-        {
-            result.File = await fileManagementClient.UploadAsync(
-                content.Serialize().ToStream(), 
-                MediaTypes.Xliff2, 
-                content.BilingualFileName);
-        }       
-
-        return result;
+            File = await UploadAsync(result.File),
+            Usage = ToUsage(content.Usage, client),
+            Prompts = UserPrompts(content),
+            TotalSegmentsCount = content.TotalSegments,
+            TotalWordsCount = content.TotalWords,
+            UpdatedSegmentsCount = content.UpdatedSegments,
+            UpdatedWordsCount = content.UpdatedWords
+        };
     }
 
     [BlueprintActionDefinition(BlueprintAction.TranslateText)]
@@ -186,61 +78,29 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
     {
         modelIdentifier.Validate(InvocationContext.AuthenticationCredentialsProviders);
 
-        var systemPrompt = "You are a text localizer. Localize the provided text for the specified locale while " +
-                          "preserving the original text structure. Respond with localized text. Do not give any other answer but the translation. No explanation or other headers.";
+        var client = CreateLlmClient(modelIdentifier.Model, new AnthropicLlmSettings(
+            input.Temperature, input.TopP, input.TopK, input.MaxTokensToSample, SkillId: skillInput.SkillId));
+        var processor = new TextProcessor(client, CreateEngineOptions(modelIdentifier.Model));
 
-        var sourceLanguage = input.SourceLanguage;
-        if (string.IsNullOrEmpty(sourceLanguage))
+        await using var glossaryFile = await DownloadOptionalAsync(input.Glossary);
+
+        var result = await AiAdapters.Mapped(() => processor.TranslateAsync(new TranslateTextOptions
         {
-            sourceLanguage = await _aiUtilities.IdentifySourceLanguageAsync(modelIdentifier.Model, input.Text);
-        }
+            Text = input.Text,
+            SourceLanguage = input.SourceLanguage,
+            TargetLanguage = input.TargetLanguage,
+            AdditionalInstructions = input.AdditionalInstructions,
+            GlossaryTbx = glossaryFile
+        }));
 
-        var userPrompt = $@"
-Original text: {input.Text}
-Source language: {sourceLanguage}
-Target language: {input.TargetLanguage}
-";
-
-        if (!string.IsNullOrWhiteSpace(input.AdditionalInstructions))
-        {
-            userPrompt += $"\nAdditional instructions: {input.AdditionalInstructions}\n";
-        }
-
-        if (input.Glossary != null)
-        {
-            var glossaryPromptPart = await _aiUtilities.GetGlossaryPromptPart(input.Glossary, [input.Text], true);
-            if (!string.IsNullOrEmpty(glossaryPromptPart))
-            {
-                userPrompt +=
-                    "\nEnhance the localized text by incorporating relevant terms from our glossary where applicable. " +
-                    "If you encounter terms from the glossary in the text, ensure that the localized text aligns " +
-                    "with the glossary entries for the respective languages. If a term has variations or synonyms, " +
-                    "consider them and choose the most appropriate translation from the glossary to maintain " +
-                    $"consistency and precision. {glossaryPromptPart}";
-            }
-        }
-
-        userPrompt += "\nTranslated text: ";
-
-        var completionRequest = new CompletionRequest
-        {
-            Prompt = userPrompt,
-            SystemPrompt = systemPrompt,
-            Temperature = input.Temperature,
-            TopP = input.TopP,
-            TopK = input.TopK,
-            MaxTokensToSample = input.MaxTokensToSample,
-            SkillId = skillInput.SkillId
-        };
-
-            var response = await _aiUtilities.SendMessageAsync(modelIdentifier, completionRequest, new());
+        ThrowIfUnresolved(result.Content);
 
         return new TranslateTextResponse
         {
-            SystemPrompt = systemPrompt,
-            UserPrompt = userPrompt,
-            TranslatedText = response.Text,
-            Usage = response.Usage
+            TranslatedText = result.Text,
+            SystemPrompt = result.Content.SystemPrompt ?? string.Empty,
+            UserPrompt = string.Join(Environment.NewLine, UserPrompts(result.Content)),
+            Usage = ToUsage(result.Content.Usage, client)
         };
     }
 }

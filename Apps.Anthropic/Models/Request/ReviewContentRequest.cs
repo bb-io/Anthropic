@@ -47,4 +47,7 @@ public class ReviewContentRequest : IReviewFileInput
 
     [Display("Filter glossary", Description = "By default, only glossary entries containing terms found in the source text are included. Matching is exact and case-insensitive. Set to false to include the entire glossary.")]
     public bool? FilterGlossary { get; set; }
+
+    [Display("Generate document summary", Description = "By default, a short summary of the document is generated and given to the model as context for files of 20 or more segments. This costs one extra request. Set to false to skip it.")]
+    public bool? GenerateDocumentSummary { get; set; }
 }

@@ -195,7 +195,8 @@ public class AmazonBedrockSdkClient : IAnthropicClient
                 OutputTokens = response.Usage.OutputTokens ?? 0,
                 CacheCreationInputTokens = response.Usage.CacheWriteInputTokens ?? 0,
                 CacheReadInputTokens = response.Usage.CacheReadInputTokens ?? 0,
-            }
+            },
+            StopReason = response.StopReason?.Value
         };
     }
 

@@ -51,37 +51,6 @@ public class AiUtilities(InvocationContext invocationContext, IFileManagementCli
 
         return await Client.ExecuteChat(body);
     }
-    
-    public async Task<string> IdentifySourceLanguageAsync(string? model, string content)
-    {
-        var systemPrompt =
-            "You are a linguist. Identify the language of the following text. " +
-            "Your response should be in the BCP 47 (language) or (language-country). " +
-            "You respond with the language only, not other text is required.";
-
-        var snippet = content.Length > 200 ? content.Substring(0, Math.Min(300, content.Length)) : content;
-        var userPrompt = snippet + ". The BCP 47 language code: ";
-
-        var requestBody = new MessageRequest
-        {
-            System = systemPrompt,
-            Model = model,
-            Messages = [new() { Role = "user", Content = userPrompt }],
-            MaxTokens = 100
-        };
-
-        var response = await Client.ExecuteChat(requestBody);
-        return response.Text;
-    }
-    
-    public async Task<string?> GetGlossaryPromptPart(
-        FileReference? glossary,
-        IEnumerable<string?> content,
-        bool filter = false)
-    {
-        var context = await GlossaryPromptHelper.CreateContextAsync(glossary, fileManagementClient);
-        return context?.BuildPrompt(content, filter);
-    }
 
     private async Task<InputFileData> ProcessInputFile(FileReference file)
     {

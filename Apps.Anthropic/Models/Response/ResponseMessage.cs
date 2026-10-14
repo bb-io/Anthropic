@@ -5,4 +5,6 @@ public class ResponseMessage
     public string Text { get; set; } = string.Empty;
 
     public UsageResponse Usage { get; set; } = new();
+
+    public string? StopReason { get; set; }
 }

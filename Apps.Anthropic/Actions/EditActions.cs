@@ -1,33 +1,28 @@
-﻿using System.Xml.Linq;
-using Apps.Anthropic.Constants;
+﻿using Apps.Anthropic.Ai;
 using Apps.Anthropic.Extensions;
 using Apps.Anthropic.Invocable;
-using Apps.Anthropic.Models.Entities;
 using Apps.Anthropic.Models.Identifiers;
 using Apps.Anthropic.Models.Request;
 using Apps.Anthropic.Models.Request.Optional;
 using Apps.Anthropic.Models.Response;
-using Apps.Anthropic.Utils;
+using Blackbird.Ai.Files;
+using Blackbird.Ai.Files.Models;
+using Blackbird.Ai.Prompts;
+using Blackbird.Ai.Summary.Models;
+using Blackbird.Ai.Text;
+using Blackbird.Ai.Text.Models;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
-using Blackbird.Applications.Sdk.Common.Exceptions;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.SDK.Blueprints;
 using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
-using Blackbird.Filters.Constants;
-using Blackbird.Filters.Enums;
-using Blackbird.Filters.Extensions;
-using Blackbird.Filters.Transformations;
-using Newtonsoft.Json;
 
 namespace Apps.Anthropic.Actions;
 
 [ActionList("Editing")]
-public class EditActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient) 
-    : AnthropicInvocable(invocationContext)
+public class EditActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient)
+    : AnthropicAiInvocable(invocationContext, fileManagementClient)
 {
-    private readonly AiUtilities _aiUtilities = new(invocationContext, fileManagementClient);
-    
     [BlueprintActionDefinition(BlueprintAction.EditFile)]
     [Action("Edit", Description = "Edit a translation. This action assumes you have previously translated content in Blackbird through any translation action.")]
     public async Task<EditContentResponse> EditContent(
@@ -37,159 +32,44 @@ public class EditActions(InvocationContext invocationContext, IFileManagementCli
     {
         modelIdentifier.Validate(InvocationContext.AuthenticationCredentialsProviders);
 
-        var result = new EditContentResponse();
-        
-        await using var inputFileStream = await fileManagementClient.DownloadAsync(input.File);
-        
-        var content = inputFileStream.LoadTransformation(input.File.Name);
-        content.SourceLanguage ??= input.SourceLanguage;
-        content.TargetLanguage ??= input.TargetLanguage;    
-        
-        if (content.TargetLanguage == null)
+        var client = CreateLlmClient(modelIdentifier.Model, new AnthropicLlmSettings(
+            input.Temperature, input.TopP, input.TopK, input.MaxTokensToSample, input.StopSequences, skillInput.SkillId));
+        var processor = new ContentStreamProcessor(client, CreateEngineOptions(modelIdentifier.Model, input.BucketSize));
+
+        await using var file = await FileManagementClient.DownloadAsync(input.File);
+        await using var glossaryFile = await DownloadOptionalAsync(input.Glossary);
+
+        var result = await AiAdapters.Mapped(() => processor.EditAsync(new EditStreamOptions
         {
-            throw new PluginMisconfigurationException(
-                "The target language is not defined yet. Please assign the target language in this action.");
-        }
-        
-        if (content.SourceLanguage == null)
+            File = file,
+            FileName = input.File.Name,
+            MediaType = input.File.ContentType,
+            SourceLanguage = input.SourceLanguage,
+            TargetLanguage = input.TargetLanguage,
+            OutputFileHandling = input.OutputFileHandling,
+            GlossaryTbx = glossaryFile,
+            FilterGlossary = input.FilterGlossary ?? true,
+            AdditionalInstructions = input.AdditionalInstructions,
+            PromptStrategy = CustomSystemPromptStrategy.For(input.SystemPrompt, () => new EditPromptStrategy()),
+            Summary = SummaryOptions.FromToggle(input.GenerateDocumentSummary),
+            ModifiedBy = input.ModifiedBy,
+            ProcessLockedSegments = input.ProcessLockedSegments ?? false
+        }));
+
+        var content = result.Content;
+
+        return new EditContentResponse
         {
-            var sourcePlainText = content.LoadSource().GetPlaintext();
-            content.SourceLanguage = await _aiUtilities.IdentifySourceLanguageAsync(modelIdentifier.Model, sourcePlainText);
-        }
-        
-        var units = content.GetUnits().ToList();
-        
-        if (input.ProcessLockedSegments is null or false)
-            units = units.Where(x => x.Translate is null or true).ToList();
-        
-        var segments = units.SelectMany(x => x.Segments).ToList();
-        
-        result.TotalSegmentsReviewed = segments.Count;
-        result.TotalWordsReviewed = segments.Sum(segment => segment.Source.CountWords());
-        
-        segments = segments.Where(x => !x.IsIgnorbale && x.State == SegmentState.Translated).ToList();
-        var glossaryContext = new Lazy<Task<GlossaryPromptContext?>>(
-            () => GlossaryPromptHelper.CreateContextAsync(input.Glossary, fileManagementClient));
-        var prompts = new System.Collections.Concurrent.ConcurrentQueue<string>();
-
-        async Task<IEnumerable<TranslationEntity>> EditBatch(IEnumerable<(Unit Unit, Segment Segment)> batch)
-        {
-            var batchList = batch.ToList();
-            var batchForJson = batchList.Select(x => x.Segment).Select((x, i) => new {
-                id = i, 
-                source_text = x.GetSource(), 
-                target_text = x.GetTarget() 
-            }).ToList();
-            var batchJson = JsonConvert.SerializeObject(batchForJson);
-            
-            var completionRequest = new CompletionRequest
-            {
-                Prompt = PromptBuilder.BuildEditUserPrompt(input.AdditionalInstructions, content, batchJson),
-                SystemPrompt = input.SystemPrompt ?? PromptBuilder.BuildEditSystemPrompt(),
-                Temperature = input.Temperature,
-                TopP = input.TopP,
-                TopK = input.TopK,
-                MaxTokensToSample = input.MaxTokensToSample,
-                StopSequences = input.StopSequences,
-                SkillId = skillInput.SkillId
-            };
-
-            var glossaryPromptPart = (await glossaryContext.Value)?.BuildPrompt(
-                batchList.Select(x => x.Segment.GetSource()),
-                input.FilterGlossary ?? true);
-            if (!string.IsNullOrEmpty(glossaryPromptPart))
-            {
-                completionRequest.Prompt += glossaryPromptPart;
-            }
-
-            prompts.Enqueue(completionRequest.Prompt);
-
-            var response = await _aiUtilities.SendMessageAsync(modelIdentifier, completionRequest, new());
-            
-            List<TranslationEntity> translationEntities = new();
-            
-            try
-            {
-                var deserializeResponse = ResponseDeserializationHelper.DeserializeResponse(response.Text);
-                if (deserializeResponse.Success)
-                {
-                    translationEntities = deserializeResponse.Translations;
-                }
-                else if(input.IgnoreDeserializationErrors == true)
-                {
-                    throw new PluginApplicationException("Anthropic returned an unexpected response that we cannot deserialize: " + response.Text);
-                }
-            } 
-            catch (Exception e) when (!e.Message.Contains("Anthropic returned an unexpected response"))
-            {
-                if (e.Message.Contains("Unterminated string. Expected delimiter:")) 
-                {
-                    throw new PluginApplicationException("Anthropic returned an unexpected response. Try adjusting the model or a lower bucket size or add retries to this action. Original error: " + e.Message);
-                }
-                else
-                {
-                    throw new PluginApplicationException(e.Message);
-                }
-            }
-
-            result.Usage += response.Usage;
-
-            return batchForJson.Select(idPair =>
-            {
-                var updatedTranslation = translationEntities.FirstOrDefault(x => x.TranslationId == idPair.id.ToString());
-                return updatedTranslation ?? new TranslationEntity { TranslationId = idPair.id.ToString(), TranslatedText = idPair.target_text };
-            });
-        }
-        
-        var processedBatches = await units.Batch(input.BucketSize ?? XliffConstants.DefaultBucketSize).Process(EditBatch);
-        int updatedSegmentsCount = 0;
-        int updatedWordsCount = 0;
-        
-        foreach (var (unit, results) in processedBatches)
-        {
-            bool modifiedSegment = false;
-            foreach (var (segment, translation) in results)
-            {
-                if (segment.GetTarget() != translation.TranslatedText)
-                {
-                    updatedSegmentsCount++;
-                    segment.SetTarget(translation.TranslatedText);
-                    modifiedSegment = true;
-                    updatedWordsCount += segment.Source.CountWords();
-                }
-                segment.State = SegmentState.Reviewed;
-            }
-
-            if (string.IsNullOrEmpty(input.ModifiedBy) || !modifiedSegment) 
-                continue;
-            
-            long unixTimestampMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-            var existingModifiedAttr = unit.Other.OfType<XAttribute>().FirstOrDefault(x => x.Name.LocalName is "modified-at" or "modified-by");
-                
-            var attrNamespace = existingModifiedAttr?.Name.Namespace ?? XNamespace.None;
-            unit.Other.RemoveAll(x => x is XAttribute attr && attr.Name.LocalName is "modified-at" or "modified-by");
-            unit.Other.Add(new XAttribute(attrNamespace + "modified-at", unixTimestampMs.ToString()));
-            unit.Other.Add(new XAttribute(attrNamespace + "modified-by", input.ModifiedBy));
-        }
-
-        result.TotalSegmentsUpdated = updatedSegmentsCount;
-        result.TotalWordsUpdated = updatedWordsCount;
-        
-        result.Prompts = prompts.ToList();
-
-        if (input.OutputFileHandling == "original")
-        {
-            var targetContent = content.LoadTarget();
-            result.File = await fileManagementClient.UploadAsync(targetContent.ToStream(), targetContent.OriginalMediaType, targetContent.OriginalName);
-        } 
-        else
-        {
-            result.File = await fileManagementClient.UploadAsync(content.Serialize().ToStream(), MediaTypes.Xliff2, content.BilingualFileName);
-        }      
-
-        return result;
+            File = await UploadAsync(result.File),
+            Usage = ToUsage(content.Usage, client),
+            Prompts = UserPrompts(content),
+            TotalSegmentsReviewed = content.ProcessableSegments,
+            TotalWordsReviewed = content.ProcessableWords,
+            TotalSegmentsUpdated = content.UpdatedSegments,
+            TotalWordsUpdated = content.UpdatedWords
+        };
     }
-    
+
     [BlueprintActionDefinition(BlueprintAction.EditText)]
     [Action("Edit text", Description = "Review translated text and generate an edited version")]
     public async Task<EditTextResponse> EditText(
@@ -199,61 +79,42 @@ public class EditActions(InvocationContext invocationContext, IFileManagementCli
     {
         modelIdentifier.Validate(InvocationContext.AuthenticationCredentialsProviders);
 
-        var systemPrompt =
-            $"You are receiving a source text{(input.SourceLanguage != null ? $" written in {input.SourceLanguage} " : "")}" +
-            $"that was translated into target text{(input.TargetLanguage != null ? $" written in {input.TargetLanguage}" : "")}. " +
-            "Review the target text and respond ONLY with the edited version of the target text. If no edits are required, respond with the original target text unchanged. " +
-            "Do not include any explanations, comments, or additional text in your response. " +
-            $"{(input.TargetAudience != null ? $"The target audience is {input.TargetAudience}" : string.Empty)}";
+        var client = CreateLlmClient(modelIdentifier.Model, new AnthropicLlmSettings(
+            input.Temperature, input.TopP, input.TopK, input.MaxTokensToSample, SkillId: skillInput.SkillId));
+        var processor = new TextProcessor(client, CreateEngineOptions(modelIdentifier.Model));
 
-        if (input.Glossary != null)
-            systemPrompt +=
-            " Use relevant terms from the glossary where applicable, ensuring the translation aligns with the glossary entries for the respective languages.";
+        await using var glossaryFile = await DownloadOptionalAsync(input.Glossary);
 
-        if (input.AdditionalInstructions != null)
-            systemPrompt = $"{systemPrompt} {input.AdditionalInstructions}";
-
-        var userPrompt = @$"
-    Source text: 
-    {input.SourceText}
-
-    Target text: 
-    {input.TargetText}
-
-    Important: Your response must contain ONLY the edited text, with no explanations or comments.
-    ";
-
-        if (input.Glossary != null)
+        var result = await AiAdapters.Mapped(() => processor.EditAsync(new EditTextOptions
         {
-            var glossaryPromptPart = await _aiUtilities.GetGlossaryPromptPart(
-                input.Glossary,
-                [input.SourceText],
-                true);
-            if (!string.IsNullOrEmpty(glossaryPromptPart))
-            {
-                userPrompt += glossaryPromptPart;
-            }
-        }
+            SourceText = input.SourceText,
+            TargetText = input.TargetText,
+            SourceLanguage = input.SourceLanguage,
+            TargetLanguage = input.TargetLanguage,
+            AdditionalInstructions = Instructions(input),
+            GlossaryTbx = glossaryFile
+        }));
 
-        var completionRequest = new CompletionRequest
-        {
-            Prompt = userPrompt,
-            SystemPrompt = systemPrompt,
-            Temperature = input.Temperature,
-            TopP = input.TopP,
-            TopK = input.TopK,
-            MaxTokensToSample = input.MaxTokensToSample,
-            SkillId = skillInput.SkillId
-        };
-
-        var response = await _aiUtilities.SendMessageAsync(modelIdentifier, completionRequest, new());
+        ThrowIfUnresolved(result.Content);
 
         return new EditTextResponse
         {
-            SystemPrompt = systemPrompt,
-            UserPrompt = userPrompt,
-            EditedText = response.Text,
-            Usage = response.Usage
+            EditedText = result.Text,
+            SystemPrompt = result.Content.SystemPrompt ?? string.Empty,
+            UserPrompt = string.Join(Environment.NewLine, UserPrompts(result.Content)),
+            Usage = ToUsage(result.Content.Usage, client)
         };
+    }
+
+    private static string? Instructions(EditTextRequest input)
+    {
+        var audience = string.IsNullOrWhiteSpace(input.TargetAudience)
+            ? null
+            : $"The target audience is {input.TargetAudience.Trim()}.";
+
+        var instructions = new[] { audience, input.AdditionalInstructions }
+            .Where(part => !string.IsNullOrWhiteSpace(part));
+
+        return instructions.Any() ? string.Join(Environment.NewLine, instructions) : null;
     }
 }
