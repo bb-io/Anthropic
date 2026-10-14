@@ -1,4 +1,5 @@
-﻿using Apps.Anthropic.Api.Interfaces;
+﻿using Apps.Anthropic.Api.Anthropic;
+using Apps.Anthropic.Api.Interfaces;
 using Apps.Anthropic.Constants;
 using Apps.Anthropic.Extensions;
 using Apps.Anthropic.Models.Request;
@@ -10,7 +11,9 @@ using Blackbird.Applications.Sdk.Common.Connections;
 using Blackbird.Applications.Sdk.Common.Exceptions;
 using Blackbird.Applications.Sdk.Utils.Extensions.Sdk;
 using Newtonsoft.Json;
+using Polly;
 using RestSharp;
+using System.Net;
 using RestSharp.Serializers.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -20,6 +23,9 @@ namespace Apps.Anthropic.Api.Bedrock;
 
 public class AmazonBedrockRestClient : RestClient, IAnthropicClient
 {
+    private static readonly ResiliencePipeline<RestResponse> RateLimitPipeline =
+        AnthropicPollyPolicies.CreateRateLimitPipeline();
+
     private readonly string _runtimeUrl;
     private readonly string _standardUrl;
 
@@ -134,7 +140,8 @@ public class AmazonBedrockRestClient : RestClient, IAnthropicClient
                 InputTokens = response.Usage.InputTokens,
                 CacheCreationInputTokens = response.Usage.CacheWriteInputTokens,
                 CacheReadInputTokens = response.Usage.CacheReadInputTokens,
-            }
+            },
+            StopReason = response.StopReason
         };
     }
 
@@ -213,7 +220,19 @@ public class AmazonBedrockRestClient : RestClient, IAnthropicClient
 
     public async Task<RestResponse> ExecuteWithErrorHandling(RestRequest request)
     {
-        RestResponse restResponse = await ExecuteAsync(request);
+        RestResponse restResponse;
+        try
+        {
+            restResponse = await RateLimitPipeline.ExecuteAsync(
+                cancellationToken => new ValueTask<RestResponse>(ExecuteAsync(request, cancellationToken)));
+        }
+        catch (HttpRequestException exception) when (exception.StatusCode == HttpStatusCode.TooManyRequests)
+        {
+            throw new PluginApplicationException(
+                "Amazon Bedrock rate limit was exceeded after multiple retry attempts. Please try again later.",
+                exception);
+        }
+
         if (!restResponse.IsSuccessStatusCode)
         {
             throw ConfigureErrorException(restResponse);

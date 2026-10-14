@@ -125,7 +125,8 @@ public sealed class GoogleVertexRestClient : RestClient, IAnthropicClient
         return new()
         {
             Text = completion.Content.ExtractText(),
-            Usage = completion.Usage
+            Usage = completion.Usage,
+            StopReason = completion.StopReason
         };
     }
 

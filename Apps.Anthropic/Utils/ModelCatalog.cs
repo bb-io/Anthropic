@@ -33,6 +33,7 @@ public static class ModelCatalog
         ["claude-3-haiku-20240307"] = new(4096, true),
         ["claude-3-haiku@20240307"] = new(4096, true),
         ["claude-haiku-4-5@20251001"] = new(64000, true),
+        ["claude-haiku-5-5"] = new(128000, false),
         ["claude-fable-5"] = new(128000, false),
         ["claude-mythos-5"] = new(128000, false),
     };

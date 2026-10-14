@@ -1,27 +1,31 @@
-﻿using Apps.Anthropic.Extensions;
+﻿using Apps.Anthropic.Ai;
+using Apps.Anthropic.Extensions;
 using Apps.Anthropic.Invocable;
 using Apps.Anthropic.Models.Identifiers;
 using Apps.Anthropic.Models.Request;
+using Apps.Anthropic.Models.Request.Optional;
 using Apps.Anthropic.Models.Response;
-using Apps.Anthropic.Utils;
+using Blackbird.Ai.Files;
+using Blackbird.Ai.Files.Models;
+using Blackbird.Ai.Summary.Models;
+using Blackbird.Ai.Text;
+using Blackbird.Ai.Text.Models;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Actions;
+using Blackbird.Applications.Sdk.Common.Exceptions;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.SDK.Blueprints;
 using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
-using Blackbird.Filters.Constants;
-using Blackbird.Filters.Extensions;
-using Newtonsoft.Json;
-using System.Xml.Linq;
-using Apps.Anthropic.Models.Request.Optional;
+using Blackbird.Filters.Enums;
 
 namespace Apps.Anthropic.Actions;
 
 [ActionList("Review")]
-public class ReviewActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient) 
-    : AnthropicInvocable(invocationContext)
+public class ReviewActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient)
+    : AnthropicAiInvocable(invocationContext, fileManagementClient)
 {
-    private readonly AiUtilities _aiUtilities = new(invocationContext, fileManagementClient);
+    // Review has always scored every segment with a target, whatever its state, locked units included.
+    private static readonly IReadOnlySet<SegmentState> AllSegmentStates = Enum.GetValues<SegmentState>().ToHashSet();
 
     [BlueprintActionDefinition(BlueprintAction.ReviewFile)]
     [Action("Review", Description = "Review translation. This action assumes you have previously translated content in Blackbird through any translation action.")]
@@ -32,108 +36,44 @@ public class ReviewActions(InvocationContext invocationContext, IFileManagementC
     {
         modelIdentifier.Validate(InvocationContext.AuthenticationCredentialsProviders);
 
-        var result = new ReviewContentResponse();
+        var client = CreateLlmClient(modelIdentifier.Model, new AnthropicLlmSettings(
+            input.Temperature, input.TopP, input.TopK, input.MaxTokensToSample, input.StopSequences, skillInput.SkillId));
+        var processor = new ContentStreamProcessor(client, CreateEngineOptions(modelIdentifier.Model));
 
-        await using var inputFileStream = await fileManagementClient.DownloadAsync(input.File);
-        var content = inputFileStream.LoadTransformation(input.File.Name);
-        content.SourceLanguage ??= input.SourceLanguage;
-        content.TargetLanguage ??= input.TargetLanguage;
-        
-        var units = content.GetUnits().ToList();
-        var segments = units.SelectMany(x => x.Segments)
-            .Where(x => !x.IsIgnorbale && !string.IsNullOrWhiteSpace(x.GetTarget()))
-            .ToList();
-        
-        result.TotalSegmentsProcessed = segments.Count;
-        var totalScore = 0.0f;
-        var finalizedSegments = 0;
-        var underThresholdSegments = 0;
-        var glossaryContext = new Lazy<Task<GlossaryPromptContext?>>(
-            () => GlossaryPromptHelper.CreateContextAsync(input.Glossary, fileManagementClient));
+        await using var file = await FileManagementClient.DownloadAsync(input.File);
+        await using var glossaryFile = await DownloadOptionalAsync(input.Glossary);
 
-        foreach (var segment in segments)
+        var result = await AiAdapters.Mapped(() => processor.ReviewAsync(new ReviewStreamOptions
         {
-            var reviewData = new List<object>
-            {
-                new
-                {
-                    translation_id = segment.Id,
-                    source_text = segment.GetSource(),
-                    target_text = segment.GetTarget()
-                }
-            };
+            File = file,
+            FileName = input.File.Name,
+            MediaType = input.File.ContentType,
+            SourceLanguage = input.SourceLanguage,
+            TargetLanguage = input.TargetLanguage,
+            OutputFileHandling = input.OutputFileHandling,
+            GlossaryTbx = glossaryFile,
+            FilterGlossary = input.FilterGlossary ?? true,
+            AdditionalInstructions = input.AdditionalInstructions,
+            Summary = SummaryOptions.FromToggle(input.GenerateDocumentSummary),
+            SegmentStates = AllSegmentStates,
+            SegmentFilter = segment => !string.IsNullOrWhiteSpace(segment.GetTarget()),
+            ProcessLockedSegments = true
+        }));
 
-            var json = JsonConvert.SerializeObject(reviewData);
-            var userPrompt = PromptBuilder.BuildReviewUserPrompt(input.AdditionalInstructions, content.SourceLanguage, content.TargetLanguage, json);
-            var systemPrompt = PromptBuilder.BuildReviewSystemPrompt();
+        var content = result.Content;
+        var review = content.Review!;
 
-            var completionRequest = new CompletionRequest
-            {
-                Prompt = userPrompt,
-                SystemPrompt = systemPrompt,
-                MaxTokensToSample = input.MaxTokensToSample,
-                Temperature = input.Temperature,
-                TopP = input.TopP,
-                TopK = input.TopK,
-                StopSequences = input.StopSequences,
-                SkillId = skillInput.SkillId
-            };
-
-            var glossaryPromptPart = (await glossaryContext.Value)?.BuildPrompt(
-                [segment.GetSource()],
-                input.FilterGlossary ?? true);
-            if (!string.IsNullOrEmpty(glossaryPromptPart))
-            {
-                completionRequest.Prompt += glossaryPromptPart;
-            }
-
-            result.Prompts.Add(completionRequest.Prompt);
-
-            var response = await _aiUtilities.SendMessageAsync(modelIdentifier, completionRequest, new());
-            result.Usage += response.Usage;
-
-            var deserializationResult = ResponseDeserializationHelper.DeserializeReviewResponse(response.Text);
-
-            if (deserializationResult.IsSuccess && deserializationResult.Reviews.Count > 0)
-            {
-                var review = deserializationResult.Reviews.First();
-                var qualityScore = review.QualityScore;
-
-                segment.TargetAttributes.RemoveAll(attr => attr.Name == "extradata");
-                segment.TargetAttributes.Add(new XAttribute("extradata", qualityScore.ToString()));
-
-                totalScore += qualityScore;
-
-                if (qualityScore >= 0.8f)
-                    finalizedSegments++;
-                if (qualityScore < 0.6f)
-                    underThresholdSegments++;
-            }
-        }
-
-        result.TotalSegmentsFinalized = finalizedSegments;
-        result.TotalSegmentsUnderThreshhold = underThresholdSegments;
-        result.AverageMetric = segments.Count > 0 ? totalScore / segments.Count : 0;
-        result.PercentageSegmentsUnderThreshhold =
-            segments.Count > 0 ? (float)underThresholdSegments / segments.Count * 100 : 0;
-
-        if (input.OutputFileHandling == "original")
+        return new ReviewContentResponse
         {
-            var targetContent = content.LoadTarget();
-            result.File = await fileManagementClient.UploadAsync(
-                targetContent.ToStream(), 
-                targetContent.OriginalMediaType, 
-                targetContent.OriginalName);
-        }
-        else
-        {
-            result.File = await fileManagementClient.UploadAsync(
-                content.Serialize().ToStream(), 
-                MediaTypes.Xliff2,
-                content.BilingualFileName);
-        }
-
-        return result;
+            File = await UploadAsync(result.File),
+            Usage = ToUsage(content.Usage, client),
+            Prompts = UserPrompts(content),
+            TotalSegmentsProcessed = content.ProcessableSegments,
+            TotalSegmentsFinalized = review.Finalized,
+            TotalSegmentsUnderThreshhold = review.UnderThreshold,
+            AverageMetric = (float)review.AverageScore,
+            PercentageSegmentsUnderThreshhold = (float)review.PercentageUnderThreshold
+        };
     }
 
     [BlueprintActionDefinition(BlueprintAction.ReviewText)]
@@ -145,55 +85,35 @@ public class ReviewActions(InvocationContext invocationContext, IFileManagementC
     {
         modelIdentifier.Validate(InvocationContext.AuthenticationCredentialsProviders);
 
-        var reviewData = new List<object>
+        if (string.IsNullOrWhiteSpace(input.SourceText) || string.IsNullOrWhiteSpace(input.TargetText))
         {
-            new
-            {
-                translation_id = "1",
-                source_text = input.SourceText,
-                target_text = input.TargetText
-            }
-        };
-
-        var json = JsonConvert.SerializeObject(reviewData);
-        
-        var userPrompt = PromptBuilder.BuildReviewUserPrompt(input.AdditionalInstructions, input.SourceLanguage, input.TargetLanguage, json);
-        var systemPrompt = PromptBuilder.BuildReviewSystemPrompt();
-
-        var glossaryContext = await GlossaryPromptHelper.CreateContextAsync(input.Glossary, fileManagementClient);
-        var glossaryPromptPart = glossaryContext?.BuildPrompt([input.SourceText], true);
-        if (!string.IsNullOrEmpty(glossaryPromptPart))
-        {
-            userPrompt += glossaryPromptPart;
+            throw new PluginMisconfigurationException("Both the source text and the target text are required for a review.");
         }
 
-        var completionRequest = new CompletionRequest
-        {
-            Prompt = userPrompt,
-            SystemPrompt = systemPrompt,
-            MaxTokensToSample = input.MaxTokensToSample,
-            Temperature = input.Temperature,
-            TopP = input.TopP,
-            TopK = input.TopK,
-            SkillId = skillInput.SkillId
-        };
+        var client = CreateLlmClient(modelIdentifier.Model, new AnthropicLlmSettings(
+            input.Temperature, input.TopP, input.TopK, input.MaxTokensToSample, SkillId: skillInput.SkillId));
+        var processor = new TextProcessor(client, CreateEngineOptions(modelIdentifier.Model));
 
-        var response = await _aiUtilities.SendMessageAsync(modelIdentifier, completionRequest, new());
-        var deserializationResult = ResponseDeserializationHelper.DeserializeReviewResponse(response.Text);
+        await using var glossaryFile = await DownloadOptionalAsync(input.Glossary);
 
-        float qualityScore = 0.0f;
-        if (deserializationResult.IsSuccess && deserializationResult.Reviews.Count > 0)
+        var result = await AiAdapters.Mapped(() => processor.ReviewAsync(new ReviewTextOptions
         {
-            var review = deserializationResult.Reviews.First();
-            qualityScore = review.QualityScore;
-        }
+            SourceText = input.SourceText,
+            TargetText = input.TargetText,
+            SourceLanguage = input.SourceLanguage,
+            TargetLanguage = input.TargetLanguage,
+            AdditionalInstructions = input.AdditionalInstructions,
+            GlossaryTbx = glossaryFile
+        }));
+
+        ThrowIfUnresolved(result.Content);
 
         return new ReviewTextResponse
         {
-            Score = qualityScore,
-            SystemPrompt = systemPrompt,
-            UserPrompt = userPrompt,
-            Usage = response.Usage
+            Score = (float)(result.Score ?? throw new PluginApplicationException("The model returned no quality score.")),
+            SystemPrompt = result.Content.SystemPrompt ?? string.Empty,
+            UserPrompt = string.Join(Environment.NewLine, UserPrompts(result.Content)),
+            Usage = ToUsage(result.Content.Usage, client)
         };
     }
 }
