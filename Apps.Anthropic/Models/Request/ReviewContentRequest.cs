@@ -23,6 +23,9 @@ public class ReviewContentRequest : IReviewFileInput
     [Display("Output file handling", Description = "Determine the format of the output file. The default Blackbird behavior is to convert to XLIFF for future steps."), StaticDataSource(typeof(ProcessFileFormatHandler))]
     public string? OutputFileHandling { get; set; }
 
+    [Display("Score threshold", Description = "All segments above this score will automatically be finalized (0..1)")]
+    public double? Threshold { get; set; }
+
     [Display("Additional instructions", Description = "Specify quality assessment criteria. For example: 'Focus on technical terminology accuracy' or 'Prioritize cultural adaptation'")]
     public string? AdditionalInstructions { get; set; }
 

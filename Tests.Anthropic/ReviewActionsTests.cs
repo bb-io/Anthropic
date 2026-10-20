@@ -3,6 +3,7 @@ using Apps.Anthropic.Actions;
 using Apps.Anthropic.Models.Request;
 using Apps.Anthropic.Models.Identifiers;
 using Apps.Anthropic.Models.Request.Optional;
+using Blackbird.Applications.Sdk.Common.Exceptions;
 using Blackbird.Applications.Sdk.Common.Files;
 using Blackbird.Applications.Sdk.Common.Invocation;
 
@@ -49,6 +50,24 @@ public class ReviewActionsTests : TestBaseMultipleConnections
         Assert.IsNotNull(result.Usage);
         Assert.IsTrue(result.AverageMetric >= 0.0f && result.AverageMetric <= 1.0f);
         Assert.IsTrue(result.PercentageSegmentsUnderThreshhold >= 0.0f && result.PercentageSegmentsUnderThreshhold <= 100.0f);
+    }
+
+    [TestMethod, ContextDataSource]
+    public async Task ReviewContent_WithThresholdOutOfRange_ThrowsMisconfiguration(InvocationContext context)
+    {
+        var reviewActions = new ReviewActions(context, FileManager);
+        var model = new ModelIdentifier { Model = "claude-sonnet-5" };
+        var request = new ReviewContentRequest
+        {
+            File = new FileReference { Name = "contentful12.xliff" },
+            TargetLanguage = "nl",
+            Threshold = 1.5
+        };
+
+        await Assert.ThrowsExactlyAsync<PluginMisconfigurationException>(() =>
+            reviewActions.ReviewContent(model, request, new OptionalSkillRequest()));
+        await Assert.ThrowsExactlyAsync<PluginMisconfigurationException>(() =>
+            reviewActions.ReviewInBackground(model, request));
     }
 
     [TestMethod, ContextDataSource]
