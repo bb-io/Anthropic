@@ -39,22 +39,7 @@ public class EditActions(InvocationContext invocationContext, IFileManagementCli
         await using var file = await FileManagementClient.DownloadAsync(input.File);
         await using var glossaryFile = await DownloadOptionalAsync(input.Glossary);
 
-        var result = await AiAdapters.Mapped(() => processor.EditAsync(new EditStreamOptions
-        {
-            File = file,
-            FileName = input.File.Name,
-            MediaType = input.File.ContentType,
-            SourceLanguage = input.SourceLanguage,
-            TargetLanguage = input.TargetLanguage,
-            OutputFileHandling = input.OutputFileHandling,
-            GlossaryTbx = glossaryFile,
-            FilterGlossary = input.FilterGlossary ?? true,
-            AdditionalInstructions = input.AdditionalInstructions,
-            PromptStrategy = CustomSystemPromptStrategy.For(input.SystemPrompt, () => new EditPromptStrategy()),
-            Summary = SummaryOptions.FromToggle(input.GenerateDocumentSummary),
-            ModifiedBy = input.ModifiedBy,
-            ProcessLockedSegments = input.ProcessLockedSegments ?? false
-        }));
+        var result = await AiAdapters.Mapped(() => processor.EditAsync(EditOptions(input, file, glossaryFile)));
 
         var content = result.Content;
 
@@ -69,6 +54,46 @@ public class EditActions(InvocationContext invocationContext, IFileManagementCli
             TotalWordsUpdated = content.UpdatedWords
         };
     }
+
+    [Action("Edit in background",
+        Description = "Starts background editing of translated content through Anthropic Message Batches and outputs a batch ID and a transformation file to download the result later.")]
+    public async Task<BackgroundProcessingResponse> EditInBackground(
+        [ActionParameter] ModelIdentifier modelIdentifier,
+        [ActionParameter] EditContentRequest input)
+    {
+        modelIdentifier.Validate(InvocationContext.AuthenticationCredentialsProviders);
+
+        var settings = new AnthropicLlmSettings(
+            input.Temperature, input.TopP, input.TopK, input.MaxTokensToSample, input.StopSequences);
+        var batchClient = CreateBatchClient(modelIdentifier.Model, settings);
+        var client = CreateLlmClient(modelIdentifier.Model, settings);
+        var processor = CreateBackgroundProcessor(batchClient, client, modelIdentifier.Model, input.BucketSize);
+
+        await using var file = await FileManagementClient.DownloadAsync(input.File);
+        await using var glossaryFile = await DownloadOptionalAsync(input.Glossary);
+
+        var started = await AiAdapters.Mapped(() => processor.StartEditAsync(EditOptions(input, file, glossaryFile)));
+
+        return await ToBackgroundResponseAsync(started, client);
+    }
+
+    // Shared by "Edit" and "Edit in background", so the two cannot drift apart.
+    private static EditStreamOptions EditOptions(EditContentRequest input, Stream file, Stream? glossaryFile) => new()
+    {
+        File = file,
+        FileName = input.File.Name,
+        MediaType = input.File.ContentType,
+        SourceLanguage = input.SourceLanguage,
+        TargetLanguage = input.TargetLanguage,
+        OutputFileHandling = input.OutputFileHandling,
+        GlossaryTbx = glossaryFile,
+        FilterGlossary = input.FilterGlossary ?? true,
+        AdditionalInstructions = input.AdditionalInstructions,
+        PromptStrategy = CustomSystemPromptStrategy.For(input.SystemPrompt, () => new EditPromptStrategy()),
+        Summary = SummaryOptions.FromToggle(input.GenerateDocumentSummary),
+        ModifiedBy = input.ModifiedBy,
+        ProcessLockedSegments = input.ProcessLockedSegments ?? false
+    };
 
     [BlueprintActionDefinition(BlueprintAction.EditText)]
     [Action("Edit text", Description = "Review translated text and generate an edited version")]

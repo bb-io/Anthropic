@@ -20,6 +20,28 @@ public class ResultDto
 
     [JsonProperty("message")]
     public MessageDto Message { get; set; } = default!;
+
+    // Set when the result type is "errored".
+    [JsonProperty("error")]
+    public BatchResultErrorDto? Error { get; set; }
+}
+
+public class BatchResultErrorDto
+{
+    [JsonProperty("type")]
+    public string? Type { get; set; }
+
+    [JsonProperty("error")]
+    public BatchResultErrorDetailDto? Error { get; set; }
+}
+
+public class BatchResultErrorDetailDto
+{
+    [JsonProperty("type")]
+    public string? Type { get; set; }
+
+    [JsonProperty("message")]
+    public string? Message { get; set; }
 }
 
 public class MessageDto
