@@ -158,7 +158,7 @@ The following table compares the key characteristics of Claude models:
 | Claude Haiku 3.5 | 8,192 tokens | 200K tokens |
 | Claude Haiku 3 | 4,096 tokens | 200K tokens |
 
-> Max output is the most important metric to consider when choosing a model for translation tasks, as it determines how much text can be generated in a single response. The context window is also important, especially for tasks that require understanding of larger documents or conversations like glossaries.
+> Max output is the most important metric to consider when choosing a model for translation tasks, as it determines how much text can be generated in a single response. The context window is also important, especially for tasks that require understanding of larger documents or conversations like glossaries. 
 
 ## Feedback
 
