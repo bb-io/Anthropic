@@ -16,6 +16,7 @@ using Blackbird.Applications.Sdk.Common.Exceptions;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.SDK.Blueprints;
 using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
+using Blackbird.Filters.Enums;
 
 namespace Apps.Anthropic.Actions;
 
@@ -31,6 +32,7 @@ public class ReviewActions(InvocationContext invocationContext, IFileManagementC
         [ActionParameter] OptionalSkillRequest skillInput)
     {
         modelIdentifier.Validate(InvocationContext.AuthenticationCredentialsProviders);
+        var threshold = ResolveThreshold(input);
 
         var client = CreateLlmClient(modelIdentifier.Model, new AnthropicLlmSettings(
             input.Temperature, input.TopP, input.TopK, input.MaxTokensToSample, input.StopSequences, skillInput.SkillId));
@@ -39,7 +41,7 @@ public class ReviewActions(InvocationContext invocationContext, IFileManagementC
         await using var file = await FileManagementClient.DownloadAsync(input.File);
         await using var glossaryFile = await DownloadOptionalAsync(input.Glossary);
 
-        var result = await AiAdapters.Mapped(() => processor.ReviewAsync(ReviewOptions(input, file, glossaryFile)));
+        var result = await AiAdapters.Mapped(() => processor.ReviewAsync(ReviewOptions(input, threshold, file, glossaryFile)));
 
         var content = result.Content;
         var review = content.Review!;
@@ -64,6 +66,7 @@ public class ReviewActions(InvocationContext invocationContext, IFileManagementC
         [ActionParameter] ReviewContentRequest input)
     {
         modelIdentifier.Validate(InvocationContext.AuthenticationCredentialsProviders);
+        var threshold = ResolveThreshold(input);
 
         var settings = new AnthropicLlmSettings(
             input.Temperature, input.TopP, input.TopK, input.MaxTokensToSample, input.StopSequences);
@@ -74,14 +77,26 @@ public class ReviewActions(InvocationContext invocationContext, IFileManagementC
         await using var file = await FileManagementClient.DownloadAsync(input.File);
         await using var glossaryFile = await DownloadOptionalAsync(input.Glossary);
 
-        var started = await AiAdapters.Mapped(() => processor.StartReviewAsync(ReviewOptions(input, file, glossaryFile)));
+        var started = await AiAdapters.Mapped(() => processor.StartReviewAsync(ReviewOptions(input, threshold, file, glossaryFile)));
 
         return await ToBackgroundResponseAsync(started, client);
     }
 
+    private static double ResolveThreshold(ReviewContentRequest input)
+    {
+        var threshold = input.Threshold ?? 0.8;
+        if (threshold < 0 || threshold > 1)
+        {
+            throw new PluginMisconfigurationException("Score threshold must be in range 0..1.");
+        }
+
+        return threshold;
+    }
+
     // Shared by "Review" and "Review in background". Segment selection is the library default:
     // Translated and Reviewed segments with a target, locked units skipped.
-    private static ReviewStreamOptions ReviewOptions(ReviewContentRequest input, Stream file, Stream? glossaryFile) => new()
+    // Segments scoring at or above the threshold are finalized; those below it count as under threshold.
+    private static ReviewStreamOptions ReviewOptions(ReviewContentRequest input, double threshold, Stream file, Stream? glossaryFile) => new()
     {
         File = file,
         FileName = input.File.Name,
@@ -92,6 +107,9 @@ public class ReviewActions(InvocationContext invocationContext, IFileManagementC
         GlossaryTbx = glossaryFile,
         FilterGlossary = input.FilterGlossary ?? true,
         AdditionalInstructions = input.AdditionalInstructions,
+        Threshold = threshold,
+        LowScoreThreshold = threshold,
+        StateAboveThreshold = SegmentState.Final,
         Summary = SummaryOptions.FromToggle(input.GenerateDocumentSummary)
     };
 
