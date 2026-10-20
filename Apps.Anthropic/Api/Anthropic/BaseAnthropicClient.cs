@@ -159,23 +159,7 @@ public class BaseAnthropicClient : BlackBirdRestClient
             };
         }
 
-        if (ModelCatalog.SupportsSamplingParameters(message.Model))
-        {
-            if (message.Temperature.HasValue)
-            {
-                payload["temperature"] = message.Temperature.Value;
-            }
-
-            if (message.TopP.HasValue)
-            {
-                payload["top_p"] = message.TopP.Value;
-            }
-
-            if (message.TopK.HasValue)
-            {
-                payload["top_k"] = message.TopK.Value;
-            }
-        }
+        AddSamplingParameters(payload, message);
 
         var request = new RestRequest("/messages", Method.Post).WithJsonBody(payload, JsonOptions.JsonSettings);
 
@@ -211,5 +195,39 @@ public class BaseAnthropicClient : BlackBirdRestClient
         }
 
         return payload;
+    }
+
+    // The body of a text-only request, as ExecuteChat sends it. Batch requests carry exactly this as their params.
+    internal static Dictionary<string, object?> BuildTextPayload(MessageRequest message)
+    {
+        var payload = BuildPayload(
+            message,
+            message.Messages.Select(msg => (object)new { role = msg.Role, content = msg.Content }).ToList());
+
+        AddSamplingParameters(payload, message);
+        return payload;
+    }
+
+    private static void AddSamplingParameters(Dictionary<string, object?> payload, MessageRequest message)
+    {
+        if (!ModelCatalog.SupportsSamplingParameters(message.Model))
+        {
+            return;
+        }
+
+        if (message.Temperature.HasValue)
+        {
+            payload["temperature"] = message.Temperature.Value;
+        }
+
+        if (message.TopP.HasValue)
+        {
+            payload["top_p"] = message.TopP.Value;
+        }
+
+        if (message.TopK.HasValue)
+        {
+            payload["top_k"] = message.TopK.Value;
+        }
     }
 }

@@ -1,5 +1,8 @@
 ﻿using Apps.Anthropic.Ai;
+using Apps.Anthropic.Api.Interfaces;
 using Apps.Anthropic.Models.Response;
+using Blackbird.Ai.Background;
+using Blackbird.Ai.Background.Models;
 using Blackbird.Ai.Batching.Models;
 using Blackbird.Ai.Content.Models;
 using Blackbird.Ai.Files.Models;
@@ -24,6 +27,43 @@ public class AnthropicAiInvocable(InvocationContext invocationContext, IFileMana
     // Virtual so a test can substitute or wrap the provider client.
     protected virtual ILlmClient CreateLlmClient(string? model, AnthropicLlmSettings settings) =>
         new AnthropicLlmClient(Client, model, settings);
+
+    // Virtual so a test can replace the batch provider. Message Batches exist on the Anthropic API only.
+    protected virtual IBatchLlmClient CreateBatchClient(string? model, AnthropicLlmSettings settings) =>
+        Client is ISupportsBatching batchClient
+            ? new AnthropicBatchLlmClient(batchClient, model, settings)
+            : throw new PluginMisconfigurationException(
+                "Background actions use Anthropic Message Batches, which are only available for the 'API Token' connection type.");
+
+    // Starting a job needs the synchronous client for language detection and the summary; completing one does not.
+    protected BackgroundContentProcessor CreateBackgroundProcessor(
+        IBatchLlmClient batchClient,
+        ILlmClient? client = null,
+        string? model = null,
+        int? bucketSize = null) =>
+        new(batchClient, client, CreateEngineOptions(model, bucketSize));
+
+    protected async Task<BackgroundProcessingResponse> ToBackgroundResponseAsync(BackgroundStart started, ILlmClient client)
+    {
+        var content = started.Content;
+
+        return new BackgroundProcessingResponse
+        {
+            // With nothing to process no batch is created; the download then returns the file unchanged.
+            BatchId = started.Job?.Id ?? string.Empty,
+            Status = StatusOf(started.Job),
+            CreatedAt = started.Job?.CreatedAt?.UtcDateTime,
+            TransformationFile = await UploadAsync(started.WorkFile),
+            TotalSegmentsCount = content.TotalSegments,
+            SegmentsToProcessCount = content.ProcessableSegments,
+            RequestsCount = started.Requests,
+            SystemPrompt = content.SystemPrompt ?? string.Empty,
+            Usage = ToUsage(content.Usage, client)
+        };
+    }
+
+    protected static string StatusOf(BatchJob? job) =>
+        (job?.State ?? BatchJobState.Completed).ToString().ToLowerInvariant();
 
     // Full traces keep every user prompt, which the "Prompts" outputs return.
     protected EngineOptions CreateEngineOptions(string? model, int? bucketSize = null) => new()

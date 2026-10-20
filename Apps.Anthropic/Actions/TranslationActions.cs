@@ -40,20 +40,7 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
         await using var file = await FileManagementClient.DownloadAsync(input.File);
         await using var glossaryFile = await DownloadOptionalAsync(input.Glossary);
 
-        var result = await AiAdapters.Mapped(() => processor.TranslateAsync(new TranslateStreamOptions
-        {
-            File = file,
-            FileName = input.File.Name,
-            MediaType = input.File.ContentType,
-            SourceLanguage = input.SourceLanguage,
-            TargetLanguage = input.TargetLanguage,
-            OutputFileHandling = input.OutputFileHandling,
-            GlossaryTbx = glossaryFile,
-            FilterGlossary = input.FilterGlossary ?? true,
-            AdditionalInstructions = input.AdditionalInstructions,
-            PromptStrategy = CustomSystemPromptStrategy.For(input.SystemPrompt, () => new TranslationPromptStrategy()),
-            Summary = SummaryOptions.FromToggle(input.GenerateDocumentSummary)
-        }));
+        var result = await AiAdapters.Mapped(() => processor.TranslateAsync(TranslateOptions(input, file, glossaryFile)));
 
         var content = result.Content;
 
@@ -68,6 +55,44 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
             UpdatedWordsCount = content.UpdatedWords
         };
     }
+
+    [Action("Translate in background",
+        Description = "Starts background translation of a file through Anthropic Message Batches and outputs a batch ID and a transformation file to download the result later.")]
+    public async Task<BackgroundProcessingResponse> TranslateInBackground(
+        [ActionParameter] ModelIdentifier modelIdentifier,
+        [ActionParameter] TranslateContentRequest input)
+    {
+        modelIdentifier.Validate(InvocationContext.AuthenticationCredentialsProviders);
+
+        var settings = new AnthropicLlmSettings(
+            input.Temperature, input.TopP, input.TopK, input.MaxTokensToSample, input.StopSequences);
+        var batchClient = CreateBatchClient(modelIdentifier.Model, settings);
+        var client = CreateLlmClient(modelIdentifier.Model, settings);
+        var processor = CreateBackgroundProcessor(batchClient, client, modelIdentifier.Model, input.BucketSize);
+
+        await using var file = await FileManagementClient.DownloadAsync(input.File);
+        await using var glossaryFile = await DownloadOptionalAsync(input.Glossary);
+
+        var started = await AiAdapters.Mapped(() => processor.StartTranslateAsync(TranslateOptions(input, file, glossaryFile)));
+
+        return await ToBackgroundResponseAsync(started, client);
+    }
+
+    // Shared by "Translate" and "Translate in background", so the two cannot drift apart.
+    private static TranslateStreamOptions TranslateOptions(TranslateContentRequest input, Stream file, Stream? glossaryFile) => new()
+    {
+        File = file,
+        FileName = input.File.Name,
+        MediaType = input.File.ContentType,
+        SourceLanguage = input.SourceLanguage,
+        TargetLanguage = input.TargetLanguage,
+        OutputFileHandling = input.OutputFileHandling,
+        GlossaryTbx = glossaryFile,
+        FilterGlossary = input.FilterGlossary ?? true,
+        AdditionalInstructions = input.AdditionalInstructions,
+        PromptStrategy = CustomSystemPromptStrategy.For(input.SystemPrompt, () => new TranslationPromptStrategy()),
+        Summary = SummaryOptions.FromToggle(input.GenerateDocumentSummary)
+    };
 
     [BlueprintActionDefinition(BlueprintAction.TranslateText)]
     [Action("Translate text", Description = "Localize the text provided.")]

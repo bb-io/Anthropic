@@ -16,7 +16,6 @@ using Blackbird.Applications.Sdk.Common.Exceptions;
 using Blackbird.Applications.Sdk.Common.Invocation;
 using Blackbird.Applications.SDK.Blueprints;
 using Blackbird.Applications.SDK.Extensions.FileManagement.Interfaces;
-using Blackbird.Filters.Enums;
 
 namespace Apps.Anthropic.Actions;
 
@@ -24,9 +23,6 @@ namespace Apps.Anthropic.Actions;
 public class ReviewActions(InvocationContext invocationContext, IFileManagementClient fileManagementClient)
     : AnthropicAiInvocable(invocationContext, fileManagementClient)
 {
-    // Review has always scored every segment with a target, whatever its state, locked units included.
-    private static readonly IReadOnlySet<SegmentState> AllSegmentStates = Enum.GetValues<SegmentState>().ToHashSet();
-
     [BlueprintActionDefinition(BlueprintAction.ReviewFile)]
     [Action("Review", Description = "Review translation. This action assumes you have previously translated content in Blackbird through any translation action.")]
     public async Task<ReviewContentResponse> ReviewContent(
@@ -43,22 +39,7 @@ public class ReviewActions(InvocationContext invocationContext, IFileManagementC
         await using var file = await FileManagementClient.DownloadAsync(input.File);
         await using var glossaryFile = await DownloadOptionalAsync(input.Glossary);
 
-        var result = await AiAdapters.Mapped(() => processor.ReviewAsync(new ReviewStreamOptions
-        {
-            File = file,
-            FileName = input.File.Name,
-            MediaType = input.File.ContentType,
-            SourceLanguage = input.SourceLanguage,
-            TargetLanguage = input.TargetLanguage,
-            OutputFileHandling = input.OutputFileHandling,
-            GlossaryTbx = glossaryFile,
-            FilterGlossary = input.FilterGlossary ?? true,
-            AdditionalInstructions = input.AdditionalInstructions,
-            Summary = SummaryOptions.FromToggle(input.GenerateDocumentSummary),
-            SegmentStates = AllSegmentStates,
-            SegmentFilter = segment => !string.IsNullOrWhiteSpace(segment.GetTarget()),
-            ProcessLockedSegments = true
-        }));
+        var result = await AiAdapters.Mapped(() => processor.ReviewAsync(ReviewOptions(input, file, glossaryFile)));
 
         var content = result.Content;
         var review = content.Review!;
@@ -75,6 +56,44 @@ public class ReviewActions(InvocationContext invocationContext, IFileManagementC
             PercentageSegmentsUnderThreshhold = (float)review.PercentageUnderThreshold
         };
     }
+
+    [Action("Review in background",
+        Description = "Starts background review of translated content through Anthropic Message Batches and outputs a batch ID and a transformation file to download the scored file later.")]
+    public async Task<BackgroundProcessingResponse> ReviewInBackground(
+        [ActionParameter] ModelIdentifier modelIdentifier,
+        [ActionParameter] ReviewContentRequest input)
+    {
+        modelIdentifier.Validate(InvocationContext.AuthenticationCredentialsProviders);
+
+        var settings = new AnthropicLlmSettings(
+            input.Temperature, input.TopP, input.TopK, input.MaxTokensToSample, input.StopSequences);
+        var batchClient = CreateBatchClient(modelIdentifier.Model, settings);
+        var client = CreateLlmClient(modelIdentifier.Model, settings);
+        var processor = CreateBackgroundProcessor(batchClient, client, modelIdentifier.Model);
+
+        await using var file = await FileManagementClient.DownloadAsync(input.File);
+        await using var glossaryFile = await DownloadOptionalAsync(input.Glossary);
+
+        var started = await AiAdapters.Mapped(() => processor.StartReviewAsync(ReviewOptions(input, file, glossaryFile)));
+
+        return await ToBackgroundResponseAsync(started, client);
+    }
+
+    // Shared by "Review" and "Review in background". Segment selection is the library default:
+    // Translated and Reviewed segments with a target, locked units skipped.
+    private static ReviewStreamOptions ReviewOptions(ReviewContentRequest input, Stream file, Stream? glossaryFile) => new()
+    {
+        File = file,
+        FileName = input.File.Name,
+        MediaType = input.File.ContentType,
+        SourceLanguage = input.SourceLanguage,
+        TargetLanguage = input.TargetLanguage,
+        OutputFileHandling = input.OutputFileHandling,
+        GlossaryTbx = glossaryFile,
+        FilterGlossary = input.FilterGlossary ?? true,
+        AdditionalInstructions = input.AdditionalInstructions,
+        Summary = SummaryOptions.FromToggle(input.GenerateDocumentSummary)
+    };
 
     [BlueprintActionDefinition(BlueprintAction.ReviewText)]
     [Action("Review text", Description = "Review the quality of translated text.")]

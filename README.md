@@ -121,15 +121,15 @@ For more in-depth information about action consult the [Anthropic API reference]
 
 >**Note**: Files are interoperable, under the hood Blackbird may convert to and from bilingual files with metadata but all our Actions are able to accept a lot of different file formats.
 
-### Batch actions
+### Background actions
 
->**Note**: Currently, batch actions are not supported for Amazon Bedrock and Google Vertex AI connection types.
+Background actions run the same translation, editing and review as the actions above through [Anthropic Message Batches](https://docs.anthropic.com/en/docs/build-with-claude/batch-processing), at about half the price. Most batches finish within an hour; a batch that does not finish within 24 hours expires.
 
-- **(Batch) Process XLIFF file** asynchronously process each translation unit in the XLIFF file according to the provided instructions (by default it just translates the source tags) and updates the target text for each unit.
-- **(Batch) Post-edit XLIFF file** asynchronously post-edit the target text of each translation unit in the XLIFF file according to the provided instructions and updates the target text for each unit. 
-- **(Batch) Get Quality Scores for XLIFF file** asynchronously get quality scores for each translation unit in the XLIFF file.
-- **(Batch) Get XLIFF from the batch** get the results of the batch process. This action is suitable only for processing and post-editing XLIFF file and should be called after the async process is completed.
-- **(Batch) Get XLIFF from the quality score batch** get the quality scores results of the batch process. This action is suitable only for getting quality scores for XLIFF file and should be called after the async process is completed.
+>**Note**: Message Batches are only available for the **API Token** connection type, not for Amazon Bedrock, Microsoft Foundry or Google Vertex AI.
+
+- **Translate in background**, **Edit in background** and **Review in background** take the same inputs as **Translate**, **Edit** and **Review** (except Skill ID), submit the batch and return its **Batch ID** and a **Transformation file**. When the file has nothing to process, no batch is created and the Batch ID is empty.
+- **Download background file** applies the results of a finished batch to the transformation file. The Batch ID is optional, because the file carries it. Requests that failed, expired or were canceled leave their segments unchanged; they are counted as **Unresolved segments** and the reasons are logged. For review jobs the output includes the **Average score** (0 to 1).
+- **On background job finished** (event) fires once when the batch ends: completed, failed, expired or canceled. With an empty Batch ID it fires on the first check.
 
 ## Token usage
 

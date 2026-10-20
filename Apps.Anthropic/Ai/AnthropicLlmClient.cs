@@ -19,10 +19,7 @@ public sealed class AnthropicLlmClient(IAnthropicClient client, string? model, A
     private readonly object _gate = new();
     private UsageResponse _usage = new();
 
-    public LlmCapabilities Capabilities { get; } = new(
-        SupportsStructuredOutput: false,
-        ContextTokens: ContextTokens,
-        MaxOutputTokens: MaxOutputTokensFor(model, settings.MaxTokens));
+    public LlmCapabilities Capabilities { get; } = CapabilitiesFor(model, settings.MaxTokens);
 
     // LlmUsage carries only input/output tokens; this keeps the cache counters the action reports.
     public UsageResponse Usage
@@ -40,35 +37,45 @@ public sealed class AnthropicLlmClient(IAnthropicClient client, string? model, A
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        var response = await client.ExecuteChat(new MessageRequest
-        {
-            System = request.SystemPrompt,
-            Model = model,
-            Messages = [new Message { Role = "user", Content = request.UserPrompt }],
-            MaxTokens = settings.MaxTokens ?? ModelCatalog.GetMaxOutputTokens(model),
-            StopSequences = settings.StopSequences ?? [],
-            Temperature = settings.Temperature.ToOptionalFloat("temperature"),
-            TopP = settings.TopP.ToOptionalFloat("top_p"),
-            TopK = settings.TopK,
-            SkillId = settings.SkillId
-        });
+        var response = await client.ExecuteChat(ToMessageRequest(request, model, settings));
 
         lock (_gate)
         {
             _usage += response.Usage;
         }
 
-        return new LlmResponse(
-            response.Text,
-            new LlmUsage(response.Usage.InputTokens, response.Usage.OutputTokens),
-            response.StopReason is not null && TruncatedStopReasons.Contains(response.StopReason)
-                ? FinishReason.Truncated
-                : FinishReason.Stop);
+        return ToLlmResponse(response);
     }
 
-    private static int MaxOutputTokensFor(string? model, int? requested)
+    // Shared with AnthropicBatchLlmClient, so a batch request carries exactly what a direct call sends.
+    internal static MessageRequest ToMessageRequest(LlmRequest request, string? model, AnthropicLlmSettings settings) => new()
+    {
+        System = request.SystemPrompt,
+        Model = model,
+        Messages = [new Message { Role = "user", Content = request.UserPrompt }],
+        MaxTokens = settings.MaxTokens ?? ModelCatalog.GetMaxOutputTokens(model),
+        StopSequences = settings.StopSequences ?? [],
+        Temperature = settings.Temperature.ToOptionalFloat("temperature"),
+        TopP = settings.TopP.ToOptionalFloat("top_p"),
+        TopK = settings.TopK,
+        SkillId = settings.SkillId
+    };
+
+    // Shared with AnthropicBatchLlmClient, so a batch result is read exactly like a direct response.
+    internal static LlmResponse ToLlmResponse(ResponseMessage response) => new(
+        response.Text,
+        new LlmUsage(response.Usage.InputTokens, response.Usage.OutputTokens),
+        response.StopReason is not null && TruncatedStopReasons.Contains(response.StopReason)
+            ? FinishReason.Truncated
+            : FinishReason.Stop);
+
+    internal static LlmCapabilities CapabilitiesFor(string? model, int? requestedMaxTokens)
     {
         var limit = ModelCatalog.GetMaxOutputTokens(model);
-        return requested is > 0 ? Math.Min(requested.Value, limit) : limit;
+
+        return new LlmCapabilities(
+            SupportsStructuredOutput: false,
+            ContextTokens: ContextTokens,
+            MaxOutputTokens: requestedMaxTokens is > 0 ? Math.Min(requestedMaxTokens.Value, limit) : limit);
     }
 }

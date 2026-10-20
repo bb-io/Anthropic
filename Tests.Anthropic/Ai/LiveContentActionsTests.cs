@@ -1,6 +1,4 @@
-﻿using System.Globalization;
-using System.Text;
-using System.Text.RegularExpressions;
+﻿using System.Text;
 using Apps.Anthropic.Actions;
 using Apps.Anthropic.Constants;
 using Apps.Anthropic.Models.Identifiers;
@@ -19,9 +17,9 @@ namespace Tests.Anthropic.Ai;
 public class LiveContentActionsTests : TestBaseMultipleConnections
 {
     private const string Model = "claude-sonnet-5";
-    private const string ContentfulHtml = "contentful.html";
-    private const string ContentfulXliff = "contentful.html.xlf";
-    private const int ContentfulXliffSegments = 47;
+    private const string ContentfulHtml = ContentfulFixture.Html;
+    private const string ContentfulXliff = ContentfulFixture.Xliff;
+    private const int ContentfulXliffSegments = ContentfulFixture.XliffSegments;
 
     private readonly InMemoryFileManagementClient _files = new();
     private readonly List<string> _loggedWarnings = [];
@@ -31,7 +29,7 @@ public class LiveContentActionsTests : TestBaseMultipleConnections
     [TestMethod, ContextDataSource(ConnectionTypes.AnthropicNative)]
     public async Task Translate_ContentfulHtml_TranslatesEverySegment(InvocationContext context)
     {
-        var file = _files.Add(ContentfulHtml, await ReadInputAsync(ContentfulHtml), "text/html");
+        var file = _files.Add(ContentfulHtml, await ContentfulFixture.ReadAsync(FileManager, ContentfulHtml), "text/html");
 
         var result = await new TranslationActions(WithWarningLog(context), _files).Translate(
             new ModelIdentifier { Model = Model },
@@ -53,7 +51,7 @@ public class LiveContentActionsTests : TestBaseMultipleConnections
     [TestMethod, ContextDataSource(ConnectionTypes.AnthropicNative)]
     public async Task Translate_ContentfulHtmlToOriginal_ReturnsTranslatedHtml(InvocationContext context)
     {
-        var file = _files.Add(ContentfulHtml, await ReadInputAsync(ContentfulHtml), "text/html");
+        var file = _files.Add(ContentfulHtml, await ContentfulFixture.ReadAsync(FileManager, ContentfulHtml), "text/html");
 
         var result = await new TranslationActions(WithWarningLog(context), _files).Translate(
             new ModelIdentifier { Model = Model },
@@ -74,7 +72,7 @@ public class LiveContentActionsTests : TestBaseMultipleConnections
     [TestMethod, ContextDataSource(ConnectionTypes.AnthropicNative)]
     public async Task Edit_ContentfulXliffWithPlantedError_CorrectsIt(InvocationContext context)
     {
-        var xliff = PlantTarget(await ReadContentfulXliffAsync(), "Why Philips AEDs?", "Pourquoi les voitures Philips ?");
+        var xliff = ContentfulFixture.PlantTarget(await ContentfulFixture.ReadXliffAsync(FileManager), "Why Philips AEDs?", "Pourquoi les voitures Philips ?");
         var file = _files.Add(ContentfulXliff, xliff);
 
         var result = await new EditActions(WithWarningLog(context), _files).EditContent(
@@ -99,7 +97,7 @@ public class LiveContentActionsTests : TestBaseMultipleConnections
     [TestMethod, ContextDataSource(ConnectionTypes.AnthropicNative)]
     public async Task Review_ContentfulXliffWithPlantedNonsense_ScoresItLowest(InvocationContext context)
     {
-        var xliff = PlantTarget(await ReadContentfulXliffAsync(), "Demonstrated results headline", "Der Mond ist aus grünem Käse.");
+        var xliff = ContentfulFixture.PlantTarget(await ContentfulFixture.ReadXliffAsync(FileManager), "Demonstrated results headline", "Der Mond ist aus grünem Käse.");
         var file = _files.Add(ContentfulXliff, xliff);
 
         var result = await new ReviewActions(WithWarningLog(context), _files).ReviewContent(
@@ -109,7 +107,7 @@ public class LiveContentActionsTests : TestBaseMultipleConnections
 
         PrintResult(result);
         var scores = Segments(result.File)
-            .Select(segment => (Source: segment.GetSource(), Score: Score(segment)))
+            .Select(segment => (Source: segment.GetSource(), Score: ContentfulFixture.Score(segment)))
             .ToList();
         AssertNoWarningsLogged();
         Assert.AreEqual(ContentfulXliffSegments, result.TotalSegmentsProcessed);
@@ -192,35 +190,10 @@ public class LiveContentActionsTests : TestBaseMultipleConnections
 
     private void AssertNoWarningsLogged() => Assert.IsEmpty(_loggedWarnings, string.Join(Environment.NewLine, _loggedWarnings));
 
-    private async Task<string> ReadInputAsync(string name)
-    {
-        await using var stream = await FileManager.DownloadAsync(new FileReference { Name = name });
-        using var reader = new StreamReader(stream);
-        return await reader.ReadToEndAsync();
-    }
-
-    // The contentful fixtures declare version="2,2", which Blackbird.Filters (before and after the
-    // migration) does not recognise as XLIFF 2. The fixture is left as it is; only the copy is fixed.
-    private async Task<string> ReadContentfulXliffAsync() =>
-        (await ReadInputAsync(ContentfulXliff)).Replace("version=\"2,2\"", "version=\"2.2\"");
-
-    private static string PlantTarget(string xliff, string source, string plantedTarget)
-    {
-        var pattern = new Regex($@"(<source>{Regex.Escape(source)}</source>\s*<target>)[^<]*(</target>)");
-        Assert.IsGreaterThan(0, pattern.Matches(xliff).Count, $"No segment with source '{source}'.");
-        return pattern.Replace(xliff, $"${{1}}{plantedTarget}${{2}}");
-    }
-
     private List<Segment> Segments(FileReference file)
     {
         var loaded = Transformation.Load(new MemoryStream(Encoding.UTF8.GetBytes(_files.Read(file))), file.Name);
         Assert.IsTrue(loaded.Success, loaded.Error);
         return loaded.Value.GetUnits().SelectMany(unit => unit.Segments).ToList();
-    }
-
-    private static double? Score(Segment segment)
-    {
-        var value = segment.TargetAttributes.SingleOrDefault(attribute => attribute.Name.LocalName == "extradata")?.Value;
-        return value is null ? null : double.Parse(value, CultureInfo.InvariantCulture);
     }
 }
