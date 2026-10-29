@@ -104,6 +104,10 @@ location and the models enabled for your Google Cloud project.
 
 For more in-depth information about action consult the [Anthropic API reference](https://docs.anthropic.com/claude/docs).
 
+### Images
+
+- **Extract localizable content from image** extracts visible localizable text from an image and creates an interoperable XLIFF file with the original image embedded in its skeleton. If the source language is not provided, Claude detects it from the image.
+
 ### Translation
 
 - **Translate** translate file content retrieved from a CMS or file storage. The output can be used in compatible Blackbird interoperable actions. Use **Filter glossary** to include only glossary entries found in the source text; disable it to include the entire glossary.
