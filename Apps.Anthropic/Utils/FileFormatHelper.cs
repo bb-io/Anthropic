@@ -4,7 +4,8 @@ public static class FileFormatHelper
 {
     public static bool IsImage(string ext)
     {
-        return new[] { ".jpg", ".jpeg", ".png", ".gif", ".webp" }.Contains(ext);
+        var normalizedExtension = ext.TrimStart('.').ToLowerInvariant();
+        return new[] { "jpg", "jpeg", "png", "gif", "webp" }.Contains(normalizedExtension);
     }
 
     public static bool IsPdf(string ext)
@@ -17,13 +18,13 @@ public static class FileFormatHelper
         return IsImage(ext) || IsPdf(ext);
     }
 
-    public static string GetAnthropicImageMediaType(string ext) => ext switch
+    public static string GetAnthropicImageMediaType(string ext) => ext.TrimStart('.').ToLowerInvariant() switch
     {
-        ".png" => "image/png",
-        ".gif" => "image/gif",
-        ".webp" => "image/webp",
-        ".jpeg" => "image/jpeg",
-        ".jpg" => "image/jpeg",
+        "png" => "image/png",
+        "gif" => "image/gif",
+        "webp" => "image/webp",
+        "jpeg" => "image/jpeg",
+        "jpg" => "image/jpeg",
         _ => "image/jpeg"
     };
 }
