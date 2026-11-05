@@ -3,7 +3,6 @@ using System.Text.RegularExpressions;
 using Apps.Anthropic.Api.Anthropic;
 using Apps.Anthropic.Api.Interfaces;
 using Apps.Anthropic.Constants;
-using Apps.Anthropic.Extensions;
 using Apps.Anthropic.Models.Request;
 using Apps.Anthropic.Models.Response;
 using Apps.Anthropic.Models.Response.Vertex;
@@ -19,7 +18,7 @@ using RestSharp;
 
 namespace Apps.Anthropic.Api.Vertex;
 
-public sealed class GoogleVertexRestClient : RestClient, IAnthropicClient
+public sealed class GoogleVertexRestClient : RestClient, IAnthropicClient, ISupportsWebSearch
 {
     private const string VertexAnthropicVersion = "vertex-2023-10-16";
     private static readonly Regex LocationPattern = new("^[a-z0-9-]+$", RegexOptions.Compiled);
@@ -96,7 +95,20 @@ public sealed class GoogleVertexRestClient : RestClient, IAnthropicClient
 
         var payload = BuildMessagePayload(message);
         var url = BuildMessageUrl(message.Model);
+        var conversation = (List<object>)payload["messages"]!;
 
+        try
+        {
+            return await PausedTurnContinuation.ExecuteAsync(message, conversation, () => SendMessageAsync(url, payload));
+        }
+        catch (JsonException exception)
+        {
+            throw new PluginApplicationException("Could not parse the response from Google Vertex AI", exception);
+        }
+    }
+
+    private async Task<string> SendMessageAsync(string url, Dictionary<string, object?> payload)
+    {
         var response = await ExecuteAuthorizedAsync(() =>
             new RestRequest(url, Method.Post).WithJsonBody(payload, JsonOptions.JsonSettings));
 
@@ -105,29 +117,12 @@ public sealed class GoogleVertexRestClient : RestClient, IAnthropicClient
             throw ConfigureErrorException(response);
         }
 
-        CompletionResponse? completion;
-        try
-        {
-            completion = JsonConvert.DeserializeObject<CompletionResponse>(
-                response.Content ?? string.Empty,
-                JsonOptions.JsonSettings);
-        }
-        catch (JsonException exception)
-        {
-            throw new PluginApplicationException("Could not parse the response from Google Vertex AI", exception);
-        }
-
-        if (completion == null)
+        if (string.IsNullOrWhiteSpace(response.Content))
         {
             throw new PluginApplicationException("Google Vertex AI returned an empty response");
         }
 
-        return new()
-        {
-            Text = completion.Content.ExtractText(),
-            Usage = completion.Usage,
-            StopReason = completion.StopReason
-        };
+        return response.Content;
     }
 
     public Task<List<ModelResponse>> ListModels() =>
@@ -214,6 +209,11 @@ public sealed class GoogleVertexRestClient : RestClient, IAnthropicClient
             ["messages"] = formattedMessages,
             ["stop_sequences"] = message.StopSequences
         };
+
+        if (message.WebSearchTool != null)
+        {
+            payload["tools"] = new List<object> { message.WebSearchTool };
+        }
 
         if (ModelCatalog.SupportsSamplingParameters(message.Model))
         {

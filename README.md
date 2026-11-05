@@ -101,6 +101,8 @@ location and the models enabled for your Google Cloud project.
 6. top_k
 7. System prompt 
 8. Stop sequences
+9. Glossary and Filter glossary. By default, only glossary entries whose terms appear in the prompt or the file text are sent; set **Filter glossary** to false to send the entire glossary.
+10. Enable web search. Lets Claude search the web and cite its sources, returned in **Citations** and **Sources**. Optional: **Max web searches**, **Allowed domains** or **Blocked domains** (not both), and the user location inputs to localize results. Web search is available for the Anthropic API, Microsoft Foundry and Google Vertex AI connections, not for Amazon Bedrock. Web searches are billed by Anthropic in addition to tokens, and an organization admin can disable web search in the Claude Console.
 
 For more in-depth information about action consult the [Anthropic API reference](https://docs.anthropic.com/claude/docs).
 

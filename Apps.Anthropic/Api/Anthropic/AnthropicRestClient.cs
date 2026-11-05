@@ -12,7 +12,7 @@ using RestSharp;
 namespace Apps.Anthropic.Api.Anthropic;
 
 public class AnthropicRestClient(IEnumerable<AuthenticationCredentialsProvider> creds) 
-    : BaseAnthropicClient(creds, new Uri("https://api.anthropic.com/v1")), IAnthropicClient, ISupportsBatching, ISupportsSkills
+    : BaseAnthropicClient(creds, new Uri("https://api.anthropic.com/v1")), IAnthropicClient, ISupportsBatching, ISupportsSkills, ISupportsWebSearch
 {
     public async Task<ConnectionValidationResponse> ValidateConnection()
     {

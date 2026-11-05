@@ -36,4 +36,28 @@ public class CompletionRequest
     
     [Display("Skill ID"), DataSource(typeof(SkillDataSource))]
     public string? SkillId { get; set; }
+
+    [Display("Enable web search", Description = "Lets Claude search the web for up-to-date information and cite its sources. Not available for Amazon Bedrock connections.")]
+    public bool? EnableWebSearch { get; set; }
+
+    [Display("Max web searches", Description = "The maximum number of web searches Claude can run for this request.")]
+    public int? MaxWebSearches { get; set; }
+
+    [Display("Allowed domains", Description = "Only include web search results from these domains, e.g. example.com. Cannot be combined with blocked domains.")]
+    public IEnumerable<string>? AllowedDomains { get; set; }
+
+    [Display("Blocked domains", Description = "Never include web search results from these domains, e.g. example.com. Cannot be combined with allowed domains.")]
+    public IEnumerable<string>? BlockedDomains { get; set; }
+
+    [Display("User location city", Description = "Localizes web search results.")]
+    public string? UserLocationCity { get; set; }
+
+    [Display("User location region", Description = "Localizes web search results.")]
+    public string? UserLocationRegion { get; set; }
+
+    [Display("User location country", Description = "Two-letter ISO country code, e.g. US. Localizes web search results.")]
+    public string? UserLocationCountry { get; set; }
+
+    [Display("User location timezone", Description = "IANA timezone, e.g. Europe/Warsaw. Localizes web search results.")]
+    public string? UserLocationTimezone { get; set; }
 }
