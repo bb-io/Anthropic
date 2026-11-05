@@ -57,7 +57,4 @@ public class CompletionRequest
 
     [Display("User location country", Description = "Two-letter ISO country code, e.g. US. Localizes web search results.")]
     public string? UserLocationCountry { get; set; }
-
-    [Display("User location timezone", Description = "IANA timezone, e.g. Europe/Warsaw. Localizes web search results.")]
-    public string? UserLocationTimezone { get; set; }
 }

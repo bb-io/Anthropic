@@ -80,7 +80,6 @@ public static class WebSearchToolBuilder
         AddIfPresent(location, "city", input.UserLocationCity);
         AddIfPresent(location, "region", input.UserLocationRegion);
         AddIfPresent(location, "country", input.UserLocationCountry);
-        AddIfPresent(location, "timezone", input.UserLocationTimezone);
 
         if (location.Count == 0)
         {

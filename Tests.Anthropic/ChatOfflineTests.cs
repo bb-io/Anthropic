@@ -171,8 +171,7 @@ public class ChatOfflineTests
             MaxWebSearches = 3,
             AllowedDomains = ["https://example.com/", " docs.example.org ", "", "EXAMPLE.com"],
             UserLocationCity = "Kyiv",
-            UserLocationCountry = "UA",
-            UserLocationTimezone = "Europe/Kyiv"
+            UserLocationCountry = "UA"
         });
 
         var json = JObject.Parse(JsonConvert.SerializeObject(tool));
@@ -186,7 +185,7 @@ public class ChatOfflineTests
         Assert.AreEqual("approximate", json["user_location"]?["type"]?.Value<string>());
         Assert.AreEqual("Kyiv", json["user_location"]?["city"]?.Value<string>());
         Assert.AreEqual("UA", json["user_location"]?["country"]?.Value<string>());
-        Assert.AreEqual("Europe/Kyiv", json["user_location"]?["timezone"]?.Value<string>());
+        Assert.IsNull(json["user_location"]?["timezone"]);
         Assert.IsNull(json["user_location"]?["region"]);
     }
 
