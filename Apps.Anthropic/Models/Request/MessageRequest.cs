@@ -23,4 +23,6 @@ public class MessageRequest
     public InputFileData? FileData { get; set; }
 
     public string? SkillId { get; set; }
+
+    public Dictionary<string, object>? WebSearchTool { get; set; }
 }

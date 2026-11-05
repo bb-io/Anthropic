@@ -12,10 +12,11 @@ public static class GlossaryPromptHelper
 {
     public static async Task<string?> GetGlossaryPromptPart(
         GlossaryRequest input,
-        IFileManagementClient fileManagementClient)
+        IFileManagementClient fileManagementClient,
+        IEnumerable<string?> searchableContent)
     {
         var context = await CreateContextAsync(input.Glossary, fileManagementClient);
-        return context?.BuildPrompt([], false);
+        return context?.BuildPrompt(searchableContent, input.FilterGlossary ?? true);
     }
 
     internal static async Task<GlossaryPromptContext?> CreateContextAsync(

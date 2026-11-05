@@ -1,7 +1,6 @@
 ﻿using Apps.Anthropic.Api.Interfaces;
 using Apps.Anthropic.Constants;
 using System.Net;
-using Apps.Anthropic.Extensions;
 using Apps.Anthropic.Models.Request;
 using Apps.Anthropic.Models.Response;
 using Apps.Anthropic.Utils;
@@ -133,8 +132,26 @@ public class BaseAnthropicClient : BlackBirdRestClient
         }
 
         var payload = BuildPayload(message, formattedMessages);
-        
-        if (this is ISupportsSkills && !string.IsNullOrEmpty(message.SkillId))
+        AddServerTools(payload, message, this is ISupportsSkills);
+        AddSamplingParameters(payload, message);
+
+        return await PausedTurnContinuation.ExecuteAsync(message, formattedMessages, async () =>
+        {
+            var request = new RestRequest("/messages", Method.Post).WithJsonBody(payload, JsonOptions.JsonSettings);
+
+            if (!string.IsNullOrEmpty(message.SkillId))
+                request.AddHeader("anthropic-beta", "code-execution-2025-08-25,skills-2025-10-02");
+
+            var response = await ExecuteWithErrorHandling(request);
+            return response.Content ?? string.Empty;
+        });
+    }
+
+    internal static void AddServerTools(Dictionary<string, object?> payload, MessageRequest message, bool supportsSkills)
+    {
+        var tools = new List<object>();
+
+        if (supportsSkills && !string.IsNullOrEmpty(message.SkillId))
         {
             payload["container"] = new
             {
@@ -149,30 +166,22 @@ public class BaseAnthropicClient : BlackBirdRestClient
                 }
             };
 
-            payload["tools"] = new[] 
+            tools.Add(new
             {
-                new
-                {
-                    type = "code_execution_20250825", 
-                    name = "code_execution"
-                }
-            };
+                type = "code_execution_20250825",
+                name = "code_execution"
+            });
         }
 
-        AddSamplingParameters(payload, message);
-
-        var request = new RestRequest("/messages", Method.Post).WithJsonBody(payload, JsonOptions.JsonSettings);
-
-        if (!string.IsNullOrEmpty(message.SkillId))
-            request.AddHeader("anthropic-beta", "code-execution-2025-08-25,skills-2025-10-02");
-        
-        var response = await ExecuteWithErrorHandling<CompletionResponse>(request);
-        return new ResponseMessage
+        if (message.WebSearchTool != null)
         {
-            Text = response.Content.ExtractText(),
-            Usage = response.Usage,
-            StopReason = response.StopReason
-        };
+            tools.Add(message.WebSearchTool);
+        }
+
+        if (tools.Count != 0)
+        {
+            payload["tools"] = tools;
+        }
     }
 
     internal static Dictionary<string, object?> BuildPayload(MessageRequest message, List<object> formattedMessages)

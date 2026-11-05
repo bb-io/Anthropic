@@ -7,4 +7,8 @@ public class ResponseMessage
     public UsageResponse Usage { get; set; } = new();
 
     public string? StopReason { get; set; }
+
+    public List<CitationResponse> Citations { get; set; } = [];
+
+    public List<string> Sources { get; set; } = [];
 }

@@ -10,7 +10,7 @@ using Blackbird.Applications.Sdk.Utils.Extensions.Sdk;
 namespace Apps.Anthropic.Api.Anthropic;
 
 public class AnthropicMsFoundryRestClient(IEnumerable<AuthenticationCredentialsProvider> creds) 
-    : BaseAnthropicClient(creds, new Uri($"{creds.Get(CredNames.BaseUrl).Value}/v1")), IAnthropicClient
+    : BaseAnthropicClient(creds, new Uri($"{creds.Get(CredNames.BaseUrl).Value}/v1")), IAnthropicClient, ISupportsWebSearch
 {
     public override async Task<ResponseMessage> ExecuteChat(MessageRequest message)
     {
