@@ -8,8 +8,6 @@ namespace Apps.Anthropic.Ai;
 
 public static class AiAdapters
 {
-    // The library logs every processing issue as a warning, so actions do not return warnings as output.
-    // The SDK logger's methods are delegates that may be unset, hence ?.Invoke.
     public static IAiLogger Logger(InvocationContext context) => new DelegateAiLogger(
         debug: message => context.Logger?.LogDebug?.Invoke(message, []),
         warn: message => context.Logger?.LogWarning?.Invoke(message, []),
@@ -23,7 +21,11 @@ public static class AiAdapters
         }
         catch (AiConfigurationException exception)
         {
-            throw new PluginMisconfigurationException(exception.Message, exception);
+            throw new PluginMisconfigurationException(exception.Message);
+        }
+        catch (Exception exception) when (exception is not (PluginApplicationException or PluginMisconfigurationException))
+        {
+            throw new PluginApplicationException(exception.Message);
         }
     }
 }
