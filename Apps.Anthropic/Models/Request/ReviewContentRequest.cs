@@ -1,5 +1,4 @@
 ﻿using Apps.Anthropic.DataSourceHandlers.EnumHandlers;
-using Blackbird.Applications.SDK.Blueprints.Handlers;
 using Blackbird.Applications.SDK.Blueprints.Interfaces.Review;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Dictionaries;
@@ -20,7 +19,7 @@ public class ReviewContentRequest : IReviewFileInput
     [DataSource(typeof(LocaleDataSourceHandler))]
     public string TargetLanguage { get; set; } = string.Empty;
     
-    [Display("Output file handling", Description = "Determine the format of the output file. The default Blackbird behavior is to convert to XLIFF for future steps."), StaticDataSource(typeof(ProcessFileFormatHandler))]
+    [Display("Output file handling", Description = "Determine the format of the output file. The default Blackbird behavior is to convert to XLIFF for future steps."), StaticDataSource(typeof(AnthropicProcessFileFormatHandler))]
     public string? OutputFileHandling { get; set; }
 
     [Display("Score threshold", Description = "All segments above this score will automatically be finalized (0..1)")]
