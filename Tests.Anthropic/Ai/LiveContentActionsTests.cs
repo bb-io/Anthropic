@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using System.Xml.Linq;
 using Apps.Anthropic.Actions;
 using Apps.Anthropic.Constants;
 using Apps.Anthropic.Models.Identifiers;
@@ -90,6 +91,38 @@ public class LiveContentActionsTests : TestBaseMultipleConnections
         Assert.IsTrue(planted.All(target => !target.Contains("voitures") && target.Contains("DEA")));
         Assert.IsTrue(segments.All(segment => segment.State == SegmentState.Reviewed));
         Assert.Contains("modified-by=\"Blackbird tests\"", _files.Read(result.File));
+    }
+
+    [TestMethod, ContextDataSource(ConnectionTypes.AnthropicNative)]
+    public async Task Edit_XtmXliff12WithPlantedErrorToXliff1_CorrectsItAndKeepsXtmStructure(InvocationContext context)
+    {
+        var xliff = XtmXliffOutputTests.XtmStyleXliff12.Replace("Solo para uso interno", "Solo para uso de gatos");
+        var file = _files.Add("es_ES_document.docx.xlf", xliff);
+
+        var result = await new EditActions(WithWarningLog(context), _files).EditContent(
+            new ModelIdentifier { Model = Model },
+            new EditContentRequest
+            {
+                File = file,
+                TargetLanguage = "es-ES",
+                OutputFileHandling = XtmXliffOutputTests.Xliff1OutputHandling,
+                GenerateDocumentSummary = false
+            },
+            new OptionalSkillRequest());
+
+        PrintResult(result);
+        var output = _files.Read(result.File);
+        TestContext.WriteLine(output);
+        var document = XDocument.Parse(output);
+        XNamespace xliff12 = XtmXliffOutputTests.Xliff12Namespace;
+        var targets = document.Descendants(xliff12 + "trans-unit")
+            .ToDictionary(unit => unit.Attribute("id")!.Value, unit => unit.Element(xliff12 + "target")!.Value);
+        AssertNoWarningsLogged();
+        Assert.AreEqual("es_ES_document.docx.xlf", result.File.Name);
+        Assert.AreEqual("1.2", document.Root!.Attribute("version")?.Value);
+        Assert.AreEqual(XtmXliffOutputTests.SkeletonContent, document.Descendants(xliff12 + "internal-file").Single().Value.Trim());
+        Assert.AreEqual(2, result.TotalSegmentsReviewed);
+        Assert.DoesNotContain("gatos", targets["t2"]);
     }
 
     // A planted nonsense target must score below the good ones, every segment gets a score, and the

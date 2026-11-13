@@ -1,5 +1,4 @@
 ﻿using Apps.Anthropic.DataSourceHandlers.EnumHandlers;
-using Blackbird.Applications.SDK.Blueprints.Handlers;
 using Blackbird.Applications.SDK.Blueprints.Interfaces.Translate;
 using Blackbird.Applications.Sdk.Common;
 using Blackbird.Applications.Sdk.Common.Dictionaries;
@@ -21,7 +20,7 @@ public class TranslateContentRequest : ITranslateFileInput
     [DataSource(typeof(LocaleDataSourceHandler))]
     public string TargetLanguage { get; set; } = string.Empty;
     
-    [Display("Output file handling", Description = "Determine the format of the output file. The default Blackbird behavior is to convert to XLIFF for future steps."), StaticDataSource(typeof(ProcessFileFormatHandler))]
+    [Display("Output file handling", Description = "Determine the format of the output file. The default Blackbird behavior is to convert to XLIFF for future steps."), StaticDataSource(typeof(AnthropicProcessFileFormatHandler))]
     public string? OutputFileHandling { get; set; }
 
     [Display("Additional instructions", Description = "The additional instructions that you want to apply to the translation.\nFor example, 'Cater to an older audience.'")]
