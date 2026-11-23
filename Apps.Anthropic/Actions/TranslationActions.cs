@@ -78,7 +78,6 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
         return await ToBackgroundResponseAsync(started, client);
     }
 
-    // Shared by "Translate" and "Translate in background", so the two cannot drift apart.
     private static TranslateStreamOptions TranslateOptions(TranslateContentRequest input, Stream file, Stream? glossaryFile) => new()
     {
         File = file,
@@ -91,7 +90,8 @@ public class TranslationActions(InvocationContext invocationContext, IFileManage
         FilterGlossary = input.FilterGlossary ?? true,
         AdditionalInstructions = input.AdditionalInstructions,
         PromptStrategy = CustomSystemPromptStrategy.For(input.SystemPrompt, () => new TranslationPromptStrategy()),
-        Summary = SummaryOptions.FromToggle(input.GenerateDocumentSummary)
+        Summary = SummaryOptions.FromToggle(input.GenerateDocumentSummary),
+        IncludeSegmentNotes = input.IncludeSegmentNotes ?? false
     };
 
     [BlueprintActionDefinition(BlueprintAction.TranslateText)]

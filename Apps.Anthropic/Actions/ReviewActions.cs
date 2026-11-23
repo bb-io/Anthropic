@@ -93,9 +93,6 @@ public class ReviewActions(InvocationContext invocationContext, IFileManagementC
         return threshold;
     }
 
-    // Shared by "Review" and "Review in background". Segment selection is the library default:
-    // Translated and Reviewed segments with a target, locked units skipped.
-    // Segments scoring at or above the threshold are finalized; those below it count as under threshold.
     private static ReviewStreamOptions ReviewOptions(ReviewContentRequest input, double threshold, Stream file, Stream? glossaryFile) => new()
     {
         File = file,
@@ -110,7 +107,8 @@ public class ReviewActions(InvocationContext invocationContext, IFileManagementC
         Threshold = threshold,
         LowScoreThreshold = threshold,
         StateAboveThreshold = SegmentState.Final,
-        Summary = SummaryOptions.FromToggle(input.GenerateDocumentSummary)
+        Summary = SummaryOptions.FromToggle(input.GenerateDocumentSummary),
+        IncludeSegmentNotes = input.IncludeSegmentNotes ?? false
     };
 
     [BlueprintActionDefinition(BlueprintAction.ReviewText)]
