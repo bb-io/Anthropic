@@ -112,7 +112,7 @@ For more in-depth information about action consult the [Anthropic API reference]
 
 ### Translation
 
-- **Translate** translate file content retrieved from a CMS or file storage. The output can be used in compatible Blackbird interoperable actions. Use **Filter glossary** to include only glossary entries found in the source text; disable it to include the entire glossary.
+- **Translate** translate file content retrieved from a CMS or file storage. The output can be used in compatible Blackbird interoperable actions. Use **Filter glossary** to include only glossary entries found in the source text; disable it to include the entire glossary. Turn on **Include segment notes** to send each segment's notes, for example the message context (msgctxt) of PO files, to the model as context (off by default).
 - **Translate text** given a text and a locale, tries to create a localized version of the text.
 
 ### Editing
@@ -127,7 +127,7 @@ For more in-depth information about action consult the [Anthropic API reference]
 
 ### Review
 
-- **Review** reviews a translation. This action assumes you have previously translated content in Blackbird through any translation action. Adds a quality score to each unit in the file. Segments scoring at or above **Score threshold** (0 to 1, default 0.8) are set to final; segments below it are counted as under threshold. Use **Filter glossary** to include only glossary entries found in the source text; disable it to include the entire glossary.
+- **Review** reviews a translation. This action assumes you have previously translated content in Blackbird through any translation action. Adds a quality score to each unit in the file. Segments scoring at or above **Score threshold** (0 to 1, default 0.8) are set to final; segments below it are counted as under threshold. Use **Filter glossary** to include only glossary entries found in the source text; disable it to include the entire glossary. Turn on **Include segment notes** to send each segment's notes, for example the message context (msgctxt) of PO files, to the model as context (off by default).
 - **Review text** reviews a single text and returns a quality score.
 
 >**Note**: Files are interoperable, under the hood Blackbird may convert to and from bilingual files with metadata but all our Actions are able to accept a lot of different file formats.
