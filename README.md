@@ -50,6 +50,8 @@ future reference e.g. 'My connection'.
 
 ### Anthropic API token
 
+Use one **regular Claude API key scoped to a single workspace**. A workspace-scoped personal key, service account key, or existing legacy workspace key covers all actions without separate action scopes or an Admin API key.
+
 1. Fill in your `API key`. You can create a new API key under [API keys](https://console.anthropic.com/account/keys). The API key has the shape `sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx`.
 2. Click _Connect_.
 
